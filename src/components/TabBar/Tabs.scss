@@ -1,0 +1,35 @@
+@import "../../styles/variables";
+
+.tab-bar {
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+  padding: 0 8px;
+  position: relative;
+  padding-top: 16px;
+}
+
+.tab {
+  padding: 12px 20px;
+  color: rgb(156, 156, 156);
+  font-size: 0.8em;
+  text-decoration: none;
+  position: relative;
+  font-weight: 700;
+  transition: color 0.3s ease-in-out;
+  &:hover {
+    color: white;
+  }
+  &.active {
+    color: white;
+  }
+}
+
+#underline {
+  position: absolute;
+  height: 2px;
+  background-color: rgba($color-primary, 0.8);
+  width: 0;
+  bottom: 0;
+  transition: left 0.3s, width 0.3s;
+}
