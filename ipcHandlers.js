@@ -27,6 +27,14 @@ function setupIpcHandlers() {
   ipcMain.handle("storeGet", (event, key) => {
     return store.get(key);
   });
+
+  ipcMain.on("set-last-tab", (event, tabPath) => {
+    store.set("lastActiveTab", tabPath);
+  });
+
+  ipcMain.handle("get-last-tab", async () => {
+    return store.get("lastActiveTab");
+  });
 }
 
 module.exports = { setupIpcHandlers };

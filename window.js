@@ -1,4 +1,4 @@
-const { BrowserWindow } = require("electron");
+const { app, BrowserWindow } = require("electron");
 const Store = require("electron-store");
 const path = require("path");
 const store = new Store();
@@ -6,6 +6,7 @@ const { setMainWindow } = require("./windowManager");
 
 function createWindow() {
   let { width, height, x, y } = store.get("windowBounds", { width: 800, height: 600 });
+  console.log(__dirname);
 
   const mainWindow = new BrowserWindow({
     x,
@@ -20,7 +21,10 @@ function createWindow() {
     },
   });
 
-  mainWindow.loadURL("http://localhost:3000");
+  const isDev = !app.isPackaged;
+  const url = isDev ? "http://localhost:3000" : `file://${path.join(__dirname, "dist/index.html")}`;
+
+  mainWindow.loadURL(url);
 
   mainWindow.on("resize", () => {
     let { width, height } = mainWindow.getBounds();

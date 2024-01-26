@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from "react";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { BrowserRouter, HashRouter, Route, Routes } from "react-router-dom";
 import RedirectToHome from "./RedirectToHome";
 import TitleBar from "./components/TitleBar/TitleBar";
 import TabBar from "./components/TabBar/TabBar";
 import "./App.scss";
 
 function App() {
+  const isDev = process.env.NODE_ENV === "development";
+  const Router = isDev ? BrowserRouter : HashRouter;
   const [fileName, setFileName] = useState("");
   const [tabs] = useState([
+    { label: "Triggers", path: "/triggers" },
     { label: "Bids", path: "/bids" },
     { label: "Alerts", path: "/alerts" },
-    { label: "Triggers", path: "/triggers" },
   ]);
 
   const extractFileName = (path) => {
@@ -46,9 +48,9 @@ function App() {
       <div className="content">
         <Routes>
           <Route path="/" element={<div>Select a file to watch</div>} />
+          <Route path="/triggers" element={<div>triggers</div>} />
           <Route path="/bids" element={<div>bids</div>} />
           <Route path="/alerts" element={<div>alerts</div>} />
-          <Route path="/triggers" element={<div>triggers</div>} />
         </Routes>
       </div>
     </Router>

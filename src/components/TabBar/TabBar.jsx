@@ -1,63 +1,67 @@
 import React, { useEffect, useRef, useState } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import "./Tabs.scss";
 
 const TabBar = ({ tabs }) => {
   const underlineRef = useRef(null);
   const tabBarRef = useRef(null);
-  const location = useLocation();
   const [activeTab, setActiveTab] = useState(null);
+  const [hoverTab, setHoverTab] = useState(null);
 
-  const updateUnderline = () => {
-    if (underlineRef.current && (activeTab || location.pathname === "/")) {
-      const target = activeTab || tabBarRef.current.querySelector(".tab");
-      underlineRef.current.style.width = `${target.offsetWidth}px`;
-      underlineRef.current.style.left = `${target.offsetLeft}px`;
+  const updateUnderline = (tab) => {
+    if (underlineRef.current && tab) {
+      underlineRef.current.style.width = `${tab.offsetWidth}px`;
+      underlineRef.current.style.left = `${tab.offsetLeft}px`;
     }
   };
 
   const handleTabClick = (event) => {
-    setActiveTab(event.target);
-  };
-
-  useEffect(() => {
-    const initialTab = tabBarRef.current.querySelector(".tab");
-    if (initialTab) {
-      setActiveTab(initialTab);
+    const targetTab = event.target.closest(".tab");
+    if (targetTab) {
+      setActiveTab(targetTab);
+      window.electron.setLastTab(targetTab.getAttribute("href"));
     }
-    updateUnderline();
-  }, []);
-
-  useEffect(() => {
-    updateUnderline();
-  }, [activeTab, location]);
+  };
 
   const getNavLinkClass = ({ isActive }) => {
     return isActive ? "tab active" : "tab";
   };
 
   const handleMouseOver = (event) => {
-    if (event.target.classList.contains("tab")) {
-      setActiveTab(event.target);
+    const targetTab = event.target.closest(".tab");
+    if (targetTab) {
+      setHoverTab(targetTab);
     }
   };
 
   const handleMouseOut = () => {
-    if (activeTab) {
-      updateUnderline();
-    }
+    setHoverTab(null);
   };
+
+  useEffect(() => {
+    window.electron.getLastTab().then((lastTab) => {
+      const lastActiveTabElement = lastTab ? tabBarRef.current.querySelector(`[href='${lastTab}']`) : null;
+
+      if (hoverTab) {
+        updateUnderline(hoverTab);
+      } else if (activeTab) {
+        updateUnderline(activeTab);
+      } else if (lastActiveTabElement) {
+        setActiveTab(lastActiveTabElement);
+        updateUnderline(lastActiveTabElement);
+      } else {
+        const initialTab = tabBarRef.current.querySelector(".tab");
+        if (initialTab) {
+          setActiveTab(initialTab);
+        }
+      }
+    });
+  }, [hoverTab, activeTab]);
 
   return (
     <div className="tab-bar" ref={tabBarRef} onMouseOver={handleMouseOver} onMouseOut={handleMouseOut}>
       {tabs.map((tab) => (
-        <NavLink
-          data-text={tab.label}
-          key={tab.path}
-          to={tab.path}
-          className={getNavLinkClass}
-          onClick={handleTabClick}
-        >
+        <NavLink key={tab.path} to={tab.path} className={getNavLinkClass} onClick={handleTabClick}>
           {tab.label}
         </NavLink>
       ))}

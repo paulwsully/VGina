@@ -6,11 +6,13 @@ function RedirectToHome({ fileName }) {
 
   useEffect(() => {
     if (fileName) {
-      navigate("/bids");
+      window.electron.getLastTab().then((lastTab) => {
+        navigate(lastTab || "/triggers");
+      });
     } else {
       navigate("/");
     }
-  }, [fileName]);
+  }, [fileName, navigate]);
 
   return null;
 }

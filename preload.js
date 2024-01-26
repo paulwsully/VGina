@@ -27,6 +27,8 @@ contextBridge.exposeInMainWorld("electron", {
     }
   },
   storeGet: (key) => {
-    return ipcRenderer.invoke("storeGet", key); // Use ipcRenderer.invoke for promise-based IPC
+    return ipcRenderer.invoke("storeGet", key);
   },
+  getLastTab: () => ipcRenderer.invoke("get-last-tab"),
+  setLastTab: (tabPath) => ipcRenderer.send("set-last-tab", tabPath),
 });
