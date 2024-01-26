@@ -36,7 +36,7 @@ const TitleBar = ({ fileName }) => {
     <div className="titlebar">
       <div className="title">
         VGina
-        <span className="version">{packageJson.version}</span>
+        <span className="version">Pre-Alpha | {packageJson.version}</span>
       </div>
       {fileName && (
         <div className="watching">
