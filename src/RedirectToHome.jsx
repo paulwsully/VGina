@@ -6,9 +6,14 @@ function RedirectToHome({ fileName }) {
 
   useEffect(() => {
     if (fileName) {
-      window.electron.getLastTab().then((lastTab) => {
-        navigate(lastTab || "/triggers");
-      });
+      window.electron.ipcRenderer
+        .invoke("get-last-tab")
+        .then((lastTab) => {
+          navigate(lastTab || "/triggers");
+        })
+        .catch((error) => {
+          console.error("Error getting last tab:", error);
+        });
     } else {
       navigate("/");
     }

@@ -3,6 +3,9 @@ import { BrowserRouter, HashRouter, Route, Routes } from "react-router-dom";
 import RedirectToHome from "./RedirectToHome";
 import TitleBar from "./components/TitleBar/TitleBar";
 import TabBar from "./components/TabBar/TabBar";
+import Triggers from "./components/Triggers/Triggers";
+import Bids from "./components/Bids/Bids";
+import Alerts from "./components/Alerts/Alerts";
 import "./App.scss";
 
 function App() {
@@ -21,9 +24,14 @@ function App() {
 
   useEffect(() => {
     const fetchInitialFileName = async () => {
-      const initialFilePath = await window.electron.storeGet("logFile");
-      if (initialFilePath) {
-        setFileName(extractFileName(initialFilePath));
+      try {
+        const initialFilePath = await window.electron.ipcRenderer.invoke("storeGet", "logFile");
+        if (initialFilePath) {
+          setFileName(extractFileName(initialFilePath));
+          window.electron.ipcRenderer.send("start-file-watch");
+        }
+      } catch (error) {
+        console.error("Error fetching initial file name:", error);
       }
     };
 
@@ -31,12 +39,20 @@ function App() {
 
     const handleFileNameChange = (path) => {
       setFileName(extractFileName(path));
+      window.electron.startFileWatch();
     };
 
-    window.electron.receiveMessage("file-name", handleFileNameChange);
+    const handleNewLine = (event, line) => {
+      console.log("Received new line:", line);
+    };
+
+    window.electron.ipcRenderer.on("file-name", handleFileNameChange);
+    window.electron.ipcRenderer.on(handleNewLine);
 
     return () => {
-      window.electron.removeMessage("file-name", handleFileNameChange);
+      window.electron.ipcRenderer.removeAllListeners("file-name");
+      window.electron.ipcRenderer.send("stop-file-watch");
+      window.electron.ipcRenderer.removeAllListeners("new-line");
     };
   }, []);
 
@@ -48,9 +64,9 @@ function App() {
       <div className="content">
         <Routes>
           <Route path="/" element={<div>Select a file to watch</div>} />
-          <Route path="/triggers" element={<div>triggers</div>} />
-          <Route path="/bids" element={<div>bids</div>} />
-          <Route path="/alerts" element={<div>alerts</div>} />
+          <Route path="/triggers" element={<Triggers />} />
+          <Route path="/bids" element={<Bids />} />
+          <Route path="/alerts" element={<Alerts />} />
         </Routes>
       </div>
     </Router>

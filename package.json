@@ -21,17 +21,16 @@
       "target": "nsis",
       "icon": "./src/assets/icon.ico"
     },
-    
-  "files": [
-    "dist/**/*",
-    "main.js",
-    "preload.js",
-    "package.json",
-    "windowManager.js",
-    "window.js",
-    "ipcHandlers.js",
-    "appLifecycle.js"
-  ]
+    "files": [
+      "dist/**/*",
+      "main.js",
+      "preload.js",
+      "package.json",
+      "windowManager.js",
+      "window.js",
+      "ipcHandlers.js",
+      "appLifecycle.js"
+    ]
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^6.5.1",
@@ -42,12 +41,14 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.21.3",
+    "read-last-lines": "^1.8.0",
     "sass": "^1.70.0"
   },
   "devDependencies": {
     "@types/react": "^18.2.43",
     "@types/react-dom": "^18.2.17",
     "@vitejs/plugin-react": "^4.2.1",
+    "electron": "^28.2.0",
     "electron-builder": "^24.9.1",
     "eslint": "^8.55.0",
     "eslint-plugin-react": "^7.33.2",

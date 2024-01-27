@@ -19,7 +19,7 @@ const TabBar = ({ tabs }) => {
     const targetTab = event.target.closest(".tab");
     if (targetTab) {
       setActiveTab(targetTab);
-      window.electron.setLastTab(targetTab.getAttribute("href"));
+      window.electron.ipcRenderer.send("set-last-tab", targetTab.getAttribute("href"));
     }
   };
 
@@ -39,23 +39,28 @@ const TabBar = ({ tabs }) => {
   };
 
   useEffect(() => {
-    window.electron.getLastTab().then((lastTab) => {
-      const lastActiveTabElement = lastTab ? tabBarRef.current.querySelector(`[href='${lastTab}']`) : null;
+    window.electron.ipcRenderer
+      .invoke("get-last-tab")
+      .then((lastTab) => {
+        const lastActiveTabElement = lastTab ? tabBarRef.current.querySelector(`[href='${lastTab}']`) : null;
 
-      if (hoverTab) {
-        updateUnderline(hoverTab);
-      } else if (activeTab) {
-        updateUnderline(activeTab);
-      } else if (lastActiveTabElement) {
-        setActiveTab(lastActiveTabElement);
-        updateUnderline(lastActiveTabElement);
-      } else {
-        const initialTab = tabBarRef.current.querySelector(".tab");
-        if (initialTab) {
-          setActiveTab(initialTab);
+        if (hoverTab) {
+          updateUnderline(hoverTab);
+        } else if (activeTab) {
+          updateUnderline(activeTab);
+        } else if (lastActiveTabElement) {
+          setActiveTab(lastActiveTabElement);
+          updateUnderline(lastActiveTabElement);
+        } else {
+          const initialTab = tabBarRef.current.querySelector(".tab");
+          if (initialTab) {
+            setActiveTab(initialTab);
+          }
         }
-      }
-    });
+      })
+      .catch((error) => {
+        console.error("Error getting last tab:", error);
+      });
   }, [hoverTab, activeTab]);
 
   return (

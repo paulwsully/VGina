@@ -18,17 +18,15 @@ const TitleBar = ({ fileName }) => {
   };
 
   const handleOpenFile = async () => {
-    const { filePaths } = await window.electron.invoke("open-file-dialog");
-    if (filePaths.length > 0) {
-      window.electron.storeSet("logFile", filePaths[0]);
-      const fileName = filePaths[0]
-        .split("\\")
-        .pop()
-        .split("/")
-        .pop()
-        .replace("eqlog_", "")
-        .replace("_pq.proj.txt", "");
-      window.electron.sendMessage("file-name", fileName);
+    try {
+      const { filePaths } = await window.electron.ipcRenderer.invoke("open-file-dialog");
+      if (filePaths && filePaths.length > 0) {
+        window.electron.ipcRenderer.send("storeSet", "logFile", filePaths[0]);
+        const fileName = filePaths[0].split("\\").pop().split("/").pop().replace("eqlog_", "").replace("_pq.proj.txt", "");
+        window.electron.ipcRenderer.send("file-name", fileName);
+      }
+    } catch (error) {
+      console.error("Error opening file:", error);
     }
   };
 
