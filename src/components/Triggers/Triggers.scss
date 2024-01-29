@@ -1,8 +1,63 @@
 @import "../../styles/variables";
 
-.triggers {
+.triggers-wrapper .new-trigger,
+.triggers-wrapper section {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 16px;
+}
+
+.triggers-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 12px;
+}
+
+.sound-list {
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  background: lighten($color-background-light, 8%);
+  max-height: 200px;
+  overflow: auto;
+  min-width: 400px;
+}
+
+.trigger-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.new-trigger {
+  display: block;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.5s ease;
+}
+
+.new-trigger.show {
+  max-height: 1000px;
+}
+
+.triggers {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.trigger {
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  &:hover {
+    background: rgba(white, 0.1);
+  }
 }

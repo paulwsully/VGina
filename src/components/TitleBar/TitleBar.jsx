@@ -6,15 +6,15 @@ import "./TitleBar.scss";
 
 const TitleBar = ({ fileName }) => {
   const handleMinimize = () => {
-    window.electron.sendMessage("minimize-app");
+    window.electron.ipcRenderer.send("minimize-app");
   };
 
   const handleMaximize = () => {
-    window.electron.sendMessage("maximize-app");
+    window.electron.ipcRenderer.send("maximize-app");
   };
 
   const handleClose = () => {
-    window.electron.sendMessage("close-app");
+    window.electron.ipcRenderer.send("close-app");
   };
 
   const handleOpenFile = async () => {

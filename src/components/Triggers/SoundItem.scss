@@ -1,0 +1,21 @@
+@import "../../styles/variables";
+
+.sound-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  .play {
+    cursor: pointer;
+    &:hover {
+      color: $color-primary;
+    }
+  }
+  .sound-name {
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 8px;
+    &:hover {
+      background-color: $color-highlight;
+    }
+  }
+}

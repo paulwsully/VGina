@@ -4,7 +4,7 @@ import RedirectToHome from "./RedirectToHome";
 import TitleBar from "./components/TitleBar/TitleBar";
 import TabBar from "./components/TabBar/TabBar";
 import Triggers from "./components/Triggers/Triggers";
-import Bids from "./components/Bids/Bids";
+import Dkp from "./components/Dkp/Dkp";
 import Alerts from "./components/Alerts/Alerts";
 import "./App.scss";
 
@@ -14,7 +14,7 @@ function App() {
   const [fileName, setFileName] = useState("");
   const [tabs] = useState([
     { label: "Triggers", path: "/triggers" },
-    { label: "Bids", path: "/bids" },
+    { label: "DKP & Loot", path: "/dkp" },
     { label: "Alerts", path: "/alerts" },
   ]);
 
@@ -58,14 +58,14 @@ function App() {
 
   return (
     <Router>
-      <RedirectToHome fileName={fileName} />
+      {fileName && <RedirectToHome fileName={fileName} />}
       <TitleBar fileName={fileName} />
       {fileName && <TabBar tabs={tabs} />}
       <div className="content">
         <Routes>
           <Route path="/" element={<div>Select a file to watch</div>} />
           <Route path="/triggers" element={<Triggers />} />
-          <Route path="/bids" element={<Bids />} />
+          <Route path="/dkp" element={<Dkp />} />
           <Route path="/alerts" element={<Alerts />} />
         </Routes>
       </div>

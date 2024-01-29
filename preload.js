@@ -2,7 +2,9 @@ const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("electron", {
   ipcRenderer: {
-    send: (channel, data) => ipcRenderer.send(channel, data),
+    send: (channel, key, value) => {
+      ipcRenderer.send(channel, key, value);
+    },
     on: (channel, func) => {
       const subscription = (event, ...args) => func(...args);
       ipcRenderer.on(channel, subscription);

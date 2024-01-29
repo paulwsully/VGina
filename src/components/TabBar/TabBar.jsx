@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { NavLink } from "react-router-dom";
 import "./Tabs.scss";
 
@@ -15,28 +15,28 @@ const TabBar = ({ tabs }) => {
     }
   };
 
-  const handleTabClick = (event) => {
+  const handleTabClick = useCallback((event) => {
     const targetTab = event.target.closest(".tab");
     if (targetTab) {
       setActiveTab(targetTab);
       window.electron.ipcRenderer.send("set-last-tab", targetTab.getAttribute("href"));
     }
-  };
+  }, []);
 
-  const getNavLinkClass = ({ isActive }) => {
+  const getNavLinkClass = useCallback(({ isActive }) => {
     return isActive ? "tab active" : "tab";
-  };
+  }, []);
 
-  const handleMouseOver = (event) => {
+  const handleMouseOver = useCallback((event) => {
     const targetTab = event.target.closest(".tab");
     if (targetTab) {
       setHoverTab(targetTab);
     }
-  };
+  }, []);
 
-  const handleMouseOut = () => {
+  const handleMouseOut = useCallback(() => {
     setHoverTab(null);
-  };
+  }, []);
 
   useEffect(() => {
     window.electron.ipcRenderer
@@ -61,7 +61,7 @@ const TabBar = ({ tabs }) => {
       .catch((error) => {
         console.error("Error getting last tab:", error);
       });
-  }, [hoverTab, activeTab]);
+  }, [hoverTab]);
 
   return (
     <div className="tab-bar" ref={tabBarRef} onMouseOver={handleMouseOver} onMouseOut={handleMouseOut}>
