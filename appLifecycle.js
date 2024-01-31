@@ -1,5 +1,7 @@
 const { app, globalShortcut } = require("electron");
+const clipboard = require("electron").clipboard;
 const { createWindow } = require("./window");
+const ks = require("node-key-sender");
 const fs = require("fs");
 const util = require("util");
 const readdir = util.promisify(fs.readdir);
