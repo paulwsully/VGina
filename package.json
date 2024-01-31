@@ -36,6 +36,7 @@
     "@fortawesome/fontawesome-svg-core": "^6.5.1",
     "@fortawesome/free-solid-svg-icons": "^6.5.1",
     "@fortawesome/react-fontawesome": "^0.2.0",
+    "@google-cloud/text-to-speech": "^5.0.2",
     "concurrently": "^8.2.2",
     "electron-store": "^8.1.0",
     "react": "^18.2.0",

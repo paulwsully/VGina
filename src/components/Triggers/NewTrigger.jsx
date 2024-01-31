@@ -1,23 +1,42 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faFloppyDisk, faPlusCircle, faTimes } from "@fortawesome/free-solid-svg-icons";
+import { faPlayCircle, faFloppyDisk, faPlusCircle, faTimes } from "@fortawesome/free-solid-svg-icons";
 import { v4 as uuidv4 } from "uuid";
 import Checkbox from "../Utilities/Checkbox";
 import Input from "../Utilities/Input";
 import SoundItem from "./SoundItem";
 import "./Triggers.scss";
 
+const triggerReset = {
+  saySomething: false,
+  playSound: false,
+  triggerName: "",
+  searchText: "",
+  searchRegex: false,
+  speechText: "",
+  sound: "",
+};
+
 function NewTrigger({ onAddTrigger }) {
   const [showNewTrigger, setShowNewTrigger] = useState(false);
   const [isCancelConfirm, setIsCancelConfirm] = useState(false);
-  const [newTrigger, setNewTrigger] = useState({
-    saySomething: false,
-    playSound: false,
-    triggerName: "",
-    searchText: "",
-    searchRegex: false,
-    speechText: "",
-  });
+  const [selectedSound, setSelectedSound] = useState("");
+  const [soundFiles, setSoundFiles] = useState([]);
+  const [newTrigger, setNewTrigger] = useState(triggerReset);
+
+  useEffect(() => {
+    if (window.electron && window.electron.ipcRenderer) {
+      // Get sound files
+      window.electron.ipcRenderer.send("get-sound-files");
+      window.electron.ipcRenderer.receive("sound-files", (files) => {
+        setSoundFiles(files);
+      });
+    }
+
+    return () => {
+      window.electron.ipcRenderer.removeAllListeners("sound-files");
+    };
+  }, []);
 
   const handleCheckboxChange = (id, checked) => {
     setNewTrigger({ ...newTrigger, [id]: checked });
@@ -28,7 +47,8 @@ function NewTrigger({ onAddTrigger }) {
   };
 
   const handleSoundItemClick = (soundName) => {
-    console.log("Sound item clicked:", soundName);
+    setSelectedSound(soundName);
+    setNewTrigger({ ...newTrigger, sound: soundName });
   };
 
   const handleNewTriggerClick = () => {
@@ -43,6 +63,7 @@ function NewTrigger({ onAddTrigger }) {
     const triggerToSave = { ...newTrigger, id: triggerId };
     const triggerWithId = { ...newTrigger, id: uuidv4() };
     onAddTrigger(triggerWithId);
+    console.log(triggerToSave);
     updatedTriggers.push(triggerToSave);
 
     window.electron.ipcRenderer.send("storeSet", "triggers", updatedTriggers);
@@ -61,14 +82,12 @@ function NewTrigger({ onAddTrigger }) {
   };
 
   const resetTrigger = () => {
-    setNewTrigger({
-      saySomething: false,
-      playSound: false,
-      triggerName: "",
-      searchText: "",
-      searchRegex: false,
-      speechText: "",
-    });
+    setNewTrigger(triggerReset);
+  };
+
+  const playSound = (filePath) => {
+    const audio = new Audio(`./sounds/${filePath}`);
+    audio.play();
   };
   return (
     <div className="new-trigger-container">
@@ -105,10 +124,22 @@ function NewTrigger({ onAddTrigger }) {
             {newTrigger.saySomething && <Input id="speechText" placeholder="" label="Say..." onTextChange={(value) => handleInputChange("speechText", value)} />}
           </div>
           <div className={`panel ${newTrigger.playSound ? "" : "inactive"}`}>
-            <Checkbox id="playSound" label="Play a sound" checked={newTrigger.playSound} onCheckChange={(checked) => handleCheckboxChange("playSound", checked)} />
+            <div className="sounds-header">
+              <Checkbox id="playSound" label="Play a sound" checked={newTrigger.playSound} onCheckChange={(checked) => handleCheckboxChange("playSound", checked)} />
+              {newTrigger.playSound && newTrigger.sound && (
+                <span className="pill">
+                  <div className="play" onClick={() => playSound(newTrigger.sound)}>
+                    <FontAwesomeIcon icon={faPlayCircle} />
+                  </div>
+                  {selectedSound.replace(".mp3", "").replace(/-/g, " ")}
+                </span>
+              )}
+            </div>
             {newTrigger.playSound && (
               <div className="sound-list">
-                <SoundItem soundName="50 dkp minus" onClick={handleSoundItemClick} />
+                {soundFiles.map((file, index) => (
+                  <SoundItem key={file} soundName={file} onClick={handleSoundItemClick} />
+                ))}
               </div>
             )}
           </div>

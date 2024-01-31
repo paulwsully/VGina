@@ -48,11 +48,16 @@ function App() {
 
     window.electron.ipcRenderer.on("file-name", handleFileNameChange);
     window.electron.ipcRenderer.on(handleNewLine);
+    window.electron.ipcRenderer.receive("play-sound", (soundFile) => {
+      console.log(soundFile);
+      window.electron.playSound(soundFile);
+    });
 
     return () => {
       window.electron.ipcRenderer.removeAllListeners("file-name");
-      window.electron.ipcRenderer.send("stop-file-watch");
       window.electron.ipcRenderer.removeAllListeners("new-line");
+      window.electron.ipcRenderer.removeAllListeners("play-sound");
+      window.electron.ipcRenderer.send("stop-file-watch");
     };
   }, []);
 

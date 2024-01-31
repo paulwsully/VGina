@@ -18,4 +18,8 @@ contextBridge.exposeInMainWorld("electron", {
     invoke: (channel, ...args) => ipcRenderer.invoke(channel, ...args),
     removeAllListeners: (channel) => ipcRenderer.removeAllListeners(channel),
   },
+  playSound: (soundFile) => {
+    const audio = new Audio(soundFile);
+    audio.play().catch((e) => console.error("Error playing sound:", e));
+  },
 });

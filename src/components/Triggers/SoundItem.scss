@@ -4,6 +4,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  user-select: none;
   .play {
     cursor: pointer;
     &:hover {

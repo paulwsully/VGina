@@ -10,6 +10,7 @@ function Alerts() {
     { id: "tell", label: "Tell Recieved" },
     { id: "groupInvite", label: "Recieved Group Invite" },
     { id: "raidInvite", label: "Recieved Raid Invite" },
+    { id: "mobEnrage", label: "Mob Enraged" },
   ];
 
   const [checkboxStates, setCheckboxStates] = useState({});

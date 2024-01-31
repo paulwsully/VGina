@@ -15,6 +15,19 @@
   padding: 12px;
 }
 
+.sounds-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  .checkbox {
+    margin: 0;
+  }
+  .play {
+    cursor: pointer;
+  }
+}
+
 .sound-list {
   border-radius: 8px;
   display: flex;
@@ -31,6 +44,7 @@
   display: flex;
   gap: 8px;
   margin-bottom: 16px;
+  user-select: none;
 }
 
 .new-trigger {

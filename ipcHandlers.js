@@ -1,19 +1,29 @@
-const { ipcMain, dialog } = require("electron");
+const { app, ipcMain, dialog } = require("electron");
+const { getMainWindow, getBidOverlay } = require("./windowManager");
 const Store = require("electron-store");
-const { getMainWindow } = require("./windowManager");
+const textToSpeech = require("@google-cloud/text-to-speech");
 const store = new Store();
 const readLastLines = require("read-last-lines");
 const fs = require("fs");
+const util = require("util");
+const writeFile = util.promisify(fs.writeFile);
+const readdir = util.promisify(fs.readdir);
+const exists = util.promisify(fs.exists);
+const path = require("path");
+
+const tts = new textToSpeech.TextToSpeechClient({
+  keyFilename: path.join(__dirname, "./vgina-412004-91343028ed0c.json"),
+});
 
 function setupIpcHandlers() {
   ipcMain.on("minimize-app", () => getMainWindow().minimize());
-
-  ipcMain.on("maximize-app", () => {
-    const mainWindow = getMainWindow();
-    mainWindow.isMaximized() ? mainWindow.unmaximize() : mainWindow.maximize();
-  });
-
   ipcMain.on("close-app", () => getMainWindow().close());
+  ipcMain.on("file-name", (event, fileName) => event.sender.send("file-name", fileName));
+  ipcMain.on("storeSet", (event, key, value) => store.set({ [key]: value }));
+  ipcMain.handle("storeGet", (event, key) => store.get(key));
+  ipcMain.on("set-last-tab", (event, tabPath) => store.set("lastActiveTab", tabPath));
+  ipcMain.handle("get-last-tab", async () => store.get("lastActiveTab"));
+  ipcMain.handle("get-rolls", async (event) => store.get("rolls", []));
 
   ipcMain.handle("open-file-dialog", async () => {
     try {
@@ -24,30 +34,14 @@ function setupIpcHandlers() {
     }
   });
 
-  ipcMain.on("file-name", (event, fileName) => {
-    event.sender.send("file-name", fileName);
-  });
-
-  ipcMain.on("storeSet", (event, key, value) => {
-    store.set({ [key]: value });
-  });
-
-  ipcMain.handle("storeGet", (event, key) => {
-    return store.get(key);
-  });
-
-  ipcMain.on("set-last-tab", (event, tabPath) => {
-    store.set("lastActiveTab", tabPath);
-  });
-
-  ipcMain.handle("get-last-tab", async () => {
-    return store.get("lastActiveTab");
+  ipcMain.on("maximize-app", () => {
+    const mainWindow = getMainWindow();
+    mainWindow.isMaximized() ? mainWindow.unmaximize() : mainWindow.maximize();
   });
 
   let fileWatcher = null;
   let lastFiveLines = [];
   const NUM_LINES_TO_READ = 5;
-
   const updateFileWatch = async (filePath) => {
     const currentLines = (await readLastLines.read(filePath, NUM_LINES_TO_READ)).split("\n").slice(0, -1);
     const newLines = [];
@@ -120,10 +114,6 @@ function setupIpcHandlers() {
     return true;
   });
 
-  ipcMain.handle("get-rolls", async (event) => {
-    return store.get("rolls", []);
-  });
-
   ipcMain.handle("close-roll", async (event, rollMax) => {
     const rolls = store.get("rolls", []);
     const updatedRolls = rolls.filter((roll) => roll.rollMax !== rollMax);
@@ -132,6 +122,18 @@ function setupIpcHandlers() {
     const mainWindow = getMainWindow();
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send("rolls-updated");
+    }
+  });
+
+  ipcMain.on("get-sound-files", async (event) => {
+    try {
+      const soundsPath = path.join(__dirname, "./sounds");
+      const files = await readdir(soundsPath);
+      const mp3Files = files.filter((file) => file.endsWith(".mp3"));
+      event.reply("sound-files", mp3Files);
+    } catch (err) {
+      console.error("Error fetching sound files:", err);
+      event.reply("sound-files", []);
     }
   });
 
@@ -154,21 +156,104 @@ function setupIpcHandlers() {
     }
   }
 
-  function processNewLine(line) {
-    if (line.includes("**A Magic Die is rolled by") || line.includes("**It could have been any number from")) {
-      parseRolls(line);
+  async function processAction(lastLine, settingKey = null, search, sound, useRegex, actionType) {
+    let matchFound = false;
+    if (useRegex) {
+      const regex = new RegExp(search);
+      matchFound = regex.test(lastLine);
+    } else {
+      matchFound = lastLine.includes(search);
     }
 
-    if (line.includes("tells you,")) {
-      parseLineForBid(line);
+    if (matchFound) {
+      try {
+        let settings = null;
+        if (settingKey !== null) {
+          settings = store.get(settingKey);
+        }
+
+        if (settings || settingKey === "") {
+          const userDataPath = app.getPath("userData");
+          let soundFilePath;
+
+          if (actionType === "speak") {
+            const sanitizedSoundName = sanitizeFilename(sound);
+            soundFilePath = path.join(userDataPath, `sounds/${sanitizedSoundName}.mp3`);
+          } else {
+            soundFilePath = path.join(userDataPath, `sounds/${sanitizeFilename(sound)}.mp3`);
+          }
+
+          if (actionType === "speak" && !(await exists(soundFilePath))) {
+            const request = {
+              input: { text: sound },
+              voice: {
+                languageCode: "en-US",
+                name: "en-US-Studio-O",
+              },
+              audioConfig: {
+                audioEncoding: "MP3",
+                speakingRate: 1,
+                effectsProfileId: ["large-home-entertainment-class-device"],
+              },
+            };
+
+            const [response] = await tts.synthesizeSpeech(request);
+
+            if (!(await exists(path.dirname(soundFilePath)))) {
+              fs.mkdirSync(path.dirname(soundFilePath), { recursive: true });
+            }
+
+            await writeFile(soundFilePath, response.audioContent, "binary");
+          }
+
+          const mainWindow = getMainWindow();
+          mainWindow && mainWindow.webContents.send("play-sound", soundFilePath);
+        }
+      } catch (err) {
+        console.error("Error:", err);
+      }
     }
+  }
+
+  function processNewLine(line) {
+    const actions = [
+      { actionType: "speak", key: "mobUnrooted", search: "Roots spell has worn off", sound: "Root fell off", useRegex: false },
+      { actionType: "speak", key: "failedFeign", search: "has fallen to the ground", sound: "Failed feign", useRegex: false },
+      { actionType: "speak", key: "mobResisted", search: "Your target resisted", sound: "Resisted", useRegex: false },
+      { actionType: "speak", key: "invisibilityFading", search: "You feel yourself starting to appear", sound: "You're starting to appear", useRegex: false },
+      { actionType: "speak", key: "groupInvite", search: "invites you to join a group", sound: "You've been invited to a group", useRegex: false },
+      { actionType: "speak", key: "raidInvite", search: "invites you to join a raid", sound: "You've been invited to a raid", useRegex: false },
+      { actionType: "speak", key: "mobEnrage", search: "has become ENRAGED", sound: "Mob is enraged", useRegex: false },
+      { actionType: "sound", key: "tells", search: "\\[.*?\\] (\\S+) tells you,", sound: "tell", useRegex: true },
+    ];
+
+    actions.forEach(({ actionType, key, search, sound, useRegex }) => {
+      processAction(line, key, search, sound, useRegex, actionType);
+    });
+
+    if (line.includes("**A Magic Die is rolled by") || line.includes("**It could have been any number from")) parseRolls(line);
+    if (line.includes("tells you,")) parseLineForBid(line);
     if (line.includes("snared")) {
       store.set("latestLine", line);
       getMainWindow().webContents.send("new-line", line);
     }
   }
 
-  function parseLineForBid(line) {
+  function checkIfRaidDrop(item) {
+    const filePath = path.join(__dirname, "./itemsList.txt");
+    return new Promise((resolve, reject) => {
+      fs.readFile(filePath, "utf8", (err, data) => {
+        if (err) {
+          console.error("Error reading the file:", err);
+          reject(err);
+        } else {
+          resolve(data.includes(item));
+        }
+      });
+    });
+  }
+
+  async function parseLineForBid(line) {
     const regex = /\[\w+ \w+ \d+ \d+:\d+:\d+ \d+\] (\w+) tells you, '([^']+?) (\d+)'/;
     const match = line.match(regex);
 
@@ -177,8 +262,14 @@ function setupIpcHandlers() {
       const item = match[2];
       const dkp = parseInt(match[3], 10);
 
-      if (name && item && !isNaN(dkp)) {
-        updateActiveBids({ name, item, dkp });
+      try {
+        const isRaidDrop = await checkIfRaidDrop(item);
+        if (name && item && !isNaN(dkp) && isRaidDrop) {
+          console.log({ name, item, dkp });
+          updateActiveBids({ name, item, dkp });
+        }
+      } catch (err) {
+        console.error("Error in parseLineForBid:", err);
       }
     } else {
       console.log("No match found for line:", line);
@@ -208,16 +299,19 @@ function setupIpcHandlers() {
     store.set("activeBids", activeBids);
   }
 
-  let currentRoller = null; // For keeping track of the current roller
-  let lines = []; // For storing all lines
+  function generateUniqueId() {
+    return Date.now();
+  }
 
+  let currentRoller = null;
+  let lines = [];
   function parseRolls(newLine) {
-    lines.push(newLine); // Add the new line to the lines array
-    const index = lines.length - 1; // Index of the new line
+    lines.push(newLine);
+    const index = lines.length - 1;
 
     if (newLine && typeof newLine === "string") {
       if (newLine.includes("**A Magic Die is rolled by")) {
-        currentRoller = newLine.split(" ").pop().slice(0, -2); // Removes the period
+        currentRoller = newLine.split(" ").pop().slice(0, -2);
       } else if (newLine.includes("**It could have been any number from") && currentRoller) {
         const previousLine = lines[index - 1];
         if (previousLine && previousLine.includes("**A Magic Die is rolled by")) {
@@ -226,7 +320,7 @@ function setupIpcHandlers() {
             const rollMax = parseInt(parts[2], 10);
             const roll = parseInt(parts[3], 10);
             addRoll(rollMax, currentRoller, roll);
-            currentRoller = null; // Reset for the next roll
+            currentRoller = null;
             lines = [];
           }
         }
@@ -237,22 +331,25 @@ function setupIpcHandlers() {
   function addRoll(rollMax, rollerName, roll) {
     const rolls = store.get("rolls", []);
     let rollEntry = rolls.find((entry) => entry.rollMax === rollMax);
-
     if (!rollEntry) {
-      // If no rollEntry for this rollMax, create a new one
       rollEntry = { rollMax, rollers: [] };
       rolls.push(rollEntry);
     }
 
-    // Check if this roller has already rolled for this rollMax
     const hasRolled = rollEntry.rollers.some((roller) => roller.name === rollerName);
 
     if (!hasRolled) {
-      // Add the roll if the roller hasn't rolled yet
       rollEntry.rollers.push({ name: rollerName, roll });
       store.set("rolls", rolls);
     }
     updateRolls();
+  }
+
+  function sanitizeFilename(text) {
+    return text
+      .toLowerCase()
+      .replace(/[^\w\s]/gi, "")
+      .replace(/\s+/g, "");
   }
 }
 

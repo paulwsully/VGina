@@ -1,4 +1,5 @@
 let mainWindow = null;
+let bidOverlay = null;
 
 function setMainWindow(window) {
   mainWindow = window;
