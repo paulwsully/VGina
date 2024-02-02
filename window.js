@@ -1,13 +1,17 @@
-const { app, BrowserWindow } = require("electron");
-const Store = require("electron-store");
-const path = require("path");
+import { app, BrowserWindow } from "electron";
+import { setMainWindow, setOverlayBid } from "./windowManager.js";
+import { fileURLToPath } from "url";
+import Store from "electron-store";
+import path from "path";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+let bidOverlay;
+
 const store = new Store();
-const { setMainWindow } = require("./windowManager");
 
 function createWindow() {
-  let { width, height, x, y } = store.get("windowBounds", { width: 800, height: 600 });
-  console.log(__dirname);
-
+  let { width, height, x, y } = store.get("windowBounds", { width: 800, height: 1000 });
   const mainWindow = new BrowserWindow({
     x,
     y,
@@ -24,7 +28,6 @@ function createWindow() {
 
   const isDev = !app.isPackaged;
   const url = isDev ? "http://localhost:3000" : `file://${path.join(__dirname, "dist/index.html")}`;
-
   mainWindow.loadURL(url);
 
   mainWindow.on("resize", () => {
@@ -38,76 +41,53 @@ function createWindow() {
   });
 
   setMainWindow(mainWindow);
-
   return mainWindow;
 }
 
-function createBidOverlay() {
-  if (bidOverlay) return;
-
-  let bidOverlayState = store.get("bidOverlayState", {
-    width: 800,
-    height: 152,
-    x: null,
-    y: null,
-  });
-
-  bidOverlay = new BrowserWindow({
-    opacity: 1,
-    width: bidOverlayState.width,
-    height: bidOverlayState.height,
-    x: bidOverlayState.x,
-    y: bidOverlayState.y,
-    frame: false,
-    transparent: true,
-    alwaysOnTop: true,
-    webPreferences: {
-      nodeIntegration: false,
-      webSecurity: false,
-      contextIsolation: true,
-      preload: path.join(__dirname, "./preload.js"),
-    },
-  });
-
-  const startUrl = app.isPackaged
-    ? url.format({
-        pathname: path.join(__dirname, "./index.html"),
-        protocol: "file:",
-        slashes: true,
-        hash: "/bids/overlay",
-      })
-    : "http://localhost:3000/bids/overlay";
-
-  bidOverlay.loadURL(startUrl);
-
-  // bidOverlay.webContents.openDevTools();
-
-  bidOverlay &&
-    bidOverlay.webContents.on("did-finish-load", async () => {
-      const contentHeight = await bidOverlay.webContents.executeJavaScript("document.body.scrollHeight");
-      bidOverlay.setSize(800, contentHeight);
+function createOverlayBids() {
+  return new Promise((resolve, reject) => {
+    let { width, height, x, y } = store.get("overlayBidBounds", { width: 800, height: 300 });
+    const overlayBid = new BrowserWindow({
+      x,
+      y,
+      width,
+      height: 172 + 16,
+      frame: false,
+      transparent: true,
+      alwaysOnTop: true,
+      webPreferences: {
+        preload: path.join(__dirname, "preload.js"),
+        nodeIntegration: false,
+        contextIsolation: true,
+        webSecurity: false,
+      },
     });
 
-  bidOverlay && bidOverlay.setIgnoreMouseEvents(false);
+    const isDev = !app.isPackaged;
+    const url = isDev ? "http://localhost:3000/dkp-and-loot/overlay/bids" : `file://${__dirname.replace(/\\/g, "/")}/dist/index.html#/dkp-and-loot/overlay/bids`;
+    overlayBid.loadURL(url);
 
-  bidOverlay &&
-    bidOverlay.on("closed", () => {
-      bidOverlay = null;
+    overlayBid.webContents.once("did-finish-load", () => {
+      resolve(overlayBid); // Resolve the promise with the overlayBid window
     });
 
-  bidOverlay.on("close", saveBidOverlayState);
-  bidOverlay.on("resize", saveBidOverlayState);
-  bidOverlay.on("move", saveBidOverlayState);
+    overlayBid.on("resize", () => {
+      let { width, height } = overlayBid.getBounds();
+      store.set("overlayBidBounds", { width, height, x, y });
+    });
 
-  ipcMain.on("closeBidOverlay", (event) => {
-    if (bidOverlay && !bidOverlay.isDestroyed()) {
-      saveSettings(bidOverlay, "bidOverlay");
-    }
-    bidOverlay.close();
+    overlayBid.on("move", () => {
+      let { x, y } = overlayBid.getBounds();
+      store.set("overlayBidBounds", { width, height, x, y });
+    });
+
+    overlayBid.on("closed", () => {
+      reject(new Error("OverlayBid window was closed before it could finish loading."));
+    });
+
+    setOverlayBid(overlayBid);
+    // overlayBid.webContents.openDevTools();
   });
-
-  setBidOverlay(bidOverlayState);
-  return bidOverlayState;
 }
 
-module.exports = { createWindow, createBidOverlay };
+export { createWindow, createOverlayBids };

@@ -5,6 +5,22 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Vite + React</title>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+    if (window.location.href.includes('/dkp-and-loot/overlay/bids')) {
+        document.documentElement.style.backgroundColor = 'transparent'; // Example style
+    }
+});
+
+document.addEventListener('DOMContentLoaded', (event) => {
+  window.electron.getOverlayBidLocked().then((overlayBidLocked) => {
+    if (overlayBidLocked) {
+      document.body.classList.add("no-drag");
+    }
+  });
+});
+    </script>
   </head>
   <body>
     <div id="root"></div>

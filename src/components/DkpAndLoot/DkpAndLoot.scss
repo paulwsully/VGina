@@ -37,10 +37,19 @@
   margin-right: 16px;
 }
 
-.bids {
+.active-bids {
   width: 100%;
   display: flex;
-  gap: 16px;
+  overflow: auto;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-start;
+  &-list {
+    gap: 8px;
+    width: 100%;
+    display: flex;
+    overflow: auto;
+  }
 }
 
 .bid {
@@ -52,6 +61,12 @@
   border: 1px solid rgba(white, 0.1);
   border-radius: 8px;
   background: darken($color-background, 2%);
+  .item-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 216px;
+  }
 }
 
 .bidders {
@@ -117,12 +132,47 @@
   gap: 16px;
   .roll-group {
     padding: 8px;
+    border: 1px solid rgba(white, 0.1);
+    border-radius: 8px;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
-    border: 1px solid rgba(white, 0.1);
-    border-radius: 8px;
     background: darken($color-background, 2%);
   }
+}
+
+.closed-bids {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.closed-bid-name {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.closed-bid {
+  display: flex;
+  flex-direction: column;
+  padding: 8px;
+  border: 1px solid rgba(white, 0.1);
+  border-radius: 8px;
+  background: darken($color-background, 2%);
+}
+
+.bid-win-amount {
+  color: rgb(110, 250, 110);
+  font-size: 0.8em;
+}
+
+.closed-bidder {
+  display: flex;
+}
+
+.closed-bid .bidder-name {
+  min-width: 120px;
+  display: flex;
 }

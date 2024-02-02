@@ -8,3 +8,25 @@
   border: 1px solid rgba(white, 0.1);
   border-radius: 8px;
 }
+
+.bid-overlay {
+  .active-bids {
+    width: 100%;
+    background: rgba(black, 0.4);
+    min-height: 150px;
+    border-radius: 8px;
+    padding: 8px;
+    -webkit-app-region: drag;
+    overflow-x: hidden;
+  }
+  .bid-close {
+    -webkit-app-region: no-drag;
+  }
+  .actions {
+    display: none;
+  }
+}
+
+.no-file {
+  margin-top: 40px;
+}

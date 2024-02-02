@@ -1,15 +1,20 @@
-const { app, ipcMain, dialog } = require("electron");
-const { getMainWindow, getBidOverlay } = require("./windowManager");
-const Store = require("electron-store");
-const textToSpeech = require("@google-cloud/text-to-speech");
+import { app, ipcMain, dialog } from "electron";
+import { getMainWindow, getOverlayBid } from "./windowManager.js"; // Adjust path as necessary
+import { createOverlayBids } from "./window.js";
+import database from "./firebaseConfig.js";
+import { ref, push, getDatabase } from "firebase/database";
+import Store from "electron-store";
 const store = new Store();
-const readLastLines = require("read-last-lines");
-const fs = require("fs");
-const util = require("util");
-const writeFile = util.promisify(fs.writeFile);
-const readdir = util.promisify(fs.readdir);
-const exists = util.promisify(fs.exists);
-const path = require("path");
+import textToSpeech from "@google-cloud/text-to-speech";
+import fs from "fs";
+import { promises as fsPromises, readFileSync } from "fs";
+import readLastLines from "read-last-lines";
+import path from "path";
+const { writeFile, readdir, access: exists } = fsPromises;
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const tts = new textToSpeech.TextToSpeechClient({
   keyFilename: path.join(__dirname, "./vgina-412004-91343028ed0c.json"),
@@ -56,6 +61,68 @@ function setupIpcHandlers() {
     lastFiveLines = currentLines.slice(-5);
   };
 
+  ipcMain.on("open-overlay-window", (event) => {
+    createOverlayBids()
+      .then((overlayBid) => {
+        const locked = store.get("overlayBidLocked", false);
+        const overlayBidWindow = getOverlayBid();
+        overlayBidWindow.show();
+        overlayBidWindow.setIgnoreMouseEvents(locked, { forward: true });
+      })
+      .catch((error) => {
+        console.error("An error occurred while creating the overlay bids window:", error);
+      });
+  });
+
+  ipcMain.handle("get-sound-path", async (event, soundFileName) => {
+    let soundFilePath;
+
+    if (app.isPackaged) {
+      // In production, use the userData directory
+      const userDataPath = app.getPath("userData");
+      soundFilePath = path.join(userDataPath, "sounds", soundFileName);
+    } else {
+      // In development, use a directory relative to __dirname, for example
+      soundFilePath = path.join(__dirname, "sounds", soundFileName);
+    }
+
+    const normalizedSoundFilePath = path.normalize(soundFilePath);
+    // Properly encode the path as a file URL
+    const soundFileUrl = new URL(`file://${normalizedSoundFilePath}`).toString();
+
+    return soundFileUrl;
+  });
+
+  ipcMain.on("enable-click-through", () => {
+    const overlayBidWindow = getOverlayBid();
+    if (overlayBidWindow && !overlayBidWindow.isDestroyed()) {
+      overlayBidWindow.setIgnoreMouseEvents(true, { forward: true });
+      overlayBidWindow.webContents.executeJavaScript(`document.body.classList.add("no-drag")`, true);
+    }
+  });
+
+  ipcMain.on("disable-click-through", () => {
+    const overlayBidWindow = getOverlayBid();
+    if (overlayBidWindow && !overlayBidWindow.isDestroyed()) {
+      overlayBidWindow.setIgnoreMouseEvents(false);
+      overlayBidWindow.webContents.executeJavaScript(`document.body.classList.remove("no-drag")`, true);
+    }
+  });
+
+  ipcMain.on("enable-only-click-through", () => {
+    const overlayBidWindow = getOverlayBid();
+    if (overlayBidWindow && !overlayBidWindow.isDestroyed()) overlayBidWindow.setIgnoreMouseEvents(true, { forward: true });
+  });
+
+  ipcMain.on("disable-only-click-through", () => {
+    const overlayBidWindow = getOverlayBid();
+    if (overlayBidWindow && !overlayBidWindow.isDestroyed()) overlayBidWindow.setIgnoreMouseEvents(false);
+  });
+
+  ipcMain.handle("get-overlayBidLocked", async () => {
+    return store.get("overlayBidLocked", false);
+  });
+
   ipcMain.on("start-file-watch", async () => {
     try {
       const filePath = store.get("logFile");
@@ -86,7 +153,6 @@ function setupIpcHandlers() {
 
   ipcMain.on("request-bids", async (event) => {
     const activeBids = store.get("activeBids", []);
-    console.log(activeBids);
     event.reply("bids-updated", activeBids);
   });
 
@@ -101,11 +167,14 @@ function setupIpcHandlers() {
 
   ipcMain.handle("close-bid", async (event, { itemName, bidders }) => {
     const timestamp = new Date().toISOString();
-    const closedBids = store.get("closedBids", []);
-    closedBids.push({ item: itemName, bidders, timestamp });
-    store.set("closedBids", closedBids);
+    const closedBid = { item: itemName, bidders, timestamp };
+    const db = getDatabase();
+    const closedBidsRef = ref(database, "closedBids");
+    push(closedBidsRef, closedBid);
+
     const activeBids = store.get("activeBids", []).filter((bid) => bid.item !== itemName);
     store.set("activeBids", activeBids);
+
     const mainWindow = getMainWindow();
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send("bids-updated");
@@ -127,7 +196,7 @@ function setupIpcHandlers() {
 
   ipcMain.on("get-sound-files", async (event) => {
     try {
-      const soundsPath = path.join(__dirname, "./sounds");
+      const soundsPath = path.join(app.getPath("userData"), "sounds");
       const files = await readdir(soundsPath);
       const mp3Files = files.filter((file) => file.endsWith(".mp3"));
       event.reply("sound-files", mp3Files);
@@ -137,11 +206,25 @@ function setupIpcHandlers() {
     }
   });
 
+  ipcMain.on("close-overlay-window", () => {
+    const overlayBid = getOverlayBid();
+    if (overlayBid && !overlayBid.isDestroyed()) {
+      overlayBid.close();
+    }
+  });
+
   store.onDidChange("activeBids", (newValue, oldValue) => {
     const mainWindow = getMainWindow();
+    const overlayBid = getOverlayBid();
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send("bids-updated");
     }
+
+    if (overlayBid && !overlayBid.isDestroyed()) {
+      overlayBid.webContents.send("bids-updated");
+    }
+
+    mainWindow.webContents.send("overlayBidLocked-updated", newValue);
   });
 
   function updateRolls() {
@@ -178,9 +261,9 @@ function setupIpcHandlers() {
 
           if (actionType === "speak") {
             const sanitizedSoundName = sanitizeFilename(sound);
-            soundFilePath = path.join(userDataPath, `sounds/${sanitizedSoundName}.mp3`);
+            soundFilePath = path.join(userDataPath, `./sounds/${sanitizedSoundName}.mp3`);
           } else {
-            soundFilePath = path.join(userDataPath, `sounds/${sanitizeFilename(sound)}.mp3`);
+            soundFilePath = path.join(userDataPath, `./sounds/${sanitizeFilename(sound)}.mp3`);
           }
 
           if (actionType === "speak" && !(await exists(soundFilePath))) {
@@ -353,4 +436,4 @@ function setupIpcHandlers() {
   }
 }
 
-module.exports = { setupIpcHandlers };
+export { setupIpcHandlers };

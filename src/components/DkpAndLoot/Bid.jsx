@@ -30,6 +30,14 @@ function Bid({ itemName, bidders, findCurrentDKP }) {
     await window.electron.ipcRenderer.invoke("close-bid", { itemName, bidders });
   };
 
+  const handleCloseMouseInAndOut = (inOrOut) => {
+    if (inOrOut === "in") {
+      window.electron.ipcRenderer.send("disable-only-click-through");
+    } else {
+      window.electron.ipcRenderer.send("enable-only-click-through");
+    }
+  };
+
   return (
     <div className="bid">
       <div className="item-name text-primary bold">{itemName}</div>
@@ -39,7 +47,7 @@ function Bid({ itemName, bidders, findCurrentDKP }) {
         ))}
       </div>
       <div className="bid-bottom">
-        <div className="bid-close text-primary" onClick={closeBid}>
+        <div className="bid-close text-primary" onClick={closeBid} onMouseEnter={() => handleCloseMouseInAndOut("in")} onMouseLeave={() => handleCloseMouseInAndOut("out")}>
           Close Bid
         </div>
         <span className="timer">{timer}</span>

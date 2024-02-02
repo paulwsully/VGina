@@ -8,7 +8,7 @@
 
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
-  background-color: $color-background;
+  background-color: transparent;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -29,6 +29,7 @@ body {
 
 h3 {
   margin: 0;
+  user-select: none;
 }
 
 .panel {
@@ -49,15 +50,19 @@ h3 {
 
 *::-webkit-scrollbar {
   width: 6px;
+  max-height: 6px;
+  -webkit-app-region: no-drag;
 }
 
 *::-webkit-scrollbar-track {
   background: rgba(white, 0.05);
+  -webkit-app-region: no-drag;
 }
 
 *::-webkit-scrollbar-thumb {
   background-color: rgba($color-primary, 0.3);
   border-radius: 8px;
+  -webkit-app-region: no-drag;
 }
 
 hr {
@@ -105,4 +110,14 @@ hr {
 .null-message {
   font-weight: 700;
   color: rgba(white, 0.5);
+}
+
+.no-drag {
+  -webkit-app-region: no-drag !important;
+}
+
+body.no-drag {
+  .active-bids {
+    background: transparent;
+  }
 }

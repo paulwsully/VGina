@@ -45,6 +45,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  position: relative;
   -webkit-app-region: no-drag;
   &:hover {
     background: rgba(white, 0.1);
@@ -58,4 +59,31 @@
   color: rgb(83, 83, 83);
   font-weight: 700;
   margin-right: 8px;
+}
+
+.click-here {
+  position: absolute;
+  font-size: 3em;
+  color: $color-primary;
+  filter: drop-shadow(0 0 5px $color-primary);
+  animation: pointUp 3s ease-in-out infinite;
+}
+
+@keyframes pointUp {
+  0% {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  20% {
+    opacity: 0;
+    transform: translateY(60px);
+  }
+  90% {
+    opacity: 1;
+    transform: translateY(40px);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(40px);
+  }
 }

@@ -2,24 +2,21 @@ const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("electron", {
   ipcRenderer: {
-    send: (channel, key, value) => {
-      ipcRenderer.send(channel, key, value);
+    send: (channel, ...args) => {
+      ipcRenderer.send(channel, ...args);
     },
     on: (channel, func) => {
       const subscription = (event, ...args) => func(...args);
       ipcRenderer.on(channel, subscription);
-      return () => ipcRenderer.removeListener(channel, subscription);
-    },
-    receive: (channel, func) => {
-      const subscription = (event, ...args) => func(...args);
-      ipcRenderer.on(channel, subscription);
-      return () => ipcRenderer.removeListener(channel, subscription);
     },
     invoke: (channel, ...args) => ipcRenderer.invoke(channel, ...args),
     removeAllListeners: (channel) => ipcRenderer.removeAllListeners(channel),
+    removeListener: (channel, func) => {},
   },
-  playSound: (soundFile) => {
-    const audio = new Audio(soundFile);
+  getSoundPath: (soundFileName) => ipcRenderer.invoke("get-sound-path", soundFileName),
+  playSound: (soundFilePath) => {
+    const audio = new Audio(soundFilePath);
     audio.play().catch((e) => console.error("Error playing sound:", e));
   },
+  getOverlayBidLocked: () => ipcRenderer.invoke("get-overlayBidLocked"),
 });

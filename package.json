@@ -1,8 +1,9 @@
 {
   "name": "vgina",
   "private": true,
-  "version": "0.0.2",
+  "version": "0.1.27",
   "main": "main.js",
+  "type": "module",
   "scripts": {
     "dev": "concurrently \"npm run dev:react\" \"npm run dev:electron\"",
     "dev:react": "vite",
@@ -13,15 +14,21 @@
     "postinstall": "electron-builder install-app-deps"
   },
   "build": {
+    "asar": true,
+    "asarUnpack": [
+        "sounds/**/*"
+    ],
     "appId": "vgina",
     "mac": {
       "category": "your.app.category.type"
     },
     "win": {
       "target": "nsis",
-      "icon": "./src/assets/icon.ico"
+      "icon": "./src/assets/icon.ico",
+      "artifactName": "${productName} ${version}.${ext}"
     },
     "files": [
+      "sounds/**/*",
       "dist/**/*",
       "main.js",
       "preload.js",
@@ -29,7 +36,9 @@
       "windowManager.js",
       "window.js",
       "ipcHandlers.js",
-      "appLifecycle.js"
+      "appLifecycle.js",
+      "firebaseConfig.js",
+      "itemsList.txt"
     ]
   },
   "dependencies": {
@@ -39,6 +48,7 @@
     "@google-cloud/text-to-speech": "^5.0.2",
     "concurrently": "^8.2.2",
     "electron-store": "^8.1.0",
+    "firebase": "^10.7.2",
     "node-key-sender": "^1.0.11",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -48,6 +58,7 @@
     "uuid": "^9.0.1"
   },
   "devDependencies": {
+    "@rollup/plugin-commonjs": "^25.0.7",
     "@types/react": "^18.2.43",
     "@types/react-dom": "^18.2.17",
     "@vitejs/plugin-react": "^4.2.1",

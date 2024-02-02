@@ -1,6 +1,6 @@
 import React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faWindowMinimize, faWindowMaximize, faTimes, faFolderOpen } from "@fortawesome/free-solid-svg-icons";
+import { faWindowMinimize, faWindowMaximize, faTimes, faFolderOpen, faArrowUp } from "@fortawesome/free-solid-svg-icons";
 import packageJson from "../../../package.json";
 import "./TitleBar.scss";
 
@@ -45,6 +45,11 @@ const TitleBar = ({ fileName }) => {
       <div className="window-controls">
         <div className="window-control" onClick={handleOpenFile}>
           <FontAwesomeIcon icon={faFolderOpen} />
+          {!fileName && (
+            <div className="click-here">
+              <FontAwesomeIcon icon={faArrowUp} />
+            </div>
+          )}
         </div>
         <div className="window-control" onClick={handleMinimize}>
           <FontAwesomeIcon icon={faWindowMinimize} />

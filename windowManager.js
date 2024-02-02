@@ -1,12 +1,18 @@
 let mainWindow = null;
-let bidOverlay = null;
+let overlayBid = null;
 
-function setMainWindow(window) {
+export function setMainWindow(window) {
   mainWindow = window;
 }
 
-function getMainWindow() {
+export function getMainWindow() {
   return mainWindow;
 }
 
-module.exports = { setMainWindow, getMainWindow };
+export function setOverlayBid(window) {
+  overlayBid = window;
+}
+
+export function getOverlayBid() {
+  return overlayBid;
+}

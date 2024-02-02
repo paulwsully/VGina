@@ -26,9 +26,8 @@ function NewTrigger({ onAddTrigger }) {
 
   useEffect(() => {
     if (window.electron && window.electron.ipcRenderer) {
-      // Get sound files
       window.electron.ipcRenderer.send("get-sound-files");
-      window.electron.ipcRenderer.receive("sound-files", (files) => {
+      window.electron.ipcRenderer.on("sound-files", (files) => {
         setSoundFiles(files);
       });
     }
@@ -88,6 +87,7 @@ function NewTrigger({ onAddTrigger }) {
   const playSound = (filePath) => {
     const audio = new Audio(`./sounds/${filePath}`);
     audio.play();
+    console.log(audio);
   };
   return (
     <div className="new-trigger-container">

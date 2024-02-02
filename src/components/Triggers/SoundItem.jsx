@@ -4,9 +4,14 @@ import { faPlayCircle } from "@fortawesome/free-solid-svg-icons";
 import "./SoundItem.scss";
 
 function SoundItem({ soundName, onClick }) {
-  const playSound = (filePath) => {
-    const audio = new Audio(`./sounds/${filePath}`);
-    audio.play();
+  const playSound = async (filePath) => {
+    try {
+      const audioPath = await window.electron.getSoundPath(filePath);
+      window.electron.playSound(audioPath);
+      console.log(audioPath);
+    } catch (error) {
+      console.error("Error playing sound:", error);
+    }
   };
 
   return (
