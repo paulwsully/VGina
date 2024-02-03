@@ -105,7 +105,7 @@ function App() {
         <Route path="/" element={<LayoutWithCommonComponents fileName={fileName} tabs={tabs} />}>
           <Route index element={<div>Select a file to watch</div>} />
           <Route path="triggers" element={<Triggers />} />
-          <Route path="dkp-and-loot" element={<DkpAndLoot sortedData={sortedData} />} />
+          <Route path="dkp-and-loot" element={<DkpAndLoot sortedData={sortedData} fileName={fileName} />} />
           <Route path="alerts" element={<Alerts />} />
         </Route>
         <Route
