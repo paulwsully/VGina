@@ -23,6 +23,7 @@ function Triggers() {
   };
   return (
     <div className="triggers-wrapper">
+      <div className="warning">Triggers can be created, but will not activate currently. Coming Soon.</div>
       <NewTrigger onAddTrigger={addTrigger} />
       <div className="triggers">
         <h3>Triggers</h3>

@@ -62,7 +62,6 @@ function NewTrigger({ onAddTrigger }) {
     const triggerToSave = { ...newTrigger, id: triggerId };
     const triggerWithId = { ...newTrigger, id: uuidv4() };
     onAddTrigger(triggerWithId);
-    console.log(triggerToSave);
     updatedTriggers.push(triggerToSave);
 
     window.electron.ipcRenderer.send("storeSet", "triggers", updatedTriggers);
@@ -87,7 +86,6 @@ function NewTrigger({ onAddTrigger }) {
   const playSound = (filePath) => {
     const audio = new Audio(`./sounds/${filePath}`);
     audio.play();
-    console.log(audio);
   };
   return (
     <div className="new-trigger-container">

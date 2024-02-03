@@ -1,7 +1,7 @@
 {
   "name": "vgina",
   "private": true,
-  "version": "0.1.27",
+  "version": "0.1.30",
   "main": "main.js",
   "type": "module",
   "scripts": {
@@ -38,7 +38,8 @@
       "ipcHandlers.js",
       "appLifecycle.js",
       "firebaseConfig.js",
-      "itemsList.txt"
+      "itemsList.txt",
+      "vgina-412004-91343028ed0c.json"
     ]
   },
   "dependencies": {

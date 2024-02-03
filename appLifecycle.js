@@ -18,30 +18,21 @@ function setupAppLifecycle() {
     const userDataPath = app.getPath("userData");
     const soundsDirPath = path.join(userDataPath, "sounds");
 
-    // Ensure the target directory exists
     if (!fs.existsSync(soundsDirPath)) {
       fs.mkdirSync(soundsDirPath, { recursive: true });
     }
-
-    // Assuming the sound folder is at the same level as the main script file
-    // Adjust this path as necessary to point to the correct location
     const sourcePath = path.join(__dirname, "sounds");
-
     fs.readdir(sourcePath, { withFileTypes: true }, (err, files) => {
       if (err) {
         console.error("Error reading sounds directory:", err);
         return;
       }
-
       files.forEach((file) => {
         const sourceFilePath = path.join(sourcePath, file.name);
         const destFilePath = path.join(soundsDirPath, file.name);
-
         if (file.isFile()) {
-          // Copy file to destination
           fs.copyFileSync(sourceFilePath, destFilePath);
         } else if (file.isDirectory()) {
-          // Implement logic to recursively copy directories or use fs-extra
           console.log(`Directory copying not implemented for: ${file.name}`);
         }
       });

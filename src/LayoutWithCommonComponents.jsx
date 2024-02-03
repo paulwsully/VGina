@@ -7,7 +7,6 @@ import TitleBar from "./components/TitleBar/TitleBar";
 import TabBar from "./components/TabBar/TabBar";
 
 function LayoutWithCommonComponents({ fileName, tabs }) {
-  console.log(fileName);
   return (
     <>
       {fileName && <RedirectToHome fileName={fileName} />}

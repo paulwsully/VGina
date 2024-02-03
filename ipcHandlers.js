@@ -1,5 +1,5 @@
 import { app, ipcMain, dialog } from "electron";
-import { getMainWindow, getOverlayBid } from "./windowManager.js"; // Adjust path as necessary
+import { getMainWindow, getOverlayBid } from "./windowManager.js";
 import { createOverlayBids } from "./window.js";
 import database from "./firebaseConfig.js";
 import { ref, push, getDatabase } from "firebase/database";
@@ -10,7 +10,7 @@ import fs from "fs";
 import { promises as fsPromises, readFileSync } from "fs";
 import readLastLines from "read-last-lines";
 import path from "path";
-const { writeFile, readdir, access: exists } = fsPromises;
+const { writeFile, mkdir, readdir, access: exists } = fsPromises;
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -78,16 +78,12 @@ function setupIpcHandlers() {
     let soundFilePath;
 
     if (app.isPackaged) {
-      // In production, use the userData directory
       const userDataPath = app.getPath("userData");
       soundFilePath = path.join(userDataPath, "sounds", soundFileName);
     } else {
-      // In development, use a directory relative to __dirname, for example
       soundFilePath = path.join(__dirname, "sounds", soundFileName);
     }
-
     const normalizedSoundFilePath = path.normalize(soundFilePath);
-    // Properly encode the path as a file URL
     const soundFileUrl = new URL(`file://${normalizedSoundFilePath}`).toString();
 
     return soundFileUrl;
@@ -166,8 +162,12 @@ function setupIpcHandlers() {
   });
 
   ipcMain.handle("close-bid", async (event, { itemName, bidders }) => {
+    const logFilePath = store.get("logFile", false);
+    const nameMatch = logFilePath.match(/eqlog_(.+?)_pq.proj.txt/);
+    const playerName = nameMatch ? nameMatch[1] : "Unknown";
+
     const timestamp = new Date().toISOString();
-    const closedBid = { item: itemName, bidders, timestamp };
+    const closedBid = { item: itemName, bidders, timestamp, bidTaker: playerName };
     const db = getDatabase();
     const closedBidsRef = ref(database, "closedBids");
     push(closedBidsRef, closedBid);
@@ -178,6 +178,15 @@ function setupIpcHandlers() {
     const mainWindow = getMainWindow();
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send("bids-updated");
+    }
+
+    const locked = store.get("overlayBidLocked", false);
+
+    const overlayBidWindow = getOverlayBid();
+    if (overlayBidWindow && !overlayBidWindow.isDestroyed()) {
+      overlayBidWindow.setIgnoreMouseEvents(locked);
+      console.log(locked);
+      if (locked) overlayBidWindow.webContents.executeJavaScript(`document.body.classList.add("no-drag")`, true);
     }
 
     return true;
@@ -257,36 +266,29 @@ function setupIpcHandlers() {
 
         if (settings || settingKey === "") {
           const userDataPath = app.getPath("userData");
-          let soundFilePath;
+          let soundFilePath = path.join(userDataPath, `sounds/${sanitizeFilename(sound)}.mp3`);
 
-          if (actionType === "speak") {
-            const sanitizedSoundName = sanitizeFilename(sound);
-            soundFilePath = path.join(userDataPath, `./sounds/${sanitizedSoundName}.mp3`);
-          } else {
-            soundFilePath = path.join(userDataPath, `./sounds/${sanitizeFilename(sound)}.mp3`);
-          }
+          try {
+            await fs.access(soundFilePath, fs.constants.F_OK);
+          } catch (error) {
+            if (actionType === "speak") {
+              const request = {
+                input: { text: sound },
+                voice: {
+                  languageCode: "en-US",
+                  name: "en-US-Studio-O",
+                },
+                audioConfig: {
+                  audioEncoding: "MP3",
+                  speakingRate: 1,
+                  effectsProfileId: ["large-home-entertainment-class-device"],
+                },
+              };
 
-          if (actionType === "speak" && !(await exists(soundFilePath))) {
-            const request = {
-              input: { text: sound },
-              voice: {
-                languageCode: "en-US",
-                name: "en-US-Studio-O",
-              },
-              audioConfig: {
-                audioEncoding: "MP3",
-                speakingRate: 1,
-                effectsProfileId: ["large-home-entertainment-class-device"],
-              },
-            };
-
-            const [response] = await tts.synthesizeSpeech(request);
-
-            if (!(await exists(path.dirname(soundFilePath)))) {
-              fs.mkdirSync(path.dirname(soundFilePath), { recursive: true });
+              const [response] = await tts.synthesizeSpeech(request);
+              await fsPromises.mkdir(path.dirname(soundFilePath), { recursive: true });
+              await writeFile(soundFilePath, response.audioContent, "binary");
             }
-
-            await writeFile(soundFilePath, response.audioContent, "binary");
           }
 
           const mainWindow = getMainWindow();
@@ -300,14 +302,14 @@ function setupIpcHandlers() {
 
   function processNewLine(line) {
     const actions = [
-      { actionType: "speak", key: "mobUnrooted", search: "Roots spell has worn off", sound: "Root fell off", useRegex: false },
-      { actionType: "speak", key: "failedFeign", search: "has fallen to the ground", sound: "Failed feign", useRegex: false },
-      { actionType: "speak", key: "mobResisted", search: "Your target resisted", sound: "Resisted", useRegex: false },
-      { actionType: "speak", key: "invisibilityFading", search: "You feel yourself starting to appear", sound: "You're starting to appear", useRegex: false },
+      { actionType: "speak", key: "rootBroke", search: "Roots spell has worn off", sound: "Root fell off", useRegex: false },
+      { actionType: "speak", key: "feignDeath", search: "has fallen to the ground", sound: "Failed feign", useRegex: false },
+      { actionType: "speak", key: "resisted", search: "Your target resisted", sound: "Resisted", useRegex: false },
+      { actionType: "speak", key: "invisFading", search: "You feel yourself starting to appear", sound: "You're starting to appear", useRegex: false },
       { actionType: "speak", key: "groupInvite", search: "invites you to join a group", sound: "You've been invited to a group", useRegex: false },
       { actionType: "speak", key: "raidInvite", search: "invites you to join a raid", sound: "You've been invited to a raid", useRegex: false },
       { actionType: "speak", key: "mobEnrage", search: "has become ENRAGED", sound: "Mob is enraged", useRegex: false },
-      { actionType: "sound", key: "tells", search: "\\[.*?\\] (\\S+) tells you,", sound: "tell", useRegex: true },
+      { actionType: "sound", key: "tell", search: "\\[.*?\\] (\\S+) tells you,", sound: "tell", useRegex: true },
     ];
 
     actions.forEach(({ actionType, key, search, sound, useRegex }) => {
@@ -322,7 +324,7 @@ function setupIpcHandlers() {
     }
   }
 
-  function checkIfRaidDrop(item) {
+  function checkIfRaidDrop(line) {
     const filePath = path.join(__dirname, "./itemsList.txt");
     return new Promise((resolve, reject) => {
       fs.readFile(filePath, "utf8", (err, data) => {
@@ -330,26 +332,30 @@ function setupIpcHandlers() {
           console.error("Error reading the file:", err);
           reject(err);
         } else {
-          resolve(data.includes(item));
+          const items = data.split("\n").map((item) => item.trim());
+          const foundItem = items.find((item) => line.includes(item));
+          resolve(foundItem);
         }
       });
     });
   }
 
   async function parseLineForBid(line) {
-    const regex = /\[\w+ \w+ \d+ \d+:\d+:\d+ \d+\] (\w+) tells you, '([^']+?) (\d+)'/;
-    const match = line.match(regex);
+    const dkpRemoved = line.replace(/dkp/gi, "");
+    const regex = /\[\w+ \w+ \d+ \d+:\d+:\d+ \d+\] (\w+) tells you, '([^']+?)'/;
+    const match = dkpRemoved.match(regex);
 
     if (match) {
       const name = match[1];
-      const item = match[2];
-      const dkp = parseInt(match[3], 10);
-
+      const messageWithoutDKP = match[2];
+      const dkpMatch = messageWithoutDKP.match(/(\d+)/);
+      const dkp = dkpMatch ? parseInt(dkpMatch[1], 10) : null;
+      const isAlt = /(?:^|\s)alt(?:\s|$)/i.test(match);
       try {
-        const isRaidDrop = await checkIfRaidDrop(item);
-        if (name && item && !isNaN(dkp) && isRaidDrop) {
-          console.log({ name, item, dkp });
-          updateActiveBids({ name, item, dkp });
+        const item = await checkIfRaidDrop(dkpRemoved);
+        if (name && item && dkp) {
+          console.log({ name, item, dkp, isAlt });
+          updateActiveBids({ name, item, dkp, isAlt });
         }
       } catch (err) {
         console.error("Error in parseLineForBid:", err);
@@ -359,23 +365,23 @@ function setupIpcHandlers() {
     }
   }
 
-  function updateActiveBids({ name, item, dkp }) {
+  function updateActiveBids({ name, item, dkp, isAlt }) {
     let activeBids = store.get("activeBids", []);
 
     const itemIndex = activeBids.findIndex((bid) => bid.item === item);
 
     if (itemIndex !== -1) {
       const bidderIndex = activeBids[itemIndex].bidders.findIndex((bidder) => bidder.name === name);
-
       if (bidderIndex !== -1) {
         activeBids[itemIndex].bidders[bidderIndex].dkp = dkp;
+        activeBids[itemIndex].bidders[bidderIndex].isAlt = isAlt;
       } else {
-        activeBids[itemIndex].bidders.push({ name, dkp });
+        activeBids[itemIndex].bidders.push({ name, dkp, isAlt });
       }
     } else {
       activeBids.push({
         item: item,
-        bidders: [{ name, dkp }],
+        bidders: [{ name, dkp, isAlt }],
       });
     }
 

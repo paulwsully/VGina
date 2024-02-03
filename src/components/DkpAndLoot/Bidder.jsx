@@ -9,7 +9,10 @@ function Bidder({ index, bidder, paysAmount, findCurrentDKP }) {
   }, [bidder.name, findCurrentDKP]);
   return (
     <div className="bidder">
-      <div className="bidder-name">{bidder.name}</div>
+      <div className="bidder-name">
+        {bidder.isAlt && <span className="alt">alt | </span>}
+        {bidder.name}
+      </div>
       <div className={`bidder-amt ${currentDKP < bidder.dkp ? "error" : ""}`}>
         {bidder.dkp} <span>/</span> {currentDKP > 0 ? currentDKP : 0}
       </div>

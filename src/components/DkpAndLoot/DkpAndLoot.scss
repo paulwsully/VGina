@@ -173,6 +173,24 @@
 }
 
 .closed-bid .bidder-name {
-  min-width: 120px;
+  min-width: 130px;
   display: flex;
+  flex-direction: row;
+}
+
+.alt {
+  font-size: 0.8em;
+}
+
+.bid-taker {
+  color: rgba(white, 0.6);
+  font-size: 0.8em;
+}
+
+.bidder-alt {
+  margin-right: 4px;
+  font-weight: 800;
+  color: rgba(white, 0.6);
+  font-size: 0.8em;
+  transform: translateY(1px);
 }

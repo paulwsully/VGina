@@ -88,7 +88,6 @@ function App() {
     window.electron.ipcRenderer.on("file-name", handleFileNameChange);
     window.electron.ipcRenderer.on(handleNewLine);
     window.electron.ipcRenderer.on("play-sound", (soundFile) => {
-      console.log(soundFile);
       window.electron.playSound(soundFile);
     });
 

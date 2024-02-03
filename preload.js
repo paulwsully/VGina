@@ -19,4 +19,7 @@ contextBridge.exposeInMainWorld("electron", {
     audio.play().catch((e) => console.error("Error playing sound:", e));
   },
   getOverlayBidLocked: () => ipcRenderer.invoke("get-overlayBidLocked"),
+  startFileWatch: () => {
+    ipcRenderer.send("start-file-watch");
+  },
 });

@@ -16,22 +16,28 @@ function ClosedBids({}) {
     });
   }, []);
 
+  // Sort bids by timestamp from newest to oldest
+  const sortedBids = Object.entries(closedBids).sort((a, b) => {
+    return new Date(b[1].timestamp) - new Date(a[1].timestamp);
+  });
+
   return (
     <div className="closed-bids">
-      {Object.entries(closedBids).length === 0 ? (
+      {sortedBids.length === 0 ? (
         <div className="null-message">No closed bids</div>
       ) : (
-        Object.entries(closedBids).map(([key, bid]) => (
+        sortedBids.map(([key, bid]) => (
           <div key={key} className="closed-bid">
             <div className="closed-bid-name">
               <div className="text-primary bold">
-                {bid.item} - <span className="bid-win-amount">{bid.bidders.length > 1 ? bid.bidders[1].dkp + 1 : 1}</span>
+                {bid.item} <span className="bid-win-amount">({bid.bidders.length > 1 ? bid.bidders[1].dkp + 1 : 1})</span> {bid.bidTaker ? <span className="bid-taker"> {bid.bidTaker}</span> : ""}
               </div>
               <span>{new Date(bid.timestamp).toLocaleString()}</span>
             </div>
             <div className="closed-bid-bidders">
               {bid.bidders.map((bidder, index) => (
                 <div key={`${key}-${index}-${bidder.name}`} className="closed-bidder">
+                  {bidder.isAlt && <span className="bidder-alt">alt | </span>}
                   <span className="bidder-name">{bidder.name}</span> <span>{bidder.dkp}</span>
                 </div>
               ))}
