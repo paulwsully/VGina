@@ -6,10 +6,10 @@ import { ref, push, getDatabase } from "firebase/database";
 import Store from "electron-store";
 const store = new Store();
 import textToSpeech from "@google-cloud/text-to-speech";
-import fs from "fs";
-import { promises as fsPromises, readFileSync } from "fs";
 import readLastLines from "read-last-lines";
 import path from "path";
+import fs from "fs";
+import { promises as fsPromises, readFileSync } from "fs";
 const { writeFile, mkdir, readdir, access: exists } = fsPromises;
 import { fileURLToPath } from "url";
 
@@ -236,18 +236,6 @@ function setupIpcHandlers() {
     mainWindow.webContents.send("overlayBidLocked-updated", newValue);
   });
 
-  function updateRolls() {
-    const updatedRolls = store.get("rolls", []);
-    if (Array.isArray(updatedRolls)) {
-      const mainWindow = getMainWindow();
-      if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send("rolls-updated");
-      }
-    } else {
-      console.error("Invalid rolls data:", updatedRolls);
-    }
-  }
-
   async function processAction(lastLine, settingKey = null, search, sound, useRegex, actionType) {
     let matchFound = false;
     if (useRegex) {
@@ -266,10 +254,12 @@ function setupIpcHandlers() {
 
         if (settings || settingKey === "") {
           const userDataPath = app.getPath("userData");
-          let soundFilePath = path.join(userDataPath, `sounds/${sanitizeFilename(sound)}.mp3`);
+          let soundFilePath;
+          if (actionType === "speak") soundFilePath = path.join(userDataPath, `./sounds/${sanitizeFilename(sound)}.mp3`);
+          if (actionType === "sound") soundFilePath = path.join(userDataPath, `./sounds/${sound}.mp3`);
 
           try {
-            await fs.access(soundFilePath, fs.constants.F_OK);
+            await exists(soundFilePath, fs.constants.F_OK);
           } catch (error) {
             if (actionType === "speak") {
               const request = {
@@ -286,6 +276,7 @@ function setupIpcHandlers() {
               };
 
               const [response] = await tts.synthesizeSpeech(request);
+              console.log("creating mp3");
               await fsPromises.mkdir(path.dirname(soundFilePath), { recursive: true });
               await writeFile(soundFilePath, response.audioContent, "binary");
             }
@@ -298,46 +289,6 @@ function setupIpcHandlers() {
         console.error("Error:", err);
       }
     }
-  }
-
-  function processNewLine(line) {
-    const actions = [
-      { actionType: "speak", key: "rootBroke", search: "Roots spell has worn off", sound: "Root fell off", useRegex: false },
-      { actionType: "speak", key: "feignDeath", search: "has fallen to the ground", sound: "Failed feign", useRegex: false },
-      { actionType: "speak", key: "resisted", search: "Your target resisted", sound: "Resisted", useRegex: false },
-      { actionType: "speak", key: "invisFading", search: "You feel yourself starting to appear", sound: "You're starting to appear", useRegex: false },
-      { actionType: "speak", key: "groupInvite", search: "invites you to join a group", sound: "You've been invited to a group", useRegex: false },
-      { actionType: "speak", key: "raidInvite", search: "invites you to join a raid", sound: "You've been invited to a raid", useRegex: false },
-      { actionType: "speak", key: "mobEnrage", search: "has become ENRAGED", sound: "Mob is enraged", useRegex: false },
-      { actionType: "sound", key: "tell", search: "\\[.*?\\] (\\S+) tells you,", sound: "tell", useRegex: true },
-    ];
-
-    actions.forEach(({ actionType, key, search, sound, useRegex }) => {
-      processAction(line, key, search, sound, useRegex, actionType);
-    });
-
-    if (line.includes("**A Magic Die is rolled by") || line.includes("**It could have been any number from")) parseRolls(line);
-    if (line.includes("tells you,")) parseLineForBid(line);
-    if (line.includes("snared")) {
-      store.set("latestLine", line);
-      getMainWindow().webContents.send("new-line", line);
-    }
-  }
-
-  function checkIfRaidDrop(line) {
-    const filePath = path.join(__dirname, "./itemsList.txt");
-    return new Promise((resolve, reject) => {
-      fs.readFile(filePath, "utf8", (err, data) => {
-        if (err) {
-          console.error("Error reading the file:", err);
-          reject(err);
-        } else {
-          const items = data.split("\n").map((item) => item.trim());
-          const foundItem = items.find((item) => line.includes(item));
-          resolve(foundItem);
-        }
-      });
-    });
   }
 
   async function parseLineForBid(line) {
@@ -365,6 +316,64 @@ function setupIpcHandlers() {
     }
   }
 
+  function updateRolls() {
+    const updatedRolls = store.get("rolls", []);
+    if (Array.isArray(updatedRolls)) {
+      const mainWindow = getMainWindow();
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send("rolls-updated");
+      }
+    } else {
+      console.error("Invalid rolls data:", updatedRolls);
+    }
+  }
+
+  function processNewLine(line) {
+    const triggers = store.get("triggers");
+    const actions = [
+      { actionType: "speak", key: "rootBroke", search: "Roots spell has worn off", sound: "Root fell off", useRegex: false },
+      { actionType: "speak", key: "feignDeath", search: "has fallen to the ground", sound: "Failed feign", useRegex: false },
+      { actionType: "speak", key: "resisted", search: "Your target resisted", sound: "Resisted", useRegex: false },
+      { actionType: "speak", key: "invisFading", search: "You feel yourself starting to appear", sound: "You're starting to appear", useRegex: false },
+      { actionType: "speak", key: "groupInvite", search: "invites you to join a group", sound: "You've been invited to a group", useRegex: false },
+      { actionType: "speak", key: "raidInvite", search: "invites you to join a raid", sound: "You've been invited to a raid", useRegex: false },
+      { actionType: "speak", key: "mobEnrage", search: "has become ENRAGED", sound: "Mob is enraged", useRegex: false },
+      { actionType: "sound", key: "tell", search: "\\[.*?\\] (\\S+) tells you,", sound: "tell", useRegex: true },
+    ];
+
+    actions.forEach(({ actionType, key, search, sound, useRegex }) => {
+      processAction(line, key, search, sound, useRegex, actionType);
+    });
+
+    triggers.map((trigger, index) => {
+      if (trigger.saySomething) processAction(line, "", trigger.searchText, trigger.speechText, trigger.searchRegex, "speak");
+      if (trigger.playSound) processAction(line, "", trigger.searchText, triggers[index].sound.replace(".mp3", ""), trigger.searchRegex, "sound");
+    });
+
+    if (line.includes("**A Magic Die is rolled by") || line.includes("**It could have been any number from")) parseRolls(line);
+    if (line.includes("tells you,")) parseLineForBid(line);
+    if (line.includes("snared")) {
+      store.set("latestLine", line);
+      getMainWindow().webContents.send("new-line", line);
+    }
+  }
+
+  function checkIfRaidDrop(line) {
+    const filePath = path.join(__dirname, "./itemsList.txt");
+    return new Promise((resolve, reject) => {
+      fs.readFile(filePath, "utf8", (err, data) => {
+        if (err) {
+          console.error("Error reading the file:", err);
+          reject(err);
+        } else {
+          const items = data.split("\n").map((item) => item.trim());
+          const foundItem = items.find((item) => line.includes(item));
+          resolve(foundItem);
+        }
+      });
+    });
+  }
+
   function updateActiveBids({ name, item, dkp, isAlt }) {
     let activeBids = store.get("activeBids", []);
 
@@ -386,10 +395,6 @@ function setupIpcHandlers() {
     }
 
     store.set("activeBids", activeBids);
-  }
-
-  function generateUniqueId() {
-    return Date.now();
   }
 
   let currentRoller = null;
@@ -439,6 +444,10 @@ function setupIpcHandlers() {
       .toLowerCase()
       .replace(/[^\w\s]/gi, "")
       .replace(/\s+/g, "");
+  }
+
+  function generateUniqueId() {
+    return Date.now();
   }
 }
 

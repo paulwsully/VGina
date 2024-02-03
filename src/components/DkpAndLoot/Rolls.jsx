@@ -45,7 +45,7 @@ function Rolls() {
   };
 
   return (
-    <div className="rolls">
+    <div className="rolls-container">
       {rolls.length === 0 && <div className="null-message">No rolls active</div>}
       {rolls.map((roll, index) => (
         <div className="roll-group" key={index}>

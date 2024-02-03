@@ -127,9 +127,20 @@
   cursor: pointer;
 }
 
-.rolls {
+.rolls-container {
   display: flex;
   gap: 16px;
+}
+
+.rolls {
+  display: flex;
+  flex-direction: column;
+  max-height: 70px;
+  overflow: auto;
+  padding-right: 16px;
+  h3 {
+    color: $color-primary;
+  }
   .roll-group {
     padding: 8px;
     border: 1px solid rgba(white, 0.1);
