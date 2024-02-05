@@ -249,7 +249,7 @@ function setupIpcHandlers() {
       const roundedWidth = Math.round(width);
       const roundedHeight = Math.round(height);
 
-      itemDetailsWindow.setSize(roundedWidth + 2, roundedHeight + 2);
+      itemDetailsWindow.setSize(roundedWidth + 4, roundedHeight + 4);
     }
   });
 
