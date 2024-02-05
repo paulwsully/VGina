@@ -1,6 +1,6 @@
 import { app, globalShortcut, clipboard } from "electron";
 import { createWindow, createOverlayBids } from "./window.js";
-import { getOverlayBid } from "./windowManager.js"; // Adjust path as necessary
+import { getOverlayBid, getOverlayItemDetails } from "./windowManager.js"; // Adjust path as necessary
 import Store from "electron-store";
 const store = new Store();
 import ks from "node-key-sender";
@@ -63,12 +63,22 @@ function setupAppLifecycle() {
       const text = clipboard.readText();
       await ks.sendText(text);
     });
+    globalShortcut.register("Escape", () => {
+      const itemDetailsWindow = getOverlayItemDetails();
+      if (itemDetailsWindow && !itemDetailsWindow.isDestroyed()) {
+        itemDetailsWindow.close();
+      }
+    });
   });
 
   app.on("window-all-closed", () => {
     if (process.platform !== "darwin") {
       app.quit();
     }
+  });
+
+  app.on("will-quit", () => {
+    globalShortcut.unregisterAll();
   });
 }
 

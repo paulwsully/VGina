@@ -2,24 +2,24 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" type="image/ico" href="src/assets/icon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React</title>
+    <title>VGina</title>
 
     <script>
       document.addEventListener("DOMContentLoaded", () => {
-    if (window.location.href.includes('/dkp-and-loot/overlay/bids')) {
-        document.documentElement.style.backgroundColor = 'transparent'; // Example style
-    }
-});
+          if (window.location.href.includes('/dkp-and-loot/overlay/bids')) {
+              document.documentElement.style.backgroundColor = 'transparent';
+          }
+      });
 
-document.addEventListener('DOMContentLoaded', (event) => {
-  window.electron.getOverlayBidLocked().then((overlayBidLocked) => {
-    if (overlayBidLocked) {
-      document.body.classList.add("no-drag");
-    }
-  });
-});
+      document.addEventListener('DOMContentLoaded', (event) => {
+        window.electron.getOverlayBidLocked().then((overlayBidLocked) => {
+          if (overlayBidLocked) {
+            document.body.classList.add("no-drag");
+          }
+        });
+      });
     </script>
   </head>
   <body>

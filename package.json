@@ -16,11 +16,11 @@
   "build": {
     "asar": true,
     "asarUnpack": [
-        "sounds/**/*"
+      "sounds/**/*"
     ],
-    "appId": "vgina",
+    "appId": "VGina",
     "mac": {
-      "category": "your.app.category.type"
+      "category": "gaming.software"
     },
     "win": {
       "target": "nsis",
@@ -50,6 +50,7 @@
     "concurrently": "^8.2.2",
     "electron-store": "^8.1.0",
     "firebase": "^10.7.2",
+    "lodash": "^4.17.21",
     "node-key-sender": "^1.0.11",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

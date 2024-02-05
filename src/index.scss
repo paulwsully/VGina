@@ -13,6 +13,8 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  height: fit-content;
+  width: fit-content;
 }
 
 * {
@@ -24,6 +26,8 @@
 body {
   padding: 0;
   margin: 0;
+  height: fit-content;
+  width: fit-content;
 }
 
 h3 {

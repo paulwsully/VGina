@@ -22,4 +22,13 @@ contextBridge.exposeInMainWorld("electron", {
   startFileWatch: () => {
     ipcRenderer.send("start-file-watch");
   },
+  readItemsData: () => ipcRenderer.invoke("read-itemsData"),
+});
+
+window.addEventListener("DOMContentLoaded", () => {
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      ipcRenderer.send("close-itemDetailsWindow");
+    }
+  });
 });

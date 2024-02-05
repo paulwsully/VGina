@@ -1,6 +1,6 @@
-import { app, ipcMain, dialog } from "electron";
-import { getMainWindow, getOverlayBid } from "./windowManager.js";
-import { createOverlayBids } from "./window.js";
+import { app, ipcMain, dialog, screen } from "electron";
+import { getMainWindow, getOverlayBid, getOverlayItemDetails } from "./windowManager.js";
+import { createOverlayBids, createItemDetailsWindow } from "./window.js";
 import database from "./firebaseConfig.js";
 import { ref, push, getDatabase } from "firebase/database";
 import Store from "electron-store";
@@ -15,20 +15,37 @@ import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
+const NUM_LINES_TO_READ = 5;
 const tts = new textToSpeech.TextToSpeechClient({
   keyFilename: path.join(__dirname, "./vgina-412004-91343028ed0c.json"),
 });
+
+let fileWatcher = null;
+let lastFiveLines = [];
 
 function setupIpcHandlers() {
   ipcMain.on("minimize-app", () => getMainWindow().minimize());
   ipcMain.on("close-app", () => getMainWindow().close());
   ipcMain.on("file-name", (event, fileName) => event.sender.send("file-name", fileName));
   ipcMain.on("storeSet", (event, key, value) => store.set({ [key]: value }));
-  ipcMain.handle("storeGet", (event, key) => store.get(key));
   ipcMain.on("set-last-tab", (event, tabPath) => store.set("lastActiveTab", tabPath));
+  ipcMain.handle("storeGet", (event, key) => store.get(key));
   ipcMain.handle("get-last-tab", async () => store.get("lastActiveTab"));
   ipcMain.handle("get-rolls", async (event) => store.get("rolls", []));
+
+  const updateFileWatch = async (filePath) => {
+    const currentLines = (await readLastLines.read(filePath, NUM_LINES_TO_READ)).split("\n").slice(0, -1);
+    const newLines = [];
+
+    for (let i = currentLines.length - 1; i >= 0; i--) {
+      if (!lastFiveLines.includes(currentLines[i])) {
+        newLines.unshift(currentLines[i]);
+      }
+    }
+
+    newLines.slice(0, 5).forEach((line) => processNewLine(line));
+    lastFiveLines = currentLines.slice(-5);
+  };
 
   ipcMain.handle("open-file-dialog", async () => {
     try {
@@ -44,36 +61,6 @@ function setupIpcHandlers() {
     mainWindow.isMaximized() ? mainWindow.unmaximize() : mainWindow.maximize();
   });
 
-  let fileWatcher = null;
-  let lastFiveLines = [];
-  const NUM_LINES_TO_READ = 5;
-  const updateFileWatch = async (filePath) => {
-    const currentLines = (await readLastLines.read(filePath, NUM_LINES_TO_READ)).split("\n").slice(0, -1);
-    const newLines = [];
-
-    for (let i = currentLines.length - 1; i >= 0; i--) {
-      if (!lastFiveLines.includes(currentLines[i])) {
-        newLines.unshift(currentLines[i]);
-      }
-    }
-
-    newLines.slice(0, 5).forEach((line) => processNewLine(line));
-    lastFiveLines = currentLines.slice(-5);
-  };
-
-  ipcMain.on("open-overlay-window", (event) => {
-    createOverlayBids()
-      .then((overlayBid) => {
-        const locked = store.get("overlayBidLocked", false);
-        const overlayBidWindow = getOverlayBid();
-        overlayBidWindow.show();
-        overlayBidWindow.setIgnoreMouseEvents(locked, { forward: true });
-      })
-      .catch((error) => {
-        console.error("An error occurred while creating the overlay bids window:", error);
-      });
-  });
-
   ipcMain.handle("get-sound-path", async (event, soundFileName) => {
     let soundFilePath;
 
@@ -87,6 +74,18 @@ function setupIpcHandlers() {
     const soundFileUrl = new URL(`file://${normalizedSoundFilePath}`).toString();
 
     return soundFileUrl;
+  });
+
+  ipcMain.on("get-sound-files", async (event) => {
+    try {
+      const soundsPath = path.join(app.getPath("userData"), "sounds");
+      const files = await readdir(soundsPath);
+      const mp3Files = files.filter((file) => file.endsWith(".mp3"));
+      event.reply("sound-files", mp3Files);
+    } catch (err) {
+      console.error("Error fetching sound files:", err);
+      event.reply("sound-files", []);
+    }
   });
 
   ipcMain.on("enable-click-through", () => {
@@ -117,6 +116,26 @@ function setupIpcHandlers() {
 
   ipcMain.handle("get-overlayBidLocked", async () => {
     return store.get("overlayBidLocked", false);
+  });
+
+  ipcMain.on("close-overlay-window", () => {
+    const overlayBid = getOverlayBid();
+    if (overlayBid && !overlayBid.isDestroyed()) {
+      overlayBid.close();
+    }
+  });
+
+  ipcMain.on("open-overlay-window", (event) => {
+    createOverlayBids()
+      .then((overlayBid) => {
+        const locked = store.get("overlayBidLocked", false);
+        const overlayBidWindow = getOverlayBid();
+        overlayBidWindow.show();
+        overlayBidWindow.setIgnoreMouseEvents(locked, { forward: true });
+      })
+      .catch((error) => {
+        console.error("An error occurred while creating the overlay bids window:", error);
+      });
   });
 
   ipcMain.on("start-file-watch", async () => {
@@ -185,7 +204,6 @@ function setupIpcHandlers() {
     const overlayBidWindow = getOverlayBid();
     if (overlayBidWindow && !overlayBidWindow.isDestroyed()) {
       overlayBidWindow.setIgnoreMouseEvents(locked);
-      console.log(locked);
       if (locked) overlayBidWindow.webContents.executeJavaScript(`document.body.classList.add("no-drag")`, true);
     }
 
@@ -203,22 +221,42 @@ function setupIpcHandlers() {
     }
   });
 
-  ipcMain.on("get-sound-files", async (event) => {
-    try {
-      const soundsPath = path.join(app.getPath("userData"), "sounds");
-      const files = await readdir(soundsPath);
-      const mp3Files = files.filter((file) => file.endsWith(".mp3"));
-      event.reply("sound-files", mp3Files);
-    } catch (err) {
-      console.error("Error fetching sound files:", err);
-      event.reply("sound-files", []);
+  ipcMain.handle("read-itemsData", async (event) => {
+    const jsonPath = path.join(__dirname, "itemsData.json"); // Adjust the path as necessary
+    const data = fs.readFileSync(jsonPath, "utf8");
+    return JSON.parse(data);
+  });
+
+  ipcMain.handle("set-foundItem", async (event, itemData) => {
+    store.set("foundItem", itemData);
+  });
+
+  ipcMain.handle("get-foundItem", async (event) => {
+    return store.get("foundItem");
+  });
+
+  ipcMain.handle("open-itemDetailsWindow", async (event, position) => {
+    const itemDetailsWindow = getOverlayItemDetails();
+    if (itemDetailsWindow && !itemDetailsWindow.isDestroyed()) {
+      itemDetailsWindow.close();
+    }
+    createItemDetailsWindow();
+  });
+
+  ipcMain.on("itemDetailsWindow-resize", (event, { width, height }) => {
+    const itemDetailsWindow = getOverlayItemDetails();
+    if (itemDetailsWindow && !itemDetailsWindow.isDestroyed()) {
+      const roundedWidth = Math.round(width);
+      const roundedHeight = Math.round(height);
+
+      itemDetailsWindow.setSize(roundedWidth + 2, roundedHeight + 2);
     }
   });
 
-  ipcMain.on("close-overlay-window", () => {
-    const overlayBid = getOverlayBid();
-    if (overlayBid && !overlayBid.isDestroyed()) {
-      overlayBid.close();
+  ipcMain.handle("close-itemDetailsWindow", (event) => {
+    const itemDetailsWindow = getOverlayItemDetails();
+    if (itemDetailsWindow && !itemDetailsWindow.isDestroyed()) {
+      itemDetailsWindow.close();
     }
   });
 
@@ -276,7 +314,6 @@ function setupIpcHandlers() {
               };
 
               const [response] = await tts.synthesizeSpeech(request);
-              console.log("creating mp3");
               await fsPromises.mkdir(path.dirname(soundFilePath), { recursive: true });
               await writeFile(soundFilePath, response.audioContent, "binary");
             }
@@ -305,7 +342,6 @@ function setupIpcHandlers() {
       try {
         const item = await checkIfRaidDrop(dkpRemoved);
         if (name && item && dkp) {
-          console.log({ name, item, dkp, isAlt });
           updateActiveBids({ name, item, dkp, isAlt });
         }
       } catch (err) {
@@ -444,10 +480,6 @@ function setupIpcHandlers() {
       .toLowerCase()
       .replace(/[^\w\s]/gi, "")
       .replace(/\s+/g, "");
-  }
-
-  function generateUniqueId() {
-    return Date.now();
   }
 }
 

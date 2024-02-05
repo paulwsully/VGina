@@ -6,6 +6,7 @@ import DkpAndLoot from "./components/DkpAndLoot/DkpAndLoot";
 import Alerts from "./components/Alerts/Alerts";
 import Bids from "./components/DkpAndLoot/Bids";
 import "./App.scss";
+import ItemDetailsWindow from "./components/DkpAndLoot/ItemDetailsWindow";
 
 function App() {
   const isDev = process.env.NODE_ENV === "development";
@@ -116,6 +117,7 @@ function App() {
             </div>
           }
         />
+        <Route path="/dkp-and-loot/overlay/item-details" element={<ItemDetailsWindow />} />
       </Routes>
     </Router>
   );

@@ -23,6 +23,22 @@ function Bid({ itemName, bidders, findCurrentDKP }) {
     return () => clearInterval(intervalId);
   }, []);
 
+  const handleItemClick = async () => {
+    const itemsData = await window.electron.readItemsData();
+    const foundItem = itemsData.find((item) => item.ItemName === itemName);
+
+    await window.electron.ipcRenderer.invoke("set-foundItem", foundItem);
+    await window.electron.ipcRenderer.invoke("open-itemDetailsWindow");
+  };
+
+  const handleMouseEnter = async (event) => {
+    window.electron.ipcRenderer.send("disable-only-click-through");
+  };
+
+  const handleMouseLeave = () => {
+    window.electron.ipcRenderer.send("enable-only-click-through");
+  };
+
   const hasMultipleBidders = bidders.length > 1;
   let paysAmount = hasMultipleBidders ? bidders[1].dkp + 1 : null;
 
@@ -30,24 +46,23 @@ function Bid({ itemName, bidders, findCurrentDKP }) {
     await window.electron.ipcRenderer.invoke("close-bid", { itemName, bidders });
   };
 
-  const handleCloseMouseInAndOut = (inOrOut) => {
-    if (inOrOut === "in") {
-      window.electron.ipcRenderer.send("disable-only-click-through");
-    } else {
-      window.electron.ipcRenderer.send("enable-only-click-through");
-    }
-  };
-
   return (
     <div className="bid">
-      <div className="item-name text-primary bold">{itemName}</div>
+      <div className="item-name text-primary bold" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} onClick={handleItemClick}>
+        {itemName}
+      </div>
       <div className="bidders">
         {bidders.map((bidder, index) => (
           <Bidder key={index} index={index} bidder={bidder} paysAmount={index === 0 && hasMultipleBidders ? paysAmount : null} findCurrentDKP={findCurrentDKP} />
         ))}
       </div>
       <div className="bid-bottom">
-        <div className="bid-close text-primary" onClick={closeBid} onMouseEnter={() => handleCloseMouseInAndOut("in")} onMouseLeave={() => handleCloseMouseInAndOut("out")}>
+        <div
+          className="bid-close text-primary"
+          onClick={closeBid}
+          onMouseEnter={() => window.electron.ipcRenderer.send("disable-only-click-through")}
+          onMouseLeave={() => window.electron.ipcRenderer.send("enable-only-click-through")}
+        >
           Close Bid
         </div>
         <span className="timer">{timer}</span>

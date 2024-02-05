@@ -30,9 +30,12 @@ function DkpAndLoot({ sortedData, fileName }) {
 
   return (
     <div className="dkp-container">
+      {/* <h3>Active Bids</h3>
+      <Bids dkp={sortedData} />
+      <hr /> */}
       {isOfficer && (
         <>
-          <h3>Active Bids</h3>
+          <h3>Bid Taking</h3>
           <Bids dkp={sortedData} />
           <hr />
         </>
