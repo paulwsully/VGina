@@ -5,6 +5,13 @@ import { faTimes } from "@fortawesome/free-solid-svg-icons";
 function ItemDetailsWindow() {
   const [itemData, setItemData] = useState(null);
   const overlayRef = useRef(null);
+  useEffect(() => {
+    document.documentElement.classList.add("item-details-window");
+
+    return () => {
+      document.documentElement.classList.remove("item-details-window");
+    };
+  }, []);
 
   useEffect(() => {
     const loadData = async () => {

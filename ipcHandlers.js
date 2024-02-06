@@ -381,10 +381,12 @@ function setupIpcHandlers() {
       processAction(line, key, search, sound, useRegex, actionType);
     });
 
-    triggers.map((trigger, index) => {
-      if (trigger.saySomething) processAction(line, "", trigger.searchText, trigger.speechText, trigger.searchRegex, "speak");
-      if (trigger.playSound) processAction(line, "", trigger.searchText, triggers[index].sound.replace(".mp3", ""), trigger.searchRegex, "sound");
-    });
+    if (triggers && triggers.length > 0) {
+      triggers.map((trigger, index) => {
+        if (trigger.saySomething) processAction(line, "", trigger.searchText, trigger.speechText, trigger.searchRegex, "speak");
+        if (trigger.playSound) processAction(line, "", trigger.searchText, triggers[index].sound.replace(".mp3", ""), trigger.searchRegex, "sound");
+      });
+    }
 
     if (line.includes("**A Magic Die is rolled by") || line.includes("**It could have been any number from")) parseRolls(line);
     if (line.includes("tells you,")) parseLineForBid(line);

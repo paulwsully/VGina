@@ -2,6 +2,7 @@ import { app, globalShortcut, clipboard } from "electron";
 import { createWindow, createOverlayBids } from "./window.js";
 import { getOverlayBid, getOverlayItemDetails } from "./windowManager.js"; // Adjust path as necessary
 import Store from "electron-store";
+import { autoUpdater } from "electron-updater";
 const store = new Store();
 import ks from "node-key-sender";
 import fs from "fs";
@@ -69,6 +70,7 @@ function setupAppLifecycle() {
         itemDetailsWindow.close();
       }
     });
+    autoUpdater.checkForUpdatesAndNotify();
   });
 
   app.on("window-all-closed", () => {
@@ -79,6 +81,14 @@ function setupAppLifecycle() {
 
   app.on("will-quit", () => {
     globalShortcut.unregisterAll();
+  });
+
+  autoUpdater.on("update-available", () => {
+    mainWindow.webContents.send("update_available");
+  });
+
+  autoUpdater.on("update-downloaded", () => {
+    mainWindow.webContents.send("update_downloaded");
   });
 }
 

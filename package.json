@@ -1,7 +1,7 @@
 {
   "name": "vgina",
   "private": true,
-  "version": "0.1.37",
+  "version": "0.2.8",
   "main": "main.js",
   "type": "module",
   "scripts": {
@@ -10,7 +10,8 @@
     "dev:electron": "electron .",
     "build:react": "vite build",
     "pack": "electron-builder --dir",
-    "dist": "npm run build:react && electron-builder",
+    "dist:local": "npm run build:react && electron-builder --publish never",
+    "dist:publish": "npm run build:react && electron-builder --publish always",
     "postinstall": "electron-builder install-app-deps"
   },
   "build": {
@@ -18,6 +19,13 @@
     "asarUnpack": [
       "sounds/**/*"
     ],
+    "publish": {
+      "provider": "github",
+      "repo": "VGina",
+      "owner": "paulwsully",
+      "private": true,
+      "releaseType": "draft"
+    },
     "appId": "VGina",
     "mac": {
       "category": "gaming.software"
@@ -39,6 +47,7 @@
       "appLifecycle.js",
       "firebaseConfig.js",
       "itemsList.txt",
+      "itemsData.json",
       "vgina-412004-91343028ed0c.json"
     ]
   },
@@ -49,6 +58,7 @@
     "@google-cloud/text-to-speech": "^5.0.2",
     "concurrently": "^8.2.2",
     "electron-store": "^8.1.0",
+    "electron-updater": "^6.1.7",
     "firebase": "^10.7.2",
     "lodash": "^4.17.21",
     "node-key-sender": "^1.0.11",
