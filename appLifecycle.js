@@ -2,7 +2,9 @@ import { app, globalShortcut, clipboard } from "electron";
 import { createWindow, createOverlayBids } from "./window.js";
 import { getOverlayBid, getOverlayItemDetails } from "./windowManager.js"; // Adjust path as necessary
 import Store from "electron-store";
-import { autoUpdater } from "electron-updater";
+// import { autoUpdater } from "electron-updater";
+import pkg from "electron-updater";
+const { autoUpdater } = pkg;
 const store = new Store();
 import ks from "node-key-sender";
 import fs from "fs";

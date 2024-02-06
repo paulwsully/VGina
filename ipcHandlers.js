@@ -1,3 +1,5 @@
+import { config } from "dotenv";
+config();
 import { app, ipcMain, dialog, screen } from "electron";
 import { getMainWindow, getOverlayBid, getOverlayItemDetails } from "./windowManager.js";
 import { createOverlayBids, createItemDetailsWindow } from "./window.js";

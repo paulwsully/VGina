@@ -1,7 +1,7 @@
 {
   "name": "vgina",
   "private": true,
-  "version": "0.2.8",
+  "version": "0.2.9",
   "main": "main.js",
   "type": "module",
   "scripts": {
@@ -11,7 +11,7 @@
     "build:react": "vite build",
     "pack": "electron-builder --dir",
     "dist:local": "npm run build:react && electron-builder --publish never",
-    "dist:publish": "npm run build:react && electron-builder --publish always",
+    "dist:publish": "cross-env GH_TOKEN=${GH_TOKEN} npm run build:react && electron-builder --publish always",
     "postinstall": "electron-builder install-app-deps"
   },
   "build": {
@@ -57,6 +57,7 @@
     "@fortawesome/react-fontawesome": "^0.2.0",
     "@google-cloud/text-to-speech": "^5.0.2",
     "concurrently": "^8.2.2",
+    "dotenv": "^16.4.1",
     "electron-store": "^8.1.0",
     "electron-updater": "^6.1.7",
     "firebase": "^10.7.2",
@@ -74,6 +75,7 @@
     "@types/react": "^18.2.43",
     "@types/react-dom": "^18.2.17",
     "@vitejs/plugin-react": "^4.2.1",
+    "cross-env": "^7.0.3",
     "electron": "^28.2.0",
     "electron-builder": "^24.9.1",
     "eslint": "^8.55.0",
