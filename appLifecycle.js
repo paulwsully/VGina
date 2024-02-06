@@ -47,6 +47,7 @@ function setupAppLifecycle() {
   }
 
   app.whenReady().then(() => {
+    autoUpdater.checkForUpdatesAndNotify();
     copyPackagedSoundsToUserData();
     createWindow();
     const store = new Store();
@@ -85,12 +86,20 @@ function setupAppLifecycle() {
     globalShortcut.unregisterAll();
   });
 
+  autoUpdater.on("error", (error) => {
+    console.log(`Update error: ${error}`);
+  });
+
   autoUpdater.on("update-available", () => {
-    mainWindow.webContents.send("update_available");
+    console.log("Update available");
+  });
+
+  autoUpdater.on("update-not-available", () => {
+    console.log("Update not available");
   });
 
   autoUpdater.on("update-downloaded", () => {
-    mainWindow.webContents.send("update_downloaded");
+    console.log("Update downloaded; will install now");
   });
 }
 
