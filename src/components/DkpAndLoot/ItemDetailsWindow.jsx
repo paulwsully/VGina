@@ -7,7 +7,6 @@ function ItemDetailsWindow() {
   const overlayRef = useRef(null);
   useEffect(() => {
     document.documentElement.classList.add("item-details-window");
-
     return () => {
       document.documentElement.classList.remove("item-details-window");
     };

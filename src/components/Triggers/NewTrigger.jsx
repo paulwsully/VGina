@@ -15,6 +15,10 @@ const triggerReset = {
   searchRegex: false,
   speechText: "",
   sound: "",
+  setTimer: false,
+  timerHours: 0,
+  timerMinutes: 0,
+  timerSeconds: 0,
 };
 
 function NewTrigger({ onAddTrigger }) {
@@ -23,6 +27,7 @@ function NewTrigger({ onAddTrigger }) {
   const [selectedSound, setSelectedSound] = useState("");
   const [soundFiles, setSoundFiles] = useState([]);
   const [newTrigger, setNewTrigger] = useState(triggerReset);
+  const [InvalidData, setInvalidData] = useState(false);
 
   useEffect(() => {
     if (window.electron && window.electron.ipcRenderer) {
@@ -39,10 +44,49 @@ function NewTrigger({ onAddTrigger }) {
 
   const handleCheckboxChange = (id, checked) => {
     setNewTrigger({ ...newTrigger, [id]: checked });
+    setInvalidData(false);
   };
 
   const handleInputChange = (id, value) => {
-    setNewTrigger({ ...newTrigger, [id]: value });
+    setInvalidData(false);
+    if (id === "timerSeconds" || id === "timerMinutes" || id === "timerHours") {
+      let newValue = value === "" ? 0 : parseInt(value, 10);
+      if (isNaN(newValue)) newValue = 0;
+
+      switch (id) {
+        case "timerSeconds":
+          if (newValue >= 60) {
+            const minutesFromSeconds = Math.floor(newValue / 60);
+            newValue %= 60;
+            setNewTrigger((prevState) => ({
+              ...prevState,
+              timerSeconds: newValue,
+              timerMinutes: prevState.timerMinutes + minutesFromSeconds,
+            }));
+          } else {
+            setNewTrigger((prevState) => ({ ...prevState, [id]: newValue }));
+          }
+          break;
+        case "timerMinutes":
+          if (newValue >= 60) {
+            const hoursFromMinutes = Math.floor(newValue / 60);
+            newValue %= 60;
+            setNewTrigger((prevState) => ({
+              ...prevState,
+              timerMinutes: newValue,
+              timerHours: prevState.timerHours + hoursFromMinutes,
+            }));
+          } else {
+            setNewTrigger((prevState) => ({ ...prevState, [id]: newValue }));
+          }
+          break;
+        case "timerHours":
+          setNewTrigger((prevState) => ({ ...prevState, [id]: newValue }));
+          break;
+      }
+    } else {
+      setNewTrigger((prevState) => ({ ...prevState, [id]: value }));
+    }
   };
 
   const handleSoundItemClick = (soundName) => {
@@ -54,7 +98,19 @@ function NewTrigger({ onAddTrigger }) {
     setShowNewTrigger(!showNewTrigger);
   };
 
+  const isActionValid = () => {
+    if (newTrigger.saySomething && !newTrigger.speechText) return false;
+    if (newTrigger.playSound && !newTrigger.sound) return false;
+    if (newTrigger.setTimer && newTrigger.timerHours === 0 && newTrigger.timerMinutes === 0 && newTrigger.timerSeconds === 0) return false;
+    return newTrigger.saySomething || newTrigger.playSound || newTrigger.setTimer;
+  };
+
   const handleSaveNewTrigger = async () => {
+    if (!newTrigger.triggerName || !newTrigger.searchText || !isActionValid()) {
+      setInvalidData(true);
+      return;
+    }
+
     const existingTriggers = await window.electron.ipcRenderer.invoke("storeGet", "triggers");
     const triggers = Array.isArray(existingTriggers) ? existingTriggers : [];
     const triggerId = newTrigger.id || uuidv4();
@@ -107,6 +163,7 @@ function NewTrigger({ onAddTrigger }) {
           </div>
         )}
       </div>
+      {InvalidData && <div className="error">Please fill in all required fields and select at least one action.</div>}
       <div className={`new-trigger ${showNewTrigger ? "show" : ""}`}>
         <section>
           <h3>General</h3>
@@ -138,6 +195,37 @@ function NewTrigger({ onAddTrigger }) {
                 {soundFiles.map((file, index) => (
                   <SoundItem key={file} soundName={file} onClick={handleSoundItemClick} />
                 ))}
+              </div>
+            )}
+          </div>
+          <div className={`panel ${newTrigger.setTimer ? "" : "inactive"}`}>
+            <Checkbox id="setTimer" label="Set Timer" checked={newTrigger.setTimer} onCheckChange={(checked) => handleCheckboxChange("setTimer", checked)} />
+            {newTrigger.setTimer && (
+              <div className="input-row timer-fields">
+                <Input
+                  id="timerHours"
+                  type="number"
+                  value={newTrigger.timerHours === 0 ? "" : newTrigger.timerHours}
+                  placeholder=" "
+                  label="HH"
+                  onTextChange={(value) => handleInputChange("timerHours", value)}
+                />
+                <Input
+                  id="timerMinutes"
+                  type="number"
+                  value={newTrigger.timerMinutes === 0 ? "" : newTrigger.timerMinutes}
+                  placeholder=" "
+                  label="MM"
+                  onTextChange={(value) => handleInputChange("timerMinutes", value)}
+                />
+                <Input
+                  id="timerSeconds"
+                  type="number"
+                  value={newTrigger.timerSeconds === 0 ? "" : newTrigger.timerSeconds}
+                  placeholder=" "
+                  label="SS"
+                  onTextChange={(value) => handleInputChange("timerSeconds", value)}
+                />
               </div>
             )}
           </div>

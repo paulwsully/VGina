@@ -1,8 +1,8 @@
 import { config } from "dotenv";
 config();
-import { app, ipcMain, dialog, screen } from "electron";
-import { getMainWindow, getOverlayBid, getOverlayItemDetails } from "./windowManager.js";
-import { createOverlayBids, createItemDetailsWindow } from "./window.js";
+import { app, ipcMain, dialog } from "electron";
+import { getMainWindow, getOverlayBid, getOverlayItemDetails, getOverlayTimers } from "./windowManager.js";
+import { createOverlayBids, createItemDetailsWindow, createOverlayTimers } from "./window.js";
 import database from "./firebaseConfig.js";
 import { ref, push, getDatabase } from "firebase/database";
 import Store from "electron-store";
@@ -11,8 +11,8 @@ import textToSpeech from "@google-cloud/text-to-speech";
 import readLastLines from "read-last-lines";
 import path from "path";
 import fs from "fs";
-import { promises as fsPromises, readFileSync } from "fs";
-const { writeFile, mkdir, readdir, access: exists } = fsPromises;
+import { promises as fsPromises } from "fs";
+const { writeFile, readdir, access: exists } = fsPromises;
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -138,6 +138,56 @@ function setupIpcHandlers() {
       .catch((error) => {
         console.error("An error occurred while creating the overlay bids window:", error);
       });
+  });
+
+  ipcMain.handle("get-overlayTimersLocked", async () => {
+    return store.get("overlayTimersLocked", false);
+  });
+
+  ipcMain.on("open-overlay-timers", (event) => {
+    createOverlayTimers()
+      .then((overlayTimer) => {
+        const locked = store.get("overlayTimersLocked", false);
+        const overlayTimerWindow = getOverlayTimers();
+        overlayTimerWindow.show();
+        overlayTimerWindow.setIgnoreMouseEvents(locked, { forward: true });
+      })
+      .catch((error) => {
+        console.error("An error occurred while creating the overlay timers window:", error);
+      });
+  });
+
+  ipcMain.on("close-overlay-timers", () => {
+    const overlayTimerWindow = getOverlayTimers();
+    if (overlayTimerWindow) {
+      overlayTimerWindow.hide();
+    }
+  });
+
+  ipcMain.on("timersOverlay-resize", (event, { width, height }) => {
+    const overlayTimerWindow = getOverlayTimers();
+    if (overlayTimerWindow && !overlayTimerWindow.isDestroyed()) {
+      const roundedWidth = Math.round(width);
+      const roundedHeight = Math.round(height);
+
+      overlayTimerWindow.setSize(roundedWidth + 4, roundedHeight + 4);
+    }
+  });
+
+  ipcMain.on("lock-overlay-timers", () => {
+    const overlayTimersWindow = getOverlayTimers();
+    if (overlayTimersWindow && !overlayTimersWindow.isDestroyed()) {
+      overlayTimersWindow.setIgnoreMouseEvents(true, { forward: true });
+      overlayTimersWindow.webContents.executeJavaScript(`document.body.classList.add("no-drag")`, true);
+    }
+  });
+
+  ipcMain.on("unlock-overlay-timers", () => {
+    const overlayTimersWindow = getOverlayTimers();
+    if (overlayTimersWindow && !overlayTimersWindow.isDestroyed()) {
+      overlayTimersWindow.setIgnoreMouseEvents(false);
+      overlayTimersWindow.webContents.executeJavaScript(`document.body.classList.remove("no-drag")`, true);
+    }
   });
 
   ipcMain.on("start-file-watch", async () => {

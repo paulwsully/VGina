@@ -94,7 +94,7 @@ function createOverlayTimers() {
       x,
       y,
       width,
-      height: 172 + 16,
+      height,
       frame: false,
       transparent: true,
       alwaysOnTop: true,

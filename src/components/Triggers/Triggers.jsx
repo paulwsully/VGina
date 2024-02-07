@@ -1,27 +1,57 @@
 import React, { useState, useEffect } from "react";
 import NewTrigger from "./NewTrigger";
+import Checkbox from "../Utilities/Checkbox";
 import "./Triggers.scss";
 
 function Triggers() {
   const [triggers, setTriggers] = useState([]);
+  const [showTimersOverlay, setShowTimersOverlay] = useState(false);
+  const [overlayTimersLocked, setOverlayTimersLocked] = useState(false); // State for locking the overlay
 
   useEffect(() => {
-    const fetchTriggers = async () => {
-      const storedTriggers = await window.electron.ipcRenderer.invoke("storeGet", "triggers");
-      if (Array.isArray(storedTriggers)) {
-        setTriggers(storedTriggers);
-      }
+    const fetchSettings = async () => {
+      const storedShowTimersOverlay = await window.electron.ipcRenderer.invoke("storeGet", "showTimersOverlay");
+      const storedOverlayTimersLocked = await window.electron.ipcRenderer.invoke("storeGet", "overlayTimersLocked"); // Fetch the initial locked state
+      setShowTimersOverlay(storedShowTimersOverlay || false);
+      setOverlayTimersLocked(storedOverlayTimersLocked || false);
     };
 
-    fetchTriggers();
+    window.electron.getOverlayBidLocked().then(setOverlayTimersLocked);
+    fetchSettings();
+
+    return () => {
+      window.electron.ipcRenderer.removeAllListeners("bids-updated");
+    };
   }, []);
+
+  const handleShowTimersOverlayChange = (checked) => {
+    setShowTimersOverlay(checked);
+    window.electron.ipcRenderer.send("storeSet", "showTimersOverlay", checked);
+    if (checked) {
+      window.electron.ipcRenderer.send("open-overlay-timers");
+    } else {
+      window.electron.ipcRenderer.send("close-overlay-timers");
+    }
+  };
+
+  const handleLockOverlayChange = (checked) => {
+    setOverlayTimersLocked(checked);
+    window.electron.ipcRenderer.send("storeSet", "overlayTimersLocked", checked);
+    if (checked) {
+      window.electron.ipcRenderer.send("lock-overlay-timers");
+    } else {
+      window.electron.ipcRenderer.send("unlock-overlay-timers");
+    }
+  };
 
   const addTrigger = (newTrigger) => {
     setTriggers([...triggers, newTrigger]);
   };
+
   return (
     <div className="triggers-wrapper">
-      <div className="warning">Triggers can be created, but will not activate currently. Coming Soon.</div>
+      <Checkbox id="showTimersOverlay" label="Show Timers Overlay" checked={showTimersOverlay} onCheckChange={handleShowTimersOverlayChange} />
+      <Checkbox id="lockOverlayTimers" label="Lock Timers Overlay" checked={overlayTimersLocked} onCheckChange={handleLockOverlayChange} />
       <NewTrigger onAddTrigger={addTrigger} />
       <div className="triggers">
         <h3>Triggers</h3>
