@@ -3,27 +3,26 @@ config();
 import { app, ipcMain, dialog } from "electron";
 import { getMainWindow, getOverlayBid, getOverlayItemDetails, getOverlayTimers } from "./windowManager.js";
 import { createOverlayBids, createItemDetailsWindow, createOverlayTimers } from "./window.js";
+import { createHash } from "crypto";
 import database from "./firebaseConfig.js";
 import { ref, push, getDatabase } from "firebase/database";
 import Store from "electron-store";
-const store = new Store();
 import textToSpeech from "@google-cloud/text-to-speech";
-import readLastLines from "read-last-lines";
+const store = new Store();
 import path from "path";
 import fs from "fs";
-import { promises as fsPromises } from "fs";
+import { promises as fsPromises, watchFile, createReadStream } from "fs";
 const { writeFile, readdir, access: exists } = fsPromises;
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const NUM_LINES_TO_READ = 5;
+const NUM_LINES_TO_READ = 3;
 const tts = new textToSpeech.TextToSpeechClient({
   keyFilename: path.join(__dirname, "./vgina-412004-91343028ed0c.json"),
 });
 
 let fileWatcher = null;
-let lastFiveLines = [];
 
 function setupIpcHandlers() {
   ipcMain.on("minimize-app", () => getMainWindow().minimize());
@@ -34,20 +33,6 @@ function setupIpcHandlers() {
   ipcMain.handle("storeGet", (event, key) => store.get(key));
   ipcMain.handle("get-last-tab", async () => store.get("lastActiveTab"));
   ipcMain.handle("get-rolls", async (event) => store.get("rolls", []));
-
-  const updateFileWatch = async (filePath) => {
-    const currentLines = (await readLastLines.read(filePath, NUM_LINES_TO_READ)).split("\n").slice(0, -1);
-    const newLines = [];
-
-    for (let i = currentLines.length - 1; i >= 0; i--) {
-      if (!lastFiveLines.includes(currentLines[i])) {
-        newLines.unshift(currentLines[i]);
-      }
-    }
-
-    newLines.slice(0, 5).forEach((line) => processNewLine(line));
-    lastFiveLines = currentLines.slice(-5);
-  };
 
   ipcMain.handle("open-file-dialog", async () => {
     try {
@@ -148,6 +133,12 @@ function setupIpcHandlers() {
     return store.get("activeTimers", false);
   });
 
+  ipcMain.on("remove-activeTimer", (event, timerId) => {
+    const activeTimers = store.get("activeTimers", []);
+    const updatedTimers = activeTimers.filter((timer) => timer.id !== timerId);
+    store.set("activeTimers", updatedTimers);
+  });
+
   ipcMain.on("open-overlay-timers", (event) => {
     createOverlayTimers()
       .then((overlayTimer) => {
@@ -191,27 +182,6 @@ function setupIpcHandlers() {
     if (overlayTimersWindow && !overlayTimersWindow.isDestroyed()) {
       overlayTimersWindow.setIgnoreMouseEvents(false);
       overlayTimersWindow.webContents.executeJavaScript(`document.body.classList.remove("no-drag")`, true);
-    }
-  });
-
-  ipcMain.on("start-file-watch", async () => {
-    try {
-      const filePath = store.get("logFile");
-      if (filePath) {
-        lastFiveLines = (await readLastLines.read(filePath, NUM_LINES_TO_READ)).split("\n").slice(0, -1);
-
-        fileWatcher = fs.watch(filePath, async (eventType, filename) => {
-          try {
-            if (filename) {
-              await updateFileWatch(filePath);
-            }
-          } catch (watchErr) {
-            console.error("Error in file watch:", watchErr);
-          }
-        });
-      }
-    } catch (err) {
-      console.error("Error in start-file-watch handler:", err);
     }
   });
 
@@ -375,6 +345,8 @@ function setupIpcHandlers() {
       matchFound = lastLine.includes(search);
     }
 
+    if (!matchFound) return;
+
     if (matchFound) {
       let settings = null;
       if (settingKey !== null) {
@@ -451,19 +423,59 @@ function setupIpcHandlers() {
     }
   }
 
-  function processNewLine(line) {
-    const triggers = store.get("triggers");
-    const actions = [
-      { actionType: "speak", key: "rootBroke", search: "Roots spell has worn off", sound: "Root fell off", useRegex: false },
-      { actionType: "speak", key: "feignDeath", search: "has fallen to the ground", sound: "Failed feign", useRegex: false },
-      { actionType: "speak", key: "resisted", search: "Your target resisted", sound: "Resisted", useRegex: false },
-      { actionType: "speak", key: "invisFading", search: "You feel yourself starting to appear", sound: "You're starting to appear", useRegex: false },
-      { actionType: "speak", key: "groupInvite", search: "invites you to join a group", sound: "You've been invited to a group", useRegex: false },
-      { actionType: "speak", key: "raidInvite", search: "invites you to join a raid", sound: "You've been invited to a raid", useRegex: false },
-      { actionType: "speak", key: "mobEnrage", search: "has become ENRAGED", sound: "Mob is enraged", useRegex: false },
-      { actionType: "sound", key: "tell", search: "\\[.*?\\] (\\S+) tells you,", sound: "tell", useRegex: true },
-    ];
+  let lastSize = 0; // Variable to store the last known size of the file
+  let lastFiveHashes = []; // Initialize a fixed-size queue for the last five line hashes
+  let debounceTimer;
 
+  const debounce = (func, delay) => {
+    return (...args) => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => func.apply(this, args), delay);
+    };
+  };
+
+  let lastLineCount = 0;
+
+  ipcMain.on("start-file-watch", async () => {
+    try {
+      const filePath = store.get("logFile");
+      if (!filePath) return;
+
+      const initialContent = await fsPromises.readFile(filePath, "utf8");
+      lastLineCount = (initialContent.match(/\n/g) || []).length;
+
+      watchFile(filePath, { interval: 100 }, async (curr, prev) => {
+        if (curr.mtimeMs > prev.mtimeMs) {
+          const currentContent = await fsPromises.readFile(filePath, "utf8");
+          const currentLines = currentContent.split("\n");
+          const newLineCount = currentLines[currentLines.length - 1] === "" ? currentLines.length - 1 : currentLines.length;
+
+          if (newLineCount > lastLineCount) {
+            for (let i = lastLineCount; i < newLineCount; i++) {
+              processNewLine(currentLines[i], i + 1);
+            }
+            lastLineCount = newLineCount;
+          }
+        }
+      });
+    } catch (err) {
+      console.error("Error in start-file-watch handler:", err);
+    }
+  });
+
+  const triggers = store.get("triggers");
+  const actions = [
+    { actionType: "speak", key: "rootBroke", search: "Roots spell has worn off", sound: "Root fell off", useRegex: false },
+    { actionType: "speak", key: "feignDeath", search: "has fallen to the ground", sound: "Failed feign", useRegex: false },
+    { actionType: "speak", key: "resisted", search: "Your target resisted", sound: "Resisted", useRegex: false },
+    { actionType: "speak", key: "invisFading", search: "You feel yourself starting to appear", sound: "You're starting to appear", useRegex: false },
+    { actionType: "speak", key: "groupInvite", search: "invites you to join a group", sound: "You've been invited to a group", useRegex: false },
+    { actionType: "speak", key: "raidInvite", search: "invites you to join a raid", sound: "You've been invited to a raid", useRegex: false },
+    { actionType: "speak", key: "mobEnrage", search: "has become ENRAGED", sound: "Mob is enraged", useRegex: false },
+    { actionType: "sound", key: "tell", search: "\\[.*?\\] (\\S+) tells you,", sound: "tell", useRegex: true },
+  ];
+
+  function processNewLine(line) {
     actions.forEach(({ actionType, key, search, sound, useRegex }) => {
       if (actionType === "speak") processSpeakAction(line, key, search, sound, useRegex, actionType);
       if (actionType === "sound") processSoundAction(line, key, search, sound, useRegex, actionType);

@@ -1,7 +1,7 @@
 {
   "name": "vgina",
   "private": true,
-  "version": "0.2.12",
+  "version": "0.2.13",
   "main": "main.js",
   "type": "module",
   "scripts": {
@@ -68,6 +68,7 @@
     "react-router-dom": "^6.21.3",
     "read-last-lines": "^1.8.0",
     "sass": "^1.70.0",
+    "tail": "^2.2.6",
     "uuid": "^9.0.1"
   },
   "devDependencies": {

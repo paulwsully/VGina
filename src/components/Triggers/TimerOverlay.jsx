@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Timer from "./Timer";
 
-function TimerOverlay({ progress = 50 }) {
+function TimerOverlay({}) {
   const [activeTimers, setActiveTimers] = useState([]);
   const overlayRef = useRef(null);
 

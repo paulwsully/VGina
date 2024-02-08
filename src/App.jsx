@@ -88,7 +88,7 @@ function App() {
     };
 
     window.electron.ipcRenderer.on("file-name", handleFileNameChange);
-    window.electron.ipcRenderer.on(handleNewLine);
+    window.electron.ipcRenderer.on("new-line", handleNewLine);
     window.electron.ipcRenderer.on("play-sound", (soundFile) => {
       window.electron.playSound(soundFile);
     });
