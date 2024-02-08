@@ -1,48 +1,38 @@
-import React, { useState, useEffect, memo } from "react";
+import React, { useState, useEffect, useRef, memo } from "react";
 
 const Timer = memo(({ timer }) => {
   const totalSeconds = timer.timerHours * 3600 + timer.timerMinutes * 60 + timer.timerSeconds;
-  const [remainingSeconds, setRemainingSeconds] = useState(totalSeconds + 1);
-  const [progressWidth, setProgressWidth] = useState("100%");
+  const endTime = useRef(Date.now() + totalSeconds * 1000);
+  const [timeLeft, setTimeLeft] = useState(totalSeconds);
   const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
-    const updateProgress = () => {
-      const percentage = Math.max(0, ((remainingSeconds - 1) / totalSeconds) * 100).toFixed(2);
-      setProgressWidth(`${percentage}%`);
-    };
+    const intervalId = setInterval(() => {
+      const now = Date.now();
+      const remainingTimeInSeconds = Math.round((endTime.current - now) / 1000);
+      setTimeLeft(remainingTimeInSeconds);
 
-    updateProgress();
-
-    const timerId = setInterval(() => {
-      setRemainingSeconds((prevSeconds) => {
-        const nextSeconds = prevSeconds - 1;
-        if (nextSeconds < 1) {
-          clearInterval(timerId);
-          setIsVisible(false);
-          window.electron.ipcRenderer.send("remove-activeTimer", timer.id);
-          return nextSeconds;
-        }
-        return nextSeconds;
-      });
+      if (remainingTimeInSeconds <= 0) {
+        clearInterval(intervalId);
+        setIsVisible(false);
+        window.electron.ipcRenderer.send("remove-activeTimer", timer.id);
+      }
     }, 1000);
 
-    return () => clearInterval(timerId);
-  }, [remainingSeconds, timer.id, totalSeconds]);
+    return () => clearInterval(intervalId);
+  }, [timer.id]);
 
-  const hours = Math.floor((remainingSeconds - 1) / 3600);
-  const minutes = Math.floor(((remainingSeconds - 1) % 3600) / 60);
-  const seconds = (remainingSeconds - 1) % 60;
+  const hours = Math.floor(timeLeft / 3600);
+  const minutes = Math.floor((timeLeft % 3600) / 60);
+  const seconds = timeLeft % 60;
 
-  const displayHours = hours >= 0 ? hours : 0;
-  const displayMinutes = minutes >= 0 ? minutes : 0;
-  const displaySeconds = seconds >= 0 ? seconds : 0;
+  const progressWidth = `${(timeLeft / totalSeconds) * 100}%`;
 
   return isVisible ? (
     <div className="timer">
       <div className="timer-header">
         <div className="timer-name">{timer.triggerName}</div>
-        <div className="timer-time">{`${displayHours}h ${displayMinutes}m ${displaySeconds}s`}</div>
+        <div className="timer-time">{`${hours}h ${minutes}m ${seconds}s`}</div>
       </div>
       <div className="timer-progress">
         <div className="progress-bar" style={{ width: progressWidth }}></div>

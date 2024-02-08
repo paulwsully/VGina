@@ -8,7 +8,6 @@ function TimerOverlay({}) {
   useEffect(() => {
     const updateTimers = async () => {
       const timers = await window.electron.getActiveTimers();
-      console.log(timers);
       setActiveTimers(timers);
     };
 

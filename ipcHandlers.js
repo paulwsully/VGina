@@ -320,7 +320,6 @@ function setupIpcHandlers() {
         console.error("Error in parseLineForBid:", err);
       }
     } else {
-      console.log("No match found for line:", line);
     }
   }
 
@@ -423,39 +422,50 @@ function setupIpcHandlers() {
     }
   }
 
-  let lastSize = 0; // Variable to store the last known size of the file
-  let lastFiveHashes = []; // Initialize a fixed-size queue for the last five line hashes
-  let debounceTimer;
-
-  const debounce = (func, delay) => {
-    return (...args) => {
-      clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(() => func.apply(this, args), delay);
-    };
-  };
-
+  let lastSize = 0;
   let lastLineCount = 0;
+
+  function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  }
+
+  const debouncedProcessNewLines = debounce((newLines) => {
+    newLines.forEach((line) => {
+      if (line !== "") {
+        processNewLine(line, lastLineCount + 1);
+        lastLineCount++;
+      }
+    });
+  }, 2);
 
   ipcMain.on("start-file-watch", async () => {
     try {
       const filePath = store.get("logFile");
       if (!filePath) return;
 
-      const initialContent = await fsPromises.readFile(filePath, "utf8");
-      lastLineCount = (initialContent.match(/\n/g) || []).length;
+      const stats = await fsPromises.stat(filePath);
+      lastSize = stats.size;
 
-      watchFile(filePath, { interval: 100 }, async (curr, prev) => {
-        if (curr.mtimeMs > prev.mtimeMs) {
-          const currentContent = await fsPromises.readFile(filePath, "utf8");
-          const currentLines = currentContent.split("\n");
-          const newLineCount = currentLines[currentLines.length - 1] === "" ? currentLines.length - 1 : currentLines.length;
+      watchFile(filePath, { interval: 100 }, async (curr) => {
+        if (curr.size > lastSize) {
+          const fd = await fsPromises.open(filePath, "r");
+          const bufferSize = curr.size - lastSize;
+          const buffer = Buffer.alloc(bufferSize);
+          await fd.read(buffer, 0, bufferSize, lastSize);
+          await fd.close();
+          const newContent = buffer.toString("utf8");
+          const newLines = newContent.split("\n").filter((line) => line !== "");
+          debouncedProcessNewLines(newLines);
 
-          if (newLineCount > lastLineCount) {
-            for (let i = lastLineCount; i < newLineCount; i++) {
-              processNewLine(currentLines[i], i + 1);
-            }
-            lastLineCount = newLineCount;
-          }
+          lastSize = curr.size;
         }
       });
     } catch (err) {
@@ -476,6 +486,7 @@ function setupIpcHandlers() {
   ];
 
   function processNewLine(line) {
+    console.log(line);
     actions.forEach(({ actionType, key, search, sound, useRegex }) => {
       if (actionType === "speak") processSpeakAction(line, key, search, sound, useRegex, actionType);
       if (actionType === "sound") processSoundAction(line, key, search, sound, useRegex, actionType);
