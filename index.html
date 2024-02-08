@@ -11,10 +11,12 @@
           if (window.location.href.includes('/dkp-and-loot/overlay/bids')) {
               document.documentElement.style.backgroundColor = 'transparent';
           }
-      });
 
-      document.addEventListener('DOMContentLoaded', (event) => {
-        window.electron.getOverlayBidLocked().then((overlayBidLocked) => {
+          if (window.location.href.includes('/dkp-and-loot/overlay/timers')) {
+              document.documentElement.classList.add("timers-root");
+          }
+          
+          window.electron.getOverlayBidLocked().then((overlayBidLocked) => {
           if (overlayBidLocked) {
             document.body.classList.add("no-drag");
           }

@@ -144,6 +144,10 @@ function setupIpcHandlers() {
     return store.get("overlayTimersLocked", false);
   });
 
+  ipcMain.handle("get-activeTimers", async () => {
+    return store.get("activeTimers", false);
+  });
+
   ipcMain.on("open-overlay-timers", (event) => {
     createOverlayTimers()
       .then((overlayTimer) => {
@@ -326,60 +330,6 @@ function setupIpcHandlers() {
     mainWindow.webContents.send("overlayBidLocked-updated", newValue);
   });
 
-  async function processAction(lastLine, settingKey = null, search, sound, useRegex, actionType) {
-    let matchFound = false;
-    if (useRegex) {
-      const regex = new RegExp(search);
-      matchFound = regex.test(lastLine);
-    } else {
-      matchFound = lastLine.includes(search);
-    }
-
-    if (matchFound) {
-      try {
-        let settings = null;
-        if (settingKey !== null) {
-          settings = store.get(settingKey);
-        }
-
-        if (settings || settingKey === "") {
-          const userDataPath = app.getPath("userData");
-          let soundFilePath;
-          if (actionType === "speak") soundFilePath = path.join(userDataPath, `./sounds/${sanitizeFilename(sound)}.mp3`);
-          if (actionType === "sound") soundFilePath = path.join(userDataPath, `./sounds/${sound}.mp3`);
-
-          try {
-            await exists(soundFilePath, fs.constants.F_OK);
-          } catch (error) {
-            if (actionType === "speak") {
-              const request = {
-                input: { text: sound },
-                voice: {
-                  languageCode: "en-US",
-                  name: "en-US-Studio-O",
-                },
-                audioConfig: {
-                  audioEncoding: "MP3",
-                  speakingRate: 1,
-                  effectsProfileId: ["large-home-entertainment-class-device"],
-                },
-              };
-
-              const [response] = await tts.synthesizeSpeech(request);
-              await fsPromises.mkdir(path.dirname(soundFilePath), { recursive: true });
-              await writeFile(soundFilePath, response.audioContent, "binary");
-            }
-          }
-
-          const mainWindow = getMainWindow();
-          mainWindow && mainWindow.webContents.send("play-sound", soundFilePath);
-        }
-      } catch (err) {
-        console.error("Error:", err);
-      }
-    }
-  }
-
   async function parseLineForBid(line) {
     const dkpRemoved = line.replace(/dkp/gi, "");
     const regex = /\[\w+ \w+ \d+ \d+:\d+:\d+ \d+\] (\w+) tells you, '([^']+?)'/;
@@ -416,6 +366,91 @@ function setupIpcHandlers() {
     }
   }
 
+  async function processCommonActions(lastLine, settingKey, search, useRegex) {
+    let matchFound = false;
+    if (useRegex) {
+      const regex = new RegExp(search);
+      matchFound = regex.test(lastLine);
+    } else {
+      matchFound = lastLine.includes(search);
+    }
+
+    if (matchFound) {
+      let settings = null;
+      if (settingKey !== null) {
+        settings = store.get(settingKey);
+      }
+
+      return settings || settingKey === "";
+    }
+
+    return false;
+  }
+
+  async function processSpeakAction(lastLine, settingKey, search, sound, useRegex) {
+    const actionRequired = await processCommonActions(lastLine, settingKey, search, useRegex);
+    if (actionRequired) {
+      const userDataPath = app.getPath("userData");
+      const soundFilePath = path.join(userDataPath, `./sounds/${sanitizeFilename(sound)}.mp3`);
+
+      try {
+        await exists(soundFilePath, fs.constants.F_OK);
+      } catch (error) {
+        const request = {
+          input: { text: sound },
+          voice: {
+            languageCode: "en-US",
+            name: "en-US-Studio-O",
+          },
+          audioConfig: {
+            audioEncoding: "MP3",
+            speakingRate: 1,
+            effectsProfileId: ["large-home-entertainment-class-device"],
+          },
+        };
+
+        const [response] = await tts.synthesizeSpeech(request);
+        await fsPromises.mkdir(path.dirname(soundFilePath), { recursive: true });
+        await writeFile(soundFilePath, response.audioContent, "binary");
+      }
+
+      const mainWindow = getMainWindow();
+      mainWindow && mainWindow.webContents.send("play-sound", soundFilePath);
+    }
+  }
+
+  async function processSoundAction(lastLine, settingKey, search, sound, useRegex) {
+    const actionRequired = await processCommonActions(lastLine, settingKey, search, useRegex);
+    if (actionRequired) {
+      const userDataPath = app.getPath("userData");
+      const soundFilePath = path.join(userDataPath, `./sounds/${sound}.mp3`);
+      const mainWindow = getMainWindow();
+      mainWindow && mainWindow.webContents.send("play-sound", soundFilePath);
+    }
+  }
+
+  async function processTimerAction(lastLine, settingKey, search, useRegex, triggerName, timerHours, timerMinutes, timerSeconds) {
+    const actionRequired = await processCommonActions(lastLine, settingKey, search, useRegex);
+    if (actionRequired) {
+      const activeTimers = store.get("activeTimers", []);
+      const uniqueId = `timer-${Date.now()}`;
+      const newTimer = {
+        id: uniqueId,
+        triggerName,
+        timerHours,
+        timerMinutes,
+        timerSeconds,
+      };
+      activeTimers.push(newTimer);
+      store.set("activeTimers", activeTimers);
+
+      const overlayTimerWindow = getOverlayTimers();
+      if (overlayTimerWindow && !overlayTimerWindow.isDestroyed()) {
+        overlayTimerWindow.webContents.send("updateActiveTimers");
+      }
+    }
+  }
+
   function processNewLine(line) {
     const triggers = store.get("triggers");
     const actions = [
@@ -430,13 +465,15 @@ function setupIpcHandlers() {
     ];
 
     actions.forEach(({ actionType, key, search, sound, useRegex }) => {
-      processAction(line, key, search, sound, useRegex, actionType);
+      if (actionType === "speak") processSpeakAction(line, key, search, sound, useRegex, actionType);
+      if (actionType === "sound") processSoundAction(line, key, search, sound, useRegex, actionType);
     });
 
     if (triggers && triggers.length > 0) {
       triggers.map((trigger, index) => {
-        if (trigger.saySomething) processAction(line, "", trigger.searchText, trigger.speechText, trigger.searchRegex, "speak");
-        if (trigger.playSound) processAction(line, "", trigger.searchText, triggers[index].sound.replace(".mp3", ""), trigger.searchRegex, "sound");
+        if (trigger.saySomething) processSpeakAction(line, "", trigger.searchText, trigger.speechText, trigger.searchRegex);
+        if (trigger.playSound) processSoundAction(line, "", trigger.searchText, triggers[index].sound.replace(".mp3", ""), trigger.searchRegex);
+        if (trigger.setTimer) processTimerAction(line, "", trigger.searchText, trigger.searchRegex, trigger.triggerName, trigger.timerHours, trigger.timerMinutes, trigger.timerSeconds);
       });
     }
 

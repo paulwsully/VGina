@@ -20,6 +20,7 @@ contextBridge.exposeInMainWorld("electron", {
   },
   getOverlayBidLocked: () => ipcRenderer.invoke("get-overlayBidLocked"),
   getOverlayTimersLocked: () => ipcRenderer.invoke("get-overlayTimersLocked"),
+  getActiveTimers: () => ipcRenderer.invoke("get-activeTimers"),
   startFileWatch: () => {
     ipcRenderer.send("start-file-watch");
   },

@@ -127,7 +127,7 @@ function createOverlayTimers() {
     });
 
     setOverlayTimers(overlayTimers);
-    // overlayTimers.webContents.openDevTools();
+    overlayTimers.webContents.openDevTools();
   });
 }
 

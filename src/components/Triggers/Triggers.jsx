@@ -6,12 +6,12 @@ import "./Triggers.scss";
 function Triggers() {
   const [triggers, setTriggers] = useState([]);
   const [showTimersOverlay, setShowTimersOverlay] = useState(false);
-  const [overlayTimersLocked, setOverlayTimersLocked] = useState(false); // State for locking the overlay
+  const [overlayTimersLocked, setOverlayTimersLocked] = useState(false);
 
   useEffect(() => {
     const fetchSettings = async () => {
       const storedShowTimersOverlay = await window.electron.ipcRenderer.invoke("storeGet", "showTimersOverlay");
-      const storedOverlayTimersLocked = await window.electron.ipcRenderer.invoke("storeGet", "overlayTimersLocked"); // Fetch the initial locked state
+      const storedOverlayTimersLocked = await window.electron.ipcRenderer.invoke("storeGet", "overlayTimersLocked");
       setShowTimersOverlay(storedShowTimersOverlay || false);
       setOverlayTimersLocked(storedOverlayTimersLocked || false);
     };

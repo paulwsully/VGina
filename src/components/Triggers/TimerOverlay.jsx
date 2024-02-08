@@ -1,7 +1,24 @@
 import React, { useState, useEffect, useRef } from "react";
+import Timer from "./Timer";
 
 function TimerOverlay({ progress = 50 }) {
+  const [activeTimers, setActiveTimers] = useState([]);
   const overlayRef = useRef(null);
+
+  useEffect(() => {
+    const updateTimers = async () => {
+      const timers = await window.electron.getActiveTimers();
+      console.log(timers);
+      setActiveTimers(timers);
+    };
+
+    window.electron.ipcRenderer.on("updateActiveTimers", updateTimers);
+    updateTimers();
+
+    return () => {
+      window.electron.ipcRenderer.removeAllListeners("updateActiveTimers");
+    };
+  }, []);
 
   useEffect(() => {
     if (overlayRef.current) {
@@ -10,19 +27,12 @@ function TimerOverlay({ progress = 50 }) {
     }
   }, []);
 
-  const progressBarStyle = {
-    width: `${progress}%`,
-  };
-
   return (
     <div className="trigger-overlay" ref={overlayRef}>
-      <div className="triggers">
-        <div className="trigger">
-          <div className="trigger-name">Ice Giants</div>
-          <div className="trigger-progress">
-            <div className="progress-bar" style={progressBarStyle}></div>
-          </div>
-        </div>
+      <div className="timers">
+        {activeTimers.map((timer) => (
+          <Timer key={timer.id} timer={timer} />
+        ))}
       </div>
     </div>
   );
