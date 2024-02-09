@@ -12,7 +12,7 @@ const Timer = memo(({ timer }) => {
       const remainingTimeInSeconds = Math.round((endTime.current - now) / 1000);
       setTimeLeft(remainingTimeInSeconds);
 
-      if (remainingTimeInSeconds <= 0) {
+      if (remainingTimeInSeconds <= -1) {
         clearInterval(intervalId);
         setIsVisible(false);
         window.electron.ipcRenderer.send("remove-activeTimer", timer.id);

@@ -21,7 +21,7 @@ const triggerReset = {
   timerSeconds: 0,
 };
 
-function NewTrigger({ onAddTrigger }) {
+function NewTrigger({ selectedTrigger, refreshTriggers }) {
   const [showNewTrigger, setShowNewTrigger] = useState(false);
   const [isCancelConfirm, setIsCancelConfirm] = useState(false);
   const [selectedSound, setSelectedSound] = useState("");
@@ -41,6 +41,15 @@ function NewTrigger({ onAddTrigger }) {
       window.electron.ipcRenderer.removeAllListeners("sound-files");
     };
   }, []);
+
+  useEffect(() => {
+    if (selectedTrigger) {
+      setNewTrigger(selectedTrigger);
+      setShowNewTrigger(true); // Automatically expand the NewTrigger form
+    } else {
+      resetTrigger(); // Resets to default if no trigger is selected
+    }
+  }, [selectedTrigger]);
 
   const handleCheckboxChange = (id, checked) => {
     setNewTrigger({ ...newTrigger, [id]: checked });
@@ -95,7 +104,10 @@ function NewTrigger({ onAddTrigger }) {
   };
 
   const handleNewTriggerClick = () => {
-    setShowNewTrigger(!showNewTrigger);
+    if (!showNewTrigger) {
+      setNewTrigger(triggerReset); // Reset form when opening a new trigger form
+    }
+    setShowNewTrigger(!showNewTrigger); // This allows toggling the form manually as well
   };
 
   const isActionValid = () => {
@@ -111,16 +123,20 @@ function NewTrigger({ onAddTrigger }) {
       return;
     }
 
-    const existingTriggers = await window.electron.ipcRenderer.invoke("storeGet", "triggers");
-    const triggers = Array.isArray(existingTriggers) ? existingTriggers : [];
-    const triggerId = newTrigger.id || uuidv4();
-    const updatedTriggers = triggers.filter((trig) => trig.id !== triggerId);
-    const triggerToSave = { ...newTrigger, id: triggerId };
-    const triggerWithId = { ...newTrigger, id: uuidv4() };
-    onAddTrigger(triggerWithId);
-    updatedTriggers.push(triggerToSave);
+    const existingTriggers = (await window.electron.ipcRenderer.invoke("storeGet", "triggers")) || [];
+    let triggerToUpdateIndex = existingTriggers.findIndex((trig) => trig.id === newTrigger.id);
 
-    window.electron.ipcRenderer.send("storeSet", "triggers", updatedTriggers);
+    if (triggerToUpdateIndex !== -1) {
+      // If trigger exists, update it
+      existingTriggers[triggerToUpdateIndex] = newTrigger;
+    } else {
+      // If trigger doesn't exist, add it with a new ID
+      const newId = newTrigger.id || uuidv4(); // Use existing ID if editing, or assign new if adding
+      existingTriggers.push({ ...newTrigger, id: newId });
+    }
+
+    window.electron.ipcRenderer.send("storeSet", "triggers", existingTriggers);
+    await refreshTriggers();
     resetTrigger();
     setShowNewTrigger(false);
   };
@@ -137,6 +153,7 @@ function NewTrigger({ onAddTrigger }) {
 
   const resetTrigger = () => {
     setNewTrigger(triggerReset);
+    setSelectedSound("");
   };
 
   const playSound = (filePath) => {

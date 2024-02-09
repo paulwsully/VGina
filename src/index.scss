@@ -89,6 +89,7 @@ hr {
   display: flex;
   align-items: center;
   gap: 8px;
+  max-height: 29px;
   &.error {
     background: rgba($color-error, 0.1);
     border: 1px solid rgba($color-error, 0.2);

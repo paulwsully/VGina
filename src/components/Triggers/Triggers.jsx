@@ -7,22 +7,32 @@ function Triggers() {
   const [triggers, setTriggers] = useState([]);
   const [showTimersOverlay, setShowTimersOverlay] = useState(false);
   const [overlayTimersLocked, setOverlayTimersLocked] = useState(false);
+  const [selectedTrigger, setSelectedTrigger] = useState(null);
 
   useEffect(() => {
-    const fetchSettings = async () => {
+    const fetchSettingsAndTriggers = async () => {
       const storedShowTimersOverlay = await window.electron.ipcRenderer.invoke("storeGet", "showTimersOverlay");
       const storedOverlayTimersLocked = await window.electron.ipcRenderer.invoke("storeGet", "overlayTimersLocked");
+      const storedTriggers = await window.electron.ipcRenderer.invoke("storeGet", "triggers");
+
       setShowTimersOverlay(storedShowTimersOverlay || false);
       setOverlayTimersLocked(storedOverlayTimersLocked || false);
-    };
 
-    window.electron.getOverlayBidLocked().then(setOverlayTimersLocked);
-    fetchSettings();
-
-    return () => {
-      window.electron.ipcRenderer.removeAllListeners("bids-updated");
+      setTriggers(storedTriggers || []);
+      if (storedShowTimersOverlay) window.electron.ipcRenderer.send("open-overlay-timers");
     };
+    fetchSettingsAndTriggers();
+    return () => {};
   }, []);
+
+  const selectTrigger = (trigger) => {
+    setSelectedTrigger(trigger);
+  };
+
+  const refreshTriggers = async () => {
+    const updatedTriggers = await window.electron.ipcRenderer.invoke("storeGet", "triggers");
+    setTriggers(updatedTriggers || []);
+  };
 
   const handleShowTimersOverlayChange = (checked) => {
     setShowTimersOverlay(checked);
@@ -44,20 +54,18 @@ function Triggers() {
     }
   };
 
-  const addTrigger = (newTrigger) => {
-    setTriggers([...triggers, newTrigger]);
-  };
-
   return (
     <div className="triggers-wrapper">
-      <Checkbox id="showTimersOverlay" label="Show Timers Overlay" checked={showTimersOverlay} onCheckChange={handleShowTimersOverlayChange} />
-      <Checkbox id="lockOverlayTimers" label="Lock Timers Overlay" checked={overlayTimersLocked} onCheckChange={handleLockOverlayChange} />
-      <NewTrigger onAddTrigger={addTrigger} />
+      <div className="actions">
+        <Checkbox id="showTimersOverlay" label="Show Timers Overlay" checked={showTimersOverlay} onCheckChange={handleShowTimersOverlayChange} />
+        <Checkbox id="lockOverlayTimers" label="Lock Timers Overlay" checked={overlayTimersLocked} onCheckChange={handleLockOverlayChange} />
+      </div>
+      <NewTrigger selectedTrigger={selectedTrigger} refreshTriggers={refreshTriggers} />
       <div className="triggers">
         <h3>Triggers</h3>
         {triggers.length === 0 && <div className="null-message">No Triggers. Click "New Trigger" to create one.</div>}
         {triggers.map((trigger) => (
-          <div key={trigger.id} className="trigger">
+          <div key={trigger.id} className="trigger" onClick={() => selectTrigger(trigger)}>
             <div className="text-primary bold">{trigger.triggerName}</div>
             <span>{trigger.searchText}</span>
           </div>

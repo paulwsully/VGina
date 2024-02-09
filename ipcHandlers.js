@@ -32,7 +32,8 @@ function setupIpcHandlers() {
   ipcMain.on("set-last-tab", (event, tabPath) => store.set("lastActiveTab", tabPath));
   ipcMain.handle("storeGet", (event, key) => store.get(key));
   ipcMain.handle("get-last-tab", async () => store.get("lastActiveTab"));
-  ipcMain.handle("get-rolls", async (event) => store.get("rolls", []));
+  ipcMain.handle("get-rolls", async () => store.get("rolls", []));
+  ipcMain.handle("get-triggers", async () => store.get("triggers", []));
 
   ipcMain.handle("open-file-dialog", async () => {
     try {
@@ -140,11 +141,13 @@ function setupIpcHandlers() {
   });
 
   ipcMain.on("open-overlay-timers", (event) => {
+    const overlayTimerWindow = getOverlayTimers();
+    if (overlayTimerWindow && !overlayTimerWindow.isDestroyed()) return;
     createOverlayTimers()
       .then((overlayTimer) => {
+        console.log("timer overlay");
         const locked = store.get("overlayTimersLocked", false);
         const overlayTimerWindow = getOverlayTimers();
-        overlayTimerWindow.show();
         overlayTimerWindow.setIgnoreMouseEvents(locked, { forward: true });
       })
       .catch((error) => {
@@ -154,8 +157,8 @@ function setupIpcHandlers() {
 
   ipcMain.on("close-overlay-timers", () => {
     const overlayTimerWindow = getOverlayTimers();
-    if (overlayTimerWindow) {
-      overlayTimerWindow.hide();
+    if (overlayTimerWindow && !overlayTimerWindow.isDestroyed()) {
+      overlayTimerWindow.close();
     }
   });
 
@@ -486,7 +489,6 @@ function setupIpcHandlers() {
   ];
 
   function processNewLine(line) {
-    console.log(line);
     actions.forEach(({ actionType, key, search, sound, useRegex }) => {
       if (actionType === "speak") processSpeakAction(line, key, search, sound, useRegex, actionType);
       if (actionType === "sound") processSoundAction(line, key, search, sound, useRegex, actionType);

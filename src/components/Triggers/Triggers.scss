@@ -87,6 +87,12 @@
   }
 }
 
+.triggers-wrapper {
+  .actions {
+    display: flex;
+  }
+}
+
 .trigger-overlay {
   background: rgba(black, 0.4);
   border-radius: 8px;
