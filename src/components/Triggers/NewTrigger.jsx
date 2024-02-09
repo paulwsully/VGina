@@ -6,6 +6,7 @@ import Checkbox from "../Utilities/Checkbox";
 import Input from "../Utilities/Input";
 import SoundItem from "./SoundItem";
 import "./Triggers.scss";
+import { toNumber } from "lodash";
 
 const triggerReset = {
   saySomething: false,
@@ -19,12 +20,17 @@ const triggerReset = {
   timerHours: 0,
   timerMinutes: 0,
   timerSeconds: 0,
+  doTimerExpirationSound: false,
+  timerExpirationSound: "",
+  doTimerExpirationVocalCountdown: false,
+  timerExpirationVocalCountdownStart: 0,
 };
 
 function NewTrigger({ selectedTrigger, refreshTriggers }) {
   const [showNewTrigger, setShowNewTrigger] = useState(false);
   const [isCancelConfirm, setIsCancelConfirm] = useState(false);
   const [selectedSound, setSelectedSound] = useState("");
+  const [selectedTimerExpirationSound, setselectedTimerExpirationSound] = useState("");
   const [soundFiles, setSoundFiles] = useState([]);
   const [newTrigger, setNewTrigger] = useState(triggerReset);
   const [InvalidData, setInvalidData] = useState(false);
@@ -45,6 +51,8 @@ function NewTrigger({ selectedTrigger, refreshTriggers }) {
   useEffect(() => {
     if (selectedTrigger) {
       setNewTrigger(selectedTrigger);
+      setSelectedSound(selectedTrigger.sound);
+      setselectedTimerExpirationSound(selectedTrigger.timerExpirationSound);
       setShowNewTrigger(true); // Automatically expand the NewTrigger form
     } else {
       resetTrigger(); // Resets to default if no trigger is selected
@@ -103,11 +111,16 @@ function NewTrigger({ selectedTrigger, refreshTriggers }) {
     setNewTrigger({ ...newTrigger, sound: soundName });
   };
 
+  const handleTimerExpirationSoundItemClick = (soundName) => {
+    setselectedTimerExpirationSound(soundName);
+    setNewTrigger({ ...newTrigger, timerExpirationSound: soundName });
+  };
+
   const handleNewTriggerClick = () => {
     if (!showNewTrigger) {
-      setNewTrigger(triggerReset); // Reset form when opening a new trigger form
+      setNewTrigger(triggerReset);
     }
-    setShowNewTrigger(!showNewTrigger); // This allows toggling the form manually as well
+    setShowNewTrigger(!showNewTrigger);
   };
 
   const isActionValid = () => {
@@ -127,11 +140,9 @@ function NewTrigger({ selectedTrigger, refreshTriggers }) {
     let triggerToUpdateIndex = existingTriggers.findIndex((trig) => trig.id === newTrigger.id);
 
     if (triggerToUpdateIndex !== -1) {
-      // If trigger exists, update it
       existingTriggers[triggerToUpdateIndex] = newTrigger;
     } else {
-      // If trigger doesn't exist, add it with a new ID
-      const newId = newTrigger.id || uuidv4(); // Use existing ID if editing, or assign new if adding
+      const newId = newTrigger.id || uuidv4();
       existingTriggers.push({ ...newTrigger, id: newId });
     }
 
@@ -176,7 +187,7 @@ function NewTrigger({ selectedTrigger, refreshTriggers }) {
         {showNewTrigger && (
           <div className="pill button error" onClick={handleCancelClick}>
             <FontAwesomeIcon icon={faTimes} />
-            {isCancelConfirm ? " This will erase this new Trigger. Continue?" : " Cancel"}
+            {isCancelConfirm ? "This will erase any changes. Continue?" : " Cancel"}
           </div>
         )}
       </div>
@@ -193,7 +204,7 @@ function NewTrigger({ selectedTrigger, refreshTriggers }) {
           <h3>Actions</h3>
           <div className={`panel ${newTrigger.saySomething ? "" : "inactive"}`}>
             <Checkbox id="saySomething" label="Say something" checked={newTrigger.saySomething} onCheckChange={(checked) => handleCheckboxChange("saySomething", checked)} />
-            {newTrigger.saySomething && <Input id="speechText" placeholder="" label="Say..." onTextChange={(value) => handleInputChange("speechText", value)} />}
+            {newTrigger.saySomething && <Input id="speechText" value={newTrigger.speechText} placeholder="" label="Say..." onTextChange={(value) => handleInputChange("speechText", value)} />}
           </div>
           <div className={`panel ${newTrigger.playSound ? "" : "inactive"}`}>
             <div className="sounds-header">
@@ -218,32 +229,78 @@ function NewTrigger({ selectedTrigger, refreshTriggers }) {
           <div className={`panel ${newTrigger.setTimer ? "" : "inactive"}`}>
             <Checkbox id="setTimer" label="Set Timer" checked={newTrigger.setTimer} onCheckChange={(checked) => handleCheckboxChange("setTimer", checked)} />
             {newTrigger.setTimer && (
-              <div className="input-row timer-fields">
-                <Input
-                  id="timerHours"
-                  type="number"
-                  value={newTrigger.timerHours === 0 ? "" : newTrigger.timerHours}
-                  placeholder=" "
-                  label="HH"
-                  onTextChange={(value) => handleInputChange("timerHours", value)}
+              <>
+                <div className="input-row timer-fields">
+                  <Input
+                    id="timerHours"
+                    type="number"
+                    value={newTrigger.timerHours === 0 ? "" : newTrigger.timerHours}
+                    placeholder=" "
+                    label="HH"
+                    onTextChange={(value) => handleInputChange("timerHours", value)}
+                  />
+                  <Input
+                    id="timerMinutes"
+                    type="number"
+                    value={newTrigger.timerMinutes === 0 ? "" : newTrigger.timerMinutes}
+                    placeholder=" "
+                    label="MM"
+                    onTextChange={(value) => handleInputChange("timerMinutes", value)}
+                  />
+                  <Input
+                    id="timerSeconds"
+                    type="number"
+                    value={newTrigger.timerSeconds === 0 ? "" : newTrigger.timerSeconds}
+                    placeholder=" "
+                    label="SS"
+                    onTextChange={(value) => handleInputChange("timerSeconds", value)}
+                  />
+                </div>
+                <h4>Expiration Action</h4>
+                <div className="sounds-header">
+                  <Checkbox
+                    id="doTimerExpirationSound"
+                    label="Play a sound"
+                    checked={newTrigger.doTimerExpirationSound}
+                    onCheckChange={(checked) => handleCheckboxChange("doTimerExpirationSound", checked)}
+                  />
+                  {newTrigger.doTimerExpirationSound && newTrigger.timerExpirationSound && (
+                    <span className="pill">
+                      <div className="play" onClick={() => playSound(newTrigger.timerExpirationSound)}>
+                        <FontAwesomeIcon icon={faPlayCircle} />
+                      </div>
+                      {selectedTimerExpirationSound.replace(".mp3", "").replace(/-/g, " ")}
+                    </span>
+                  )}
+                </div>
+                {newTrigger.doTimerExpirationSound && (
+                  <div className="sound-list">
+                    {soundFiles.map((file, index) => (
+                      <SoundItem key={file} soundName={file} onClick={handleTimerExpirationSoundItemClick} />
+                    ))}
+                  </div>
+                )}
+
+                <Checkbox
+                  id="doTimerExpirationVocalCountdown"
+                  label="Vocal countdown"
+                  checked={newTrigger.doTimerExpirationVocalCountdown}
+                  onCheckChange={(checked) => handleCheckboxChange("doTimerExpirationVocalCountdown", checked)}
                 />
-                <Input
-                  id="timerMinutes"
-                  type="number"
-                  value={newTrigger.timerMinutes === 0 ? "" : newTrigger.timerMinutes}
-                  placeholder=" "
-                  label="MM"
-                  onTextChange={(value) => handleInputChange("timerMinutes", value)}
-                />
-                <Input
-                  id="timerSeconds"
-                  type="number"
-                  value={newTrigger.timerSeconds === 0 ? "" : newTrigger.timerSeconds}
-                  placeholder=" "
-                  label="SS"
-                  onTextChange={(value) => handleInputChange("timerSeconds", value)}
-                />
-              </div>
+                {newTrigger.doTimerExpirationVocalCountdown && (
+                  <div className="input-row timer-fields">
+                    Start counting down at:
+                    <Input
+                      id="timerExpirationVocalCountdownStart"
+                      type="number"
+                      value={newTrigger.timerExpirationVocalCountdownStart === 0 ? "" : newTrigger.timerExpirationVocalCountdownStart}
+                      placeholder=" "
+                      label="sec"
+                      onTextChange={(value) => handleInputChange("timerExpirationVocalCountdownStart", value)}
+                    />
+                  </div>
+                )}
+              </>
             )}
           </div>
         </section>

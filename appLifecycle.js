@@ -75,12 +75,12 @@ function setupAppLifecycle() {
       const text = clipboard.readText();
       await ks.sendText(text);
     });
-    globalShortcut.register("Escape", () => {
-      const itemDetailsWindow = getOverlayItemDetails();
-      if (itemDetailsWindow && !itemDetailsWindow.isDestroyed()) {
-        itemDetailsWindow.close();
-      }
-    });
+    // globalShortcut.register("Escape", () => {
+    //   const itemDetailsWindow = getOverlayItemDetails();
+    //   if (itemDetailsWindow && !itemDetailsWindow.isDestroyed()) {
+    //     itemDetailsWindow.close();
+    //   }
+    // });
     autoUpdater.checkForUpdatesAndNotify();
   });
 

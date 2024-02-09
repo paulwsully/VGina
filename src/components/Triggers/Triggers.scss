@@ -80,6 +80,7 @@
   display: flex;
   justify-content: flex-start;
   gap: 32px;
+  align-items: center;
   &.timer-fields {
     .input {
       max-width: 50px;

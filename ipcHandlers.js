@@ -282,6 +282,17 @@ function setupIpcHandlers() {
     }
   });
 
+  ipcMain.on("get-sounds-path", (event, fileName) => {
+    const userDataPath = app.getPath("userData");
+    const fullPath = path.join(userDataPath, `sounds/${fileName}`);
+    const mainWindow = getMainWindow();
+    mainWindow && mainWindow.webContents.send("play-sound", fullPath);
+  });
+
+  ipcMain.on("speak", (event, speech) => {
+    speak(speech);
+  });
+
   ipcMain.handle("close-itemDetailsWindow", (event) => {
     const itemDetailsWindow = getOverlayItemDetails();
     if (itemDetailsWindow && !itemDetailsWindow.isDestroyed()) {
@@ -338,6 +349,35 @@ function setupIpcHandlers() {
     }
   }
 
+  async function speak(speech) {
+    const userDataPath = app.getPath("userData");
+    const soundFilePath = path.join(userDataPath, `./sounds/${sanitizeFilename(speech)}.mp3`);
+
+    try {
+      await exists(soundFilePath, fs.constants.F_OK);
+    } catch (error) {
+      const request = {
+        input: { text: speech },
+        voice: {
+          languageCode: "en-US",
+          name: "en-US-Studio-O",
+        },
+        audioConfig: {
+          audioEncoding: "MP3",
+          speakingRate: 1,
+          effectsProfileId: ["large-home-entertainment-class-device"],
+        },
+      };
+
+      const [response] = await tts.synthesizeSpeech(request);
+      await fsPromises.mkdir(path.dirname(soundFilePath), { recursive: true });
+      await writeFile(soundFilePath, response.audioContent, "binary");
+    }
+
+    const mainWindow = getMainWindow();
+    mainWindow && mainWindow.webContents.send("play-sound", soundFilePath);
+  }
+
   async function processCommonActions(lastLine, settingKey, search, useRegex) {
     let matchFound = false;
     if (useRegex) {
@@ -364,8 +404,7 @@ function setupIpcHandlers() {
   async function processSpeakAction(lastLine, settingKey, search, sound, useRegex) {
     const actionRequired = await processCommonActions(lastLine, settingKey, search, useRegex);
     if (actionRequired) {
-      const userDataPath = app.getPath("userData");
-      const soundFilePath = path.join(userDataPath, `./sounds/${sanitizeFilename(sound)}.mp3`);
+      let soundFilePath = path.join(userDataPath, `./sounds/${sanitizeFilename(sound)}.mp3`);
 
       try {
         await exists(soundFilePath, fs.constants.F_OK);
@@ -403,17 +442,21 @@ function setupIpcHandlers() {
     }
   }
 
-  async function processTimerAction(lastLine, settingKey, search, useRegex, triggerName, timerHours, timerMinutes, timerSeconds) {
+  async function processTimerAction(lastLine, settingKey, search, useRegex, timer) {
     const actionRequired = await processCommonActions(lastLine, settingKey, search, useRegex);
     if (actionRequired) {
       const activeTimers = store.get("activeTimers", []);
       const uniqueId = `timer-${Date.now()}`;
       const newTimer = {
         id: uniqueId,
-        triggerName,
-        timerHours,
-        timerMinutes,
-        timerSeconds,
+        triggerName: timer.triggerName,
+        timerHours: timer.timerHours,
+        timerMinutes: timer.timerMinutes,
+        timerSeconds: timer.timerSeconds,
+        doTimerExpirationSound: timer.doTimerExpirationSound,
+        timerExpirationSound: timer.timerExpirationSound,
+        doTimerExpirationVocalCountdown: timer.doTimerExpirationVocalCountdown,
+        timerExpirationVocalCountdownStart: timer.timerExpirationVocalCountdownStart,
       };
       activeTimers.push(newTimer);
       store.set("activeTimers", activeTimers);
@@ -476,7 +519,6 @@ function setupIpcHandlers() {
     }
   });
 
-  const triggers = store.get("triggers");
   const actions = [
     { actionType: "speak", key: "rootBroke", search: "Roots spell has worn off", sound: "Root fell off", useRegex: false },
     { actionType: "speak", key: "feignDeath", search: "has fallen to the ground", sound: "Failed feign", useRegex: false },
@@ -489,24 +531,27 @@ function setupIpcHandlers() {
   ];
 
   function processNewLine(line) {
-    actions.forEach(({ actionType, key, search, sound, useRegex }) => {
-      if (actionType === "speak") processSpeakAction(line, key, search, sound, useRegex, actionType);
-      if (actionType === "sound") processSoundAction(line, key, search, sound, useRegex, actionType);
-    });
-
-    if (triggers && triggers.length > 0) {
-      triggers.map((trigger, index) => {
-        if (trigger.saySomething) processSpeakAction(line, "", trigger.searchText, trigger.speechText, trigger.searchRegex);
-        if (trigger.playSound) processSoundAction(line, "", trigger.searchText, triggers[index].sound.replace(".mp3", ""), trigger.searchRegex);
-        if (trigger.setTimer) processTimerAction(line, "", trigger.searchText, trigger.searchRegex, trigger.triggerName, trigger.timerHours, trigger.timerMinutes, trigger.timerSeconds);
+    if (line) {
+      const triggers = store.get("triggers");
+      actions.forEach(({ actionType, key, search, sound, useRegex }) => {
+        if (actionType === "speak") processSpeakAction(line, key, search, sound, useRegex, actionType);
+        if (actionType === "sound") processSoundAction(line, key, search, sound, useRegex, actionType);
       });
-    }
 
-    if (line.includes("**A Magic Die is rolled by") || line.includes("**It could have been any number from")) parseRolls(line);
-    if (line.includes("tells you,")) parseLineForBid(line);
-    if (line.includes("snared")) {
-      store.set("latestLine", line);
-      getMainWindow().webContents.send("new-line", line);
+      if (triggers && triggers.length > 0) {
+        triggers.map((trigger, index) => {
+          if (trigger.saySomething) processSpeakAction(line, "", trigger.searchText, trigger.speechText, trigger.searchRegex);
+          if (trigger.playSound) processSoundAction(line, "", trigger.searchText, triggers[index].sound.replace(".mp3", ""), trigger.searchRegex);
+          if (trigger.setTimer) processTimerAction(line, "", trigger.searchText, trigger.searchRegex, trigger);
+        });
+      }
+
+      if (line.includes("**A Magic Die is rolled by") || line.includes("**It could have been any number from")) parseRolls(line);
+      if (line.includes("tells you,")) parseLineForBid(line);
+      if (line.includes("snared")) {
+        store.set("latestLine", line);
+        getMainWindow().webContents.send("new-line", line);
+      }
     }
   }
 

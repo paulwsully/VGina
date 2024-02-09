@@ -7,20 +7,35 @@ const Timer = memo(({ timer }) => {
   const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
+    const calculateTimeLeft = () => Math.ceil((endTime.current - Date.now()) / 1000);
+    setTimeLeft(calculateTimeLeft());
+
     const intervalId = setInterval(() => {
-      const now = Date.now();
-      const remainingTimeInSeconds = Math.round((endTime.current - now) / 1000);
+      const remainingTimeInSeconds = calculateTimeLeft();
       setTimeLeft(remainingTimeInSeconds);
 
-      if (remainingTimeInSeconds <= -1) {
+      if (timer.doTimerExpirationVocalCountdown) {
+        const countdownStartTime = parseInt(timer.timerExpirationVocalCountdownStart, 10);
+        if (remainingTimeInSeconds <= countdownStartTime && remainingTimeInSeconds >= 1) {
+          window.electron.ipcRenderer.send("speak", `${remainingTimeInSeconds}`);
+        }
+      }
+
+      if (remainingTimeInSeconds === 0) {
+        if (timer.doTimerExpirationSound) {
+          window.electron.ipcRenderer.send("get-sounds-path", timer.timerExpirationSound);
+        }
+      }
+
+      if (remainingTimeInSeconds < 0) {
+        window.electron.ipcRenderer.send("remove-activeTimer", timer.id);
         clearInterval(intervalId);
         setIsVisible(false);
-        window.electron.ipcRenderer.send("remove-activeTimer", timer.id);
       }
     }, 1000);
 
     return () => clearInterval(intervalId);
-  }, [timer.id]);
+  }, [timer]);
 
   const hours = Math.floor(timeLeft / 3600);
   const minutes = Math.floor((timeLeft % 3600) / 60);
