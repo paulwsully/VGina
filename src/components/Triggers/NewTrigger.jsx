@@ -131,6 +131,7 @@ function NewTrigger({ selectedTrigger, refreshTriggers }) {
   };
 
   const handleSaveNewTrigger = async () => {
+    console.log(newTrigger);
     if (!newTrigger.triggerName || !newTrigger.searchText || !isActionValid()) {
       setInvalidData(true);
       return;

@@ -404,7 +404,8 @@ function setupIpcHandlers() {
   async function processSpeakAction(lastLine, settingKey, search, sound, useRegex) {
     const actionRequired = await processCommonActions(lastLine, settingKey, search, useRegex);
     if (actionRequired) {
-      let soundFilePath = path.join(userDataPath, `./sounds/${sanitizeFilename(sound)}.mp3`);
+      const userDataPath = app.getPath("userData");
+      const soundFilePath = path.join(userDataPath, `./sounds/${sanitizeFilename(sound)}.mp3`);
 
       try {
         await exists(soundFilePath, fs.constants.F_OK);
