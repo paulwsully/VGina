@@ -1671,6 +1671,13 @@
         "QuestData": []
     },
     {
+        "ItemName": "Bone Clasped Girdle",
+        "URL": "https://wiki.project1999.com/Bone-Clasped_Girdle",
+        "ItemData": "MAGIC ITEM\r\nSlot: WAIST\r\nAC: 4\r\nSTR: +7 DEX: +7 STA: +7 HP: +75 MANA: +75\r\nWT: 0.1 Size: SMALL\r\nClass: CLR DRU BRD SHM NEC WIZ MAG ENC\r\nRace: ALL",
+        "ItemImage": "https://wiki.project1999.com/images/Item_718.png",
+        "QuestData": []
+    },
+    {
         "ItemName": "Bone Razor",
         "URL": "https://wiki.project1999.com/Bone_Razor",
         "ItemData": "MAGIC ITEM LORE ITEM \r\nSlot: PRIMARY SECONDARY\r\nSkill: Piercing Atk Delay: 22\r\nDMG: 10 \r\nWT: 1.5 Size: MEDIUM\r\nClass: ROG\r\nRace: ALL except ERU HIE TRL OGR IKS",

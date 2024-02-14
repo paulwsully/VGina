@@ -14,16 +14,16 @@ function TimerOverlay({}) {
     window.electron.ipcRenderer.on("updateActiveTimers", updateTimers);
     updateTimers();
 
+    const fetchSettings = async () => {
+      const storedOverlayTimersLocked = await window.electron.ipcRenderer.invoke("storeGet", "overlayTimersLocked");
+      window.electron.ipcRenderer.send(`${storedOverlayTimersLocked ? "lock" : "unlock"}-overlay-timers`);
+    };
+
+    fetchSettings();
+
     return () => {
       window.electron.ipcRenderer.removeAllListeners("updateActiveTimers");
     };
-  }, []);
-
-  useEffect(() => {
-    if (overlayRef.current) {
-      const { width, height } = overlayRef.current.getBoundingClientRect();
-      window.electron.ipcRenderer.send("timersOverlay-resize", { width, height });
-    }
   }, []);
 
   return (

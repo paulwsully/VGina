@@ -7,7 +7,6 @@ function SoundItem({ soundName, onClick }) {
   const playSound = async (filePath) => {
     try {
       const audioPath = await window.electron.getSoundPath(filePath);
-      console.log(audioPath);
       window.electron.playSound(audioPath);
     } catch (error) {
       console.error("Error playing sound:", error);

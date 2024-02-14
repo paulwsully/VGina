@@ -1,6 +1,6 @@
 import { app, globalShortcut, clipboard } from "electron";
 import { createWindow, createOverlayBids, createOverlayTimers } from "./window.js";
-import { getOverlayBid, getOverlayItemDetails, getOverlayTimers } from "./windowManager.js";
+import { getOverlayBid, getOverlayTimers } from "./windowManager.js";
 import Store from "electron-store";
 import pkg from "electron-updater";
 const { autoUpdater } = pkg;
@@ -21,7 +21,7 @@ function setupAppLifecycle() {
     if (!fs.existsSync(soundsDirPath)) {
       fs.mkdirSync(soundsDirPath, { recursive: true });
     }
-    const sourcePath = path.join(__dirname, "sounds");
+    const sourcePath = path.join(__dirname, "../sounds");
     fs.readdir(sourcePath, { withFileTypes: true }, (err, files) => {
       if (err) {
         console.error("Error reading sounds directory:", err);

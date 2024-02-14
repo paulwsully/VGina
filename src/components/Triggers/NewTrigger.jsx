@@ -6,7 +6,6 @@ import Checkbox from "../Utilities/Checkbox";
 import Input from "../Utilities/Input";
 import SoundItem from "./SoundItem";
 import "./Triggers.scss";
-import { toNumber } from "lodash";
 
 const triggerReset = {
   saySomething: false,

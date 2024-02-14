@@ -2,7 +2,7 @@
   "name": "vgina",
   "private": true,
   "version": "0.3.0",
-  "main": "main.js",
+  "main": "./main/main.js",
   "type": "module",
   "scripts": {
     "dev": "concurrently \"npm run dev:react\" \"npm run dev:electron\"",
@@ -60,6 +60,7 @@
     "dotenv": "^16.4.1",
     "electron-store": "^8.1.0",
     "electron-updater": "^6.1.7",
+    "fast-xml-parser": "^4.3.4",
     "firebase": "^10.7.2",
     "lodash": "^4.17.21",
     "node-key-sender": "^1.0.11",

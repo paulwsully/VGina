@@ -25,6 +25,7 @@ function Bids({ dkp }) {
     getActiveBids();
 
     const bidsUpdatedListener = async () => {
+      console.log("bidsUpdatedListener");
       await getActiveBids();
     };
 
@@ -50,9 +51,9 @@ function Bids({ dkp }) {
     setShowBidsOverlay(checked);
     window.electron.ipcRenderer.send("storeSet", "showBidsOverlay", checked);
     if (checked) {
-      window.electron.ipcRenderer.send("open-overlay-window");
+      window.electron.ipcRenderer.send("open-bid-overlay-window");
     } else {
-      window.electron.ipcRenderer.send("close-overlay-window");
+      window.electron.ipcRenderer.send("close-bid-overlay-window");
     }
   };
 
