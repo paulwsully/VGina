@@ -25,7 +25,12 @@ function Bid({ itemName, bidders, findCurrentDKP }) {
 
   const handleItemClick = async () => {
     const itemsData = await window.electron.readItemsData();
-    const foundItem = itemsData.find((item) => item.ItemName === itemName);
+    const cleanItemName = itemName.replace(/[\W_]+/g, "").toLowerCase();
+
+    const foundItem = itemsData.find((item) => {
+      const cleanItemNameFromData = item.ItemName.replace(/[\W_]+/g, "").toLowerCase();
+      return cleanItemName === cleanItemNameFromData;
+    });
 
     await window.electron.ipcRenderer.invoke("set-foundItem", foundItem);
     await window.electron.ipcRenderer.invoke("open-itemDetailsWindow");

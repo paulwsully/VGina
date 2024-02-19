@@ -5,9 +5,10 @@ import Triggers from "./components/Triggers/Triggers";
 import DkpAndLoot from "./components/DkpAndLoot/DkpAndLoot";
 import Alerts from "./components/Alerts/Alerts";
 import Bids from "./components/DkpAndLoot/Bids";
-import "./App.scss";
 import ItemDetailsWindow from "./components/DkpAndLoot/ItemDetailsWindow";
 import TimerOverlay from "./components/Triggers/TimerOverlay";
+import Tracker from "./components/Tracker/Tracker";
+import "./App.scss";
 
 function App() {
   const isDev = process.env.NODE_ENV === "development";
@@ -16,7 +17,7 @@ function App() {
   const [tabs] = useState([
     { label: "Triggers", path: "/triggers" },
     { label: "DKP & Loot", path: "/dkp-and-loot" },
-    { label: "Alerts", path: "/alerts" },
+    { label: "Alerts and Options", path: "/alerts" },
   ]);
   const [sortedData, setSortedData] = useState(null);
 
@@ -120,6 +121,7 @@ function App() {
         />
         <Route path="/dkp-and-loot/overlay/item-details" element={<ItemDetailsWindow />} />
         <Route path="/dkp-and-loot/overlay/timers" element={<TimerOverlay />} />
+        <Route path="/dkp-and-loot/overlay/tracker" element={<Tracker />} />
       </Routes>
     </Router>
   );

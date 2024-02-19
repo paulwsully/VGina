@@ -1,9 +1,11 @@
 {
   "name": "vgina",
   "private": true,
-  "version": "0.3.0",
-  "main": "./main/main.js",
+  "version": "0.4.2",
+  "main": "main/main.js",
   "type": "module",
+  "author": "Manie",
+  "description": "VGina is a log parser for the MMORPG, Everquest.",
   "scripts": {
     "dev": "concurrently \"npm run dev:react\" \"npm run dev:electron\"",
     "dev:react": "vite",
@@ -12,6 +14,7 @@
     "pack": "electron-builder --dir",
     "dist:local": "npm run build:react && electron-builder --publish never",
     "dist:publish": "cross-env GH_TOKEN=${GH_TOKEN} npm run build:react && electron-builder --publish always",
+    "deploy:functions": "cd functions && firebase deploy --only functions && cd ../",
     "postinstall": "electron-builder install-app-deps"
   },
   "build": {
@@ -38,17 +41,10 @@
     "files": [
       "sounds/**/*",
       "dist/**/*",
-      "main.js",
-      "preload.js",
+      "main/**/*",
       "package.json",
-      "windowManager.js",
-      "window.js",
-      "ipcHandlers.js",
-      "appLifecycle.js",
       "firebaseConfig.js",
-      "itemsList.txt",
-      "itemsData.json",
-      "vgina-412004-91343028ed0c.json"
+      "itemsData.json"
     ]
   },
   "dependencies": {
@@ -56,6 +52,7 @@
     "@fortawesome/free-solid-svg-icons": "^6.5.1",
     "@fortawesome/react-fontawesome": "^0.2.0",
     "@google-cloud/text-to-speech": "^5.0.2",
+    "@supabase/supabase-js": "^2.39.6",
     "concurrently": "^8.2.2",
     "dotenv": "^16.4.1",
     "electron-store": "^8.1.0",
@@ -67,9 +64,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.21.3",
-    "read-last-lines": "^1.8.0",
     "sass": "^1.70.0",
-    "tail": "^2.2.6",
     "uuid": "^9.0.1"
   },
   "devDependencies": {

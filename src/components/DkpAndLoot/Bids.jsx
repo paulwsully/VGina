@@ -24,12 +24,11 @@ function Bids({ dkp }) {
 
     getActiveBids();
 
-    const bidsUpdatedListener = async () => {
-      console.log("bidsUpdatedListener");
-      await getActiveBids();
+    const bidsUpdatedListener = () => {
+      getActiveBids();
     };
 
-    window.electron.ipcRenderer.on("bids-updated", bidsUpdatedListener);
+    window.electron.ipcRenderer.on("activeBids-updated", bidsUpdatedListener);
 
     const fetchSettings = async () => {
       const storedShowBidsOverlay = await window.electron.ipcRenderer.invoke("storeGet", "showBidsOverlay");

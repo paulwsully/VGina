@@ -795,6 +795,13 @@
         "QuestData": []
     },
     {
+        "ItemName": "Ethereal Mist Boots",
+        "URL": "https://wiki.project1999.com/Ethereal_Mist_Boots",
+        "ItemData": "MAGIC ITEM NO DROP\r\nSlot: FEET\r\nAC: 15\r\nWIS: +5\r\nSV COLD: +7\r\nWT: 4.9 Size: LARGE\r\nClass: CLR\r\nRace: HUM ERU HIE DEF DWF HFL GNM",
+        "ItemImage": "https://wiki.project1999.com/images/Item_524.png",
+        "QuestData": []
+    },
+    {
         "ItemName": "Ethereal Mist Bracers",
         "URL": "https://wiki.project1999.com/Ethereal_Mist_Bracers",
         "ItemData": "MAGIC ITEM NO DROP\r\nSlot: WRIST\r\nAC: 9\r\nDEX: +9 CHA: +9 MANA: +20\r\nWT: 3.0 Size: SMALL\r\nClass: CLR\r\nRace: HUM ERU HIE DEF DWF HFL GNM",

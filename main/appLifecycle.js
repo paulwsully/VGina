@@ -1,5 +1,5 @@
 import { app, globalShortcut, clipboard } from "electron";
-import { createWindow, createOverlayBids, createOverlayTimers } from "./window.js";
+import { createWindow, createOverlayBids, createOverlayTimers, createTrackerWindow } from "./window.js";
 import { getOverlayBid, getOverlayTimers } from "./windowManager.js";
 import Store from "electron-store";
 import pkg from "electron-updater";
@@ -33,7 +33,7 @@ function setupAppLifecycle() {
         if (file.isFile()) {
           fs.copyFileSync(sourceFilePath, destFilePath);
         } else if (file.isDirectory()) {
-          console.log(`Directory copying not implemented for: ${file.name}`);
+          console.error(`Directory copying not implemented for: ${file.name}`);
         }
       });
     });
@@ -52,6 +52,8 @@ function setupAppLifecycle() {
     const overlayBidLocked = store.get("overlayBidLocked", false);
     const showTimersOverlay = store.get("showTimersOverlay", false);
     const overlayTimersLocked = store.get("overlayTimersLocked", false);
+    const showTrackerOverlay = store.get("tracker", false);
+    const overlayTrackerLocked = store.get("overlayTrackerLocked", false);
     if (showBidsOverlay) {
       createOverlayBids()
         .then(() => {
@@ -67,6 +69,15 @@ function setupAppLifecycle() {
           const overlayTimersWindow = getOverlayTimers();
           overlayTimersWindow.setIgnoreMouseEvents(overlayTimersLocked, { forward: true });
           overlayTimersWindow.webContents.executeJavaScript(`document.body.classList.add("${overlayTimersLocked ? "no-drag" : "drag"}")`, true);
+        })
+        .catch((err) => console.log(err));
+    }
+    if (showTrackerOverlay) {
+      createTrackerWindow()
+        .then(() => {
+          const overlayTrackerWindow = getOverlayTimers();
+          overlayTrackerWindow.setIgnoreMouseEvents(overlayTrackerLocked, { forward: true });
+          overlayTrackerWindow.webContents.executeJavaScript(`document.body.classList.add("${overlayTrackerLocked ? "no-drag" : "drag"}")`, true);
         })
         .catch((err) => console.log(err));
     }
@@ -95,7 +106,7 @@ function setupAppLifecycle() {
   });
 
   autoUpdater.on("error", (error) => {
-    console.log(`Update error: ${error}`);
+    console.error(`Update error: ${error}`);
   });
 
   autoUpdater.on("update-available", () => {

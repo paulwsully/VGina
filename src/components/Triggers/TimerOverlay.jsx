@@ -7,7 +7,10 @@ function TimerOverlay({}) {
 
   useEffect(() => {
     const updateTimers = async () => {
-      const timers = await window.electron.getActiveTimers();
+      let timers = await window.electron.getActiveTimers();
+      if (!Array.isArray(timers)) {
+        timers = [];
+      }
       setActiveTimers(timers);
     };
 
@@ -28,11 +31,7 @@ function TimerOverlay({}) {
 
   return (
     <div className="trigger-overlay" ref={overlayRef}>
-      <div className="timers">
-        {activeTimers.map((timer) => (
-          <Timer key={timer.id} timer={timer} />
-        ))}
-      </div>
+      <div className="timers">{activeTimers && activeTimers.map((timer, index) => <Timer key={timer.id + index} timer={timer} />)}</div>
     </div>
   );
 }

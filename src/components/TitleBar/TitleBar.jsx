@@ -81,8 +81,6 @@ const TitleBar = ({ fileName }) => {
         const existingTriggers = (await window.electron.ipcRenderer.invoke("storeGet", "triggers")) || [];
         const updatedTriggers = existingTriggers.concat(remappedTriggers);
         window.electron.ipcRenderer.send("storeSet", "triggers", updatedTriggers);
-
-        console.log("Triggers updated in store successfully.");
       }
     } catch (error) {
       console.error("Error importing file:", error);
@@ -109,7 +107,7 @@ const TitleBar = ({ fileName }) => {
     return triggers.map((trigger) => {
       let mappedTrigger = {
         saySomething: trigger.UseTextToVoice,
-        playSound: trigger.PlayMediaFile,
+        playSound: trigger.PlayMediaFile ? true : false,
         triggerName: trigger.Name,
         searchText: trigger.TriggerText,
         searchRegex: trigger.EnableRegex === "True" || trigger.EnableRegex === true,
@@ -126,9 +124,6 @@ const TitleBar = ({ fileName }) => {
         mappedTrigger.setTimer = true;
       }
 
-      if (mappedTrigger.playSound) {
-        mappedTrigger.sound = true;
-      }
       if (mappedTrigger.timerEndedTrigger?.playMediaFile || mappedTrigger.timerEndingTrigger?.playMediaFile) {
         mappedTrigger.doTimerExpirationSound = true;
       }
@@ -157,10 +152,10 @@ const TitleBar = ({ fileName }) => {
         </div>
       )}
       <div className="window-controls">
-        <div className="window-control" onClick={handleFileImport}>
+        <div className="window-control" onClick={handleFileImport} title="Import from GINA">
           <FontAwesomeIcon icon={faFileImport} />
         </div>
-        <div className="window-control" onClick={handleOpenLogFile}>
+        <div className="window-control" onClick={handleOpenLogFile} title="Select log file">
           <FontAwesomeIcon icon={faFolderOpen} />
           {!fileName && (
             <div className="click-here">

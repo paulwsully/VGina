@@ -11,12 +11,11 @@ function ClosedBids({}) {
       if (snapshot.exists()) {
         setClosedBids(snapshot.val());
       } else {
-        console.log("No data available");
+        console.error("No data available");
       }
     });
   }, []);
 
-  // Sort bids by timestamp from newest to oldest
   const sortedBids = Object.entries(closedBids).sort((a, b) => {
     return new Date(b[1].timestamp) - new Date(a[1].timestamp);
   });

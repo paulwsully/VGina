@@ -39,3 +39,14 @@ export function setOverlayItemDetails(window) {
 export function getOverlayItemDetails() {
   return overlayItemDetails;
 }
+
+/////////////////////////////////////////////////////////////
+
+let overlayTracker = null;
+export function setOverlayTracker(window) {
+  overlayTracker = window;
+}
+
+export function getOverlayTracker() {
+  return overlayTracker;
+}

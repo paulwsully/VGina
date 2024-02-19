@@ -1,24 +1,48 @@
 import { config } from "dotenv";
 config();
 import { app, ipcMain } from "electron";
-import { getMainWindow, getOverlayTimers } from "./windowManager.js";
+import { getMainWindow, getOverlayBid, getOverlayTimers, getOverlayTracker } from "./windowManager.js";
 import Store from "electron-store";
-import textToSpeech from "@google-cloud/text-to-speech";
+import { getFunctions, httpsCallable } from "firebase/functions";
 const store = new Store();
 import path from "path";
 import fs from "fs";
-import { promises as fsPromises, watchFile } from "fs";
-const { writeFile, access: exists } = fsPromises;
-import { fileURLToPath } from "url";
+import { promises as fsPromises, watchFile, readFileSync } from "fs";
 import { sanitizeFilename } from "./util.js";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const tts = new textToSpeech.TextToSpeechClient({
-  keyFilename: path.join(__dirname, "./../vgina-412004-91343028ed0c.json"),
-});
-
 function setupIpcHandlers() {
+  let lastSize = 0;
+  let lastLineCount = 0;
+  let currentRoller = null;
+  let lines = [];
+
+  ipcMain.on("start-file-watch", async () => {
+    try {
+      const filePath = store.get("logFile");
+      if (!filePath) return;
+
+      const stats = await fsPromises.stat(filePath);
+      lastSize = stats.size;
+
+      watchFile(filePath, { interval: 100 }, async (curr) => {
+        if (curr.size > lastSize) {
+          const fd = await fsPromises.open(filePath, "r");
+          const bufferSize = curr.size - lastSize;
+          const buffer = Buffer.alloc(bufferSize);
+          await fd.read(buffer, 0, bufferSize, lastSize);
+          await fd.close();
+          const newContent = buffer.toString("utf8");
+          const newLines = newContent.split("\n").filter((line) => line !== "");
+          debouncedProcessNewLines(newLines);
+
+          lastSize = curr.size;
+        }
+      });
+    } catch (err) {
+      console.error("Error in start-file-watch handler:", err);
+    }
+  });
+
   function updateRolls() {
     const updatedRolls = store.get("rolls", []);
     if (Array.isArray(updatedRolls)) {
@@ -60,29 +84,26 @@ function setupIpcHandlers() {
     if (actionRequired) {
       const userDataPath = app.getPath("userData");
       const soundFilePath = path.join(userDataPath, `./sounds/${sanitizeFilename(sound)}.mp3`);
+      const mainWindow = getMainWindow();
 
       try {
-        await exists(soundFilePath, fs.constants.F_OK);
+        await fsPromises.access(soundFilePath, fs.constants.F_OK);
       } catch (error) {
-        const request = {
-          input: { text: sound },
-          voice: {
-            languageCode: "en-US",
-            name: "en-US-Studio-O",
-          },
-          audioConfig: {
-            audioEncoding: "MP3",
-            speakingRate: 1,
-            effectsProfileId: ["large-home-entertainment-class-device"],
-          },
-        };
+        const functions = getFunctions();
+        const speech = httpsCallable(functions, "processSpeakAction");
 
-        const [response] = await tts.synthesizeSpeech(request);
-        await fsPromises.mkdir(path.dirname(soundFilePath), { recursive: true });
-        await writeFile(soundFilePath, response.audioContent, "binary");
+        speech(sound)
+          .then((result) => {
+            const audioBuffer = Buffer.from(result.data.audioContent, "base64");
+
+            fsPromises.mkdir(path.dirname(soundFilePath), { recursive: true });
+            fsPromises.writeFile(soundFilePath, audioBuffer);
+            mainWindow && mainWindow.webContents.send("play-sound", soundFilePath);
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+          });
       }
-
-      const mainWindow = getMainWindow();
       mainWindow && mainWindow.webContents.send("play-sound", soundFilePath);
     }
   }
@@ -107,10 +128,8 @@ function setupIpcHandlers() {
       if (actionRequired) {
         const activeTimers = store.get("activeTimers", []);
         const uniqueId = `timer-${Date.now()}`;
-        const newTimer = {
-          id: uniqueId,
-          ...timer,
-        };
+        timer.id = uniqueId;
+        const newTimer = { ...timer };
         activeTimers.push(newTimer);
         store.set("activeTimers", activeTimers);
 
@@ -123,9 +142,6 @@ function setupIpcHandlers() {
       console.error("Error in processTimerAction:", error);
     }
   }
-
-  let lastSize = 0;
-  let lastLineCount = 0;
 
   function debounce(func, wait) {
     let timeout;
@@ -147,33 +163,6 @@ function setupIpcHandlers() {
       }
     });
   }, 2);
-
-  ipcMain.on("start-file-watch", async () => {
-    try {
-      const filePath = store.get("logFile");
-      if (!filePath) return;
-
-      const stats = await fsPromises.stat(filePath);
-      lastSize = stats.size;
-
-      watchFile(filePath, { interval: 100 }, async (curr) => {
-        if (curr.size > lastSize) {
-          const fd = await fsPromises.open(filePath, "r");
-          const bufferSize = curr.size - lastSize;
-          const buffer = Buffer.alloc(bufferSize);
-          await fd.read(buffer, 0, bufferSize, lastSize);
-          await fd.close();
-          const newContent = buffer.toString("utf8");
-          const newLines = newContent.split("\n").filter((line) => line !== "");
-          debouncedProcessNewLines(newLines);
-
-          lastSize = curr.size;
-        }
-      });
-    } catch (err) {
-      console.error("Error in start-file-watch handler:", err);
-    }
-  });
 
   const actions = [
     { actionType: "speak", key: "rootBroke", search: "Roots spell has worn off", sound: "Root fell off", useRegex: false },
@@ -197,7 +186,10 @@ function setupIpcHandlers() {
       if (triggers && triggers.length > 0) {
         triggers.map((trigger, index) => {
           if (trigger.saySomething) processSpeakAction(line, "", trigger.searchText, trigger.speechText, trigger.searchRegex);
-          if (trigger.playSound) processSoundAction(line, "", trigger.searchText, triggers[index].sound.replace(".mp3", ""), trigger.searchRegex);
+          if (trigger.playSound) {
+            const soundFile = typeof triggers[index]?.sound === "string" ? triggers[index].sound.replace(".mp3", "") : undefined;
+            processSoundAction(line, "", trigger.searchText, soundFile, trigger.searchRegex);
+          }
           if (trigger.setTimer) processTimerAction(line, "", trigger.searchText, trigger.searchRegex, trigger);
         });
       }
@@ -207,6 +199,17 @@ function setupIpcHandlers() {
       if (line.includes("snared")) {
         store.set("latestLine", line);
         getMainWindow().webContents.send("new-line", line);
+      }
+
+      if (getOverlayTracker()) {
+        if (line.includes(" is ahead and to the left")) getOverlayTracker().webContents.send("send-tracker-direction", "aheadLeft");
+        if (line.includes(" is straight ahead")) getOverlayTracker().webContents.send("send-tracker-direction", "ahead");
+        if (line.includes(" is ahead and to the right")) getOverlayTracker().webContents.send("send-tracker-direction", "aheadRight");
+        if (line.includes(" is to the right")) getOverlayTracker().webContents.send("send-tracker-direction", "right");
+        if (line.includes(" is behind and to the right")) getOverlayTracker().webContents.send("send-tracker-direction", "behindRight");
+        if (line.includes(" is behind you")) getOverlayTracker().webContents.send("send-tracker-direction", "behind");
+        if (line.includes(" is behind and to the left")) getOverlayTracker().webContents.send("send-tracker-direction", "behindLeft");
+        if (line.includes(" is to the left")) getOverlayTracker().webContents.send("send-tracker-direction", "left");
       }
     }
   }
@@ -220,7 +223,6 @@ function setupIpcHandlers() {
       const name = match[1];
       const messageWithoutDKP = match[2];
       const dkpMatch = messageWithoutDKP.match(/(\d+)/);
-      // console.log(dkpMatch);
       const dkp = dkpMatch ? parseInt(dkpMatch[1], 10) : null;
       const isAlt = /(?:^|\s)alt(?:\s|$)/i.test(match);
       try {
@@ -236,35 +238,56 @@ function setupIpcHandlers() {
   }
 
   function checkIfRaidDrop(line) {
-    const itemsData = JSON.parse(fs.readFileSync("./itemsData.json", "utf8"));
-    const item = itemsData.find((item) => line.includes(item.ItemName));
+    const itemsData = JSON.parse(readFileSync("itemsData.json", "utf8"));
+    const cleanLine = line.replace(/[\W_]+/g, "").toLowerCase();
+
+    const item = itemsData.find((item) => {
+      const cleanItemName = item.ItemName.replace(/[\W_]+/g, "").toLowerCase();
+      return cleanLine.includes(cleanItemName);
+    });
+
     return item ? item.ItemName : undefined;
   }
 
   function updateActiveBids({ name, item, dkp, isAlt }) {
-    let activeBids = store.get("activeBids", []);
-    const itemIndex = activeBids.findIndex((bid) => bid.item === item);
+    const activeBids = store.get("activeBids", []);
+    let updated = false; // Flag to track if update is made
 
-    if (itemIndex !== -1) {
-      const bidderIndex = activeBids[itemIndex].bidders.findIndex((bidder) => bidder.name === name);
-      if (bidderIndex !== -1) {
-        activeBids[itemIndex].bidders[bidderIndex].dkp = dkp;
-        activeBids[itemIndex].bidders[bidderIndex].isAlt = isAlt;
-      } else {
-        activeBids[itemIndex].bidders.push({ name, dkp, isAlt });
+    const newActiveBids = activeBids.map((bid) => {
+      if (bid.item === item) {
+        const bidders = bid.bidders.map((bidder) => {
+          if (bidder.name === name) {
+            updated = true; // Mark as updated
+            return { ...bidder, dkp, isAlt }; // Return updated bidder
+          }
+          return bidder; // Return unchanged bidder
+        });
+
+        if (!bidders.some((bidder) => bidder.name === name)) {
+          updated = true; // Mark as updated
+          bidders.push({ name, dkp, isAlt }); // Add new bidder
+        }
+
+        return { ...bid, bidders }; // Return updated bid
       }
-    } else {
-      activeBids.push({
-        item: item,
-        bidders: [{ name, dkp, isAlt }],
-      });
+      return bid; // Return unchanged bid
+    });
+
+    if (!updated) {
+      newActiveBids.push({ item, bidders: [{ name, dkp, isAlt }] }); // Add new item bid
     }
 
-    store.set("activeBids", activeBids);
+    store.set("activeBids", newActiveBids); // Set with new reference
+    const mainWindow = getMainWindow();
+    const overlayBidWindow = getOverlayBid();
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send("activeBids-updated", newActiveBids);
+    }
+    if (overlayBidWindow && !overlayBidWindow.isDestroyed()) {
+      overlayBidWindow.webContents.send("activeBids-updated", newActiveBids);
+    }
   }
 
-  let currentRoller = null;
-  let lines = [];
   function parseRolls(newLine) {
     lines.push(newLine);
     const index = lines.length - 1;

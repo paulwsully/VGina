@@ -39,7 +39,16 @@ const Timer = memo(({ timer }) => {
     }, 1000);
 
     return () => clearInterval(intervalId);
-  }, [timer]);
+  }, []);
+
+  const progressPercentage = (timeLeft / totalSeconds) * 100;
+  const red = Math.floor((255 * (100 - progressPercentage)) / 100);
+  const green = Math.floor((255 * progressPercentage) / 100);
+  const color = `rgb(${red},${green},0)`;
+  const progressBarStyle = {
+    width: `${progressPercentage}%`,
+    backgroundColor: color,
+  };
 
   const hours = Math.floor(timeLeft / 3600);
   const minutes = Math.floor((timeLeft % 3600) / 60);
@@ -54,7 +63,7 @@ const Timer = memo(({ timer }) => {
         <div className="timer-time">{`${hours}h ${minutes}m ${seconds}s`}</div>
       </div>
       <div className="timer-progress">
-        <div className="progress-bar" style={{ width: `${100 - parseFloat(progressWidth)}%` }}></div>
+        <div className="progress-bar" style={progressBarStyle}></div>
       </div>
     </div>
   ) : null;
