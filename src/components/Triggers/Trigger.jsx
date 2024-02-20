@@ -17,11 +17,12 @@ function Trigger({ trigger, refreshTriggers }) {
       <div className="text-primary bold">{trigger.triggerName}</div>
       <span>{trigger.searchText}</span>
       <div className="tags">
-        {trigger.tags.map((tag, index) => (
-          <div className="tag pill" key={index}>
-            {tag}
-          </div>
-        ))}
+        {trigger.tags &&
+          trigger.tags.map((tag, index) => (
+            <div className="tag pill" key={index}>
+              {tag}
+            </div>
+          ))}
       </div>
       {isSelected && (
         <div onClick={handleNewTriggerClick}>

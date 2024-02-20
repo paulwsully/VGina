@@ -114,52 +114,57 @@ function Triggers() {
         <Checkbox id="lockOverlayTimers" label="Lock Timers Overlay" checked={overlayTimersLocked} onCheckChange={handleLockOverlayChange} />
       </div>
       <NewTrigger refreshTriggers={refreshTriggers} triggerUpdateCancelled={() => setIsSelected(false)} />
+
       <div className="triggers">
-        <h3>Triggers</h3>
+        <hr />
         <div className="trigger-content">
           <div className="tags">
-            <Input id="searchText" value={searchText} placeholder="" label="Search..." onTextChange={(value) => handleInputChange("searchText", value)} />
+            {triggers.length} {`trigger${triggers.length === 1 ? "" : "s"}`}
+            {triggers.length > triggersPerPage && <Input id="searchText" value={searchText} placeholder="" label="Search..." onTextChange={(value) => handleInputChange("searchText", value)} />}
             {tags.map((tag) => (
               <div key={tag} className={`tag pill ${selectedTags.includes(tag) ? "active" : ""}`} onClick={() => toggleTagSelection(tag)}>
                 {tag}
               </div>
             ))}
           </div>
+          {currentTriggers.length === 0 ? (
+            <div className="null-message">No Results</div>
+          ) : (
+            <div className="triggers-page-and-list">
+              {triggers.length > triggersPerPage && (
+                <div className="pagination">
+                  <span>
+                    <button onClick={firstPage} disabled={currentPage === 0}>
+                      <FontAwesomeIcon icon={faAnglesLeft} />
+                    </button>
+                    <button onClick={prevPage} disabled={currentPage === 0}>
+                      <FontAwesomeIcon icon={faAngleLeft} />
+                    </button>
+                  </span>
 
-          <div className="triggers-page-and-list">
-            <div className="pagination">
-              <span>
-                <button onClick={firstPage} disabled={currentPage === 0}>
-                  <FontAwesomeIcon icon={faAnglesLeft} />
-                </button>
-                <button onClick={prevPage} disabled={currentPage === 0}>
-                  <FontAwesomeIcon icon={faAngleLeft} />
-                </button>
-              </span>
+                  {getPageNumbers().map((number) => (
+                    <button className="num-btn" key={number} onClick={() => setCurrentPage(number)} disabled={number === currentPage}>
+                      {number + 1}
+                    </button>
+                  ))}
 
-              {getPageNumbers().map((number) => (
-                <button className="num-btn" key={number} onClick={() => setCurrentPage(number)} disabled={number === currentPage}>
-                  {number + 1}
-                </button>
-              ))}
-
-              <span>
-                <button onClick={nextPage} disabled={currentPage >= pageCount - 1}>
-                  <FontAwesomeIcon icon={faAngleRight} />
-                </button>
-                <button onClick={lastPage} disabled={currentPage >= pageCount - 1}>
-                  <FontAwesomeIcon icon={faAnglesRight} />
-                </button>
-              </span>
-            </div>
-            <div className="trigger-list">
-              {currentTriggers.length === 0 ? (
-                <div className="null-message">No Triggers. Click "New Trigger" to create one.</div>
-              ) : (
-                currentTriggers.map((trigger) => <Trigger key={trigger.id} trigger={trigger} isSelected={selectedTags.includes(trigger.id)} refreshTriggers={() => {}} />)
+                  <span>
+                    <button onClick={nextPage} disabled={currentPage >= pageCount - 1}>
+                      <FontAwesomeIcon icon={faAngleRight} />
+                    </button>
+                    <button onClick={lastPage} disabled={currentPage >= pageCount - 1}>
+                      <FontAwesomeIcon icon={faAnglesRight} />
+                    </button>
+                  </span>
+                </div>
               )}
+              <div className="trigger-list">
+                {currentTriggers.map((trigger) => (
+                  <Trigger key={trigger.id} trigger={trigger} isSelected={selectedTags.includes(trigger.id)} refreshTriggers={refreshTriggers} />
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>
