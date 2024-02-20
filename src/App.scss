@@ -7,6 +7,9 @@
   background-color: $color-background-light;
   border: 1px solid rgba(white, 0.1);
   border-radius: 8px;
+  height: 0%;
+  flex: 1;
+  overflow: auto;
 }
 
 .bid-overlay {
@@ -38,4 +41,39 @@
 
 .actions {
   display: flex;
+}
+
+.pagination {
+  width: 100%;
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+  margin-bottom: 16px;
+  span {
+    padding: 0 16px;
+  }
+  button {
+    background: transparent;
+    border: 1px solid $color-primary;
+    color: $color-primary;
+    padding: 4px;
+    border-radius: 4px;
+    height: 30px;
+    width: 30px;
+    user-select: none;
+    &:disabled {
+      opacity: 0.45;
+      &:hover {
+        background: transparent;
+        border: 1px solid $color-primary;
+        color: $color-primary;
+        cursor: default;
+      }
+    }
+    &:hover {
+      background: $color-primary;
+      color: white;
+      cursor: pointer;
+    }
+  }
 }

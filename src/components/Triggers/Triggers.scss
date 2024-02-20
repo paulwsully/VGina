@@ -13,6 +13,7 @@
   flex-direction: column;
   gap: 16px;
   padding: 12px;
+  height: 100%;
 }
 
 .sounds-header {
@@ -48,32 +49,28 @@
   user-select: none;
 }
 
-.new-trigger {
-  display: block;
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 0.5s ease;
-}
-
-.new-trigger.show {
-  max-height: 1300px;
-}
-
 .triggers {
   display: flex;
   flex-direction: column;
   gap: 8px;
   align-items: flex-start;
+  height: calc(100% - 135px);
 }
 
 .trigger {
-  padding: 8px 16px;
-  border-radius: 8px;
+  margin: 8px 0;
   cursor: pointer;
   display: flex;
   flex-direction: column;
+  border-left: 3px solid transparent;
+  transition: padding 0.15s ease-in-out, border-left 0.15s ease-in-out;
+  .tags {
+    margin-bottom: 8px;
+  }
   &:hover {
-    background: rgba(white, 0.1);
+    margin: 8px 0;
+    padding-left: 16px;
+    border-left: 3px solid $color-primary;
   }
 }
 
@@ -131,4 +128,59 @@
       }
     }
   }
+}
+
+.trigger-content {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+  height: 100%;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  width: 300px;
+  height: fit-content;
+  .tag {
+    user-select: none;
+    padding: 0px 4px;
+    cursor: pointer;
+    &.active {
+      background-color: #007bff;
+      color: white;
+    }
+  }
+}
+
+.trigger-list {
+  flex: 1;
+  padding-right: 16px;
+  height: 100%;
+  width: 100%;
+  overflow: auto;
+}
+
+.new-trigger-container {
+  border-radius: 8px;
+  display: block;
+  max-height: 35px;
+  overflow: hidden;
+  transition: max-height 0.25s ease-in-out, background-color 0.25s ease-in-out, padding 0.25s ease-in-out;
+  padding: 0;
+  &.show {
+    max-height: 1300px;
+    padding: 8px;
+    background-color: lighten($color-background-light, 5%);
+    overflow: visible;
+  }
+}
+
+.triggers-page-and-list {
+  height: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }

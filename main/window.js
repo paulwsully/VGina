@@ -1,4 +1,5 @@
 import { app, BrowserWindow } from "electron";
+import throttle from "lodash.throttle";
 import { setMainWindow, setOverlayBid, setOverlayTimers, setOverlayItemDetails, setOverlayTracker } from "./windowManager.js";
 import { fileURLToPath } from "url";
 import Store from "electron-store";
@@ -11,7 +12,7 @@ const store = new Store();
 const isDev = !app.isPackaged;
 
 function createWindow() {
-  let { width, height, x, y } = store.get("windowBounds", { width: 800, height: 1000 });
+  let { width, height, x, y } = store.get("windowBounds", { width: 1000, height: 1000 });
   const mainWindow = new BrowserWindow({
     x,
     y,
@@ -28,15 +29,23 @@ function createWindow() {
 
   mainWindow.loadURL(isDev ? "http://localhost:3000" : `file://${path.join(__dirname, "../dist/index.html")}`);
 
-  mainWindow.on("resize", () => {
-    let { width, height } = mainWindow.getBounds();
-    store.set("windowBounds", { width, height, x, y });
-  });
+  mainWindow.on(
+    "resize",
+    throttle(() => {
+      let bounds = store.get("windowBounds", { width: 1000, height: 1000, x: 0, y: 0 });
+      let { width, height } = mainWindow.getBounds();
+      store.set("windowBounds", { ...bounds, width, height });
+    }, 500)
+  );
 
-  mainWindow.on("move", () => {
-    let { x, y } = mainWindow.getBounds();
-    store.set("windowBounds", { width, height, x, y });
-  });
+  mainWindow.on(
+    "move",
+    throttle(() => {
+      let bounds = store.get("windowBounds", { width: 1000, height: 1000, x: 0, y: 0 });
+      let { x, y } = mainWindow.getBounds();
+      store.set("windowBounds", { ...bounds, x, y });
+    }, 500)
+  );
 
   setMainWindow(mainWindow);
   return mainWindow;
@@ -67,15 +76,23 @@ function createOverlayBids() {
       resolve(overlayBid); // Resolve the promise with the overlayBid window
     });
 
-    overlayBid.on("resize", () => {
-      let { width, height } = overlayBid.getBounds();
-      store.set("overlayBidBounds", { width, height, x, y });
-    });
+    overlayBid.on(
+      "resize",
+      throttle(() => {
+        let bounds = store.get("overlayBidBounds", { width: 1000, height: 1000, x: 0, y: 0 });
+        let { width, height } = overlayBid.getBounds();
+        store.set("overlayBidBounds", { ...bounds, width, height });
+      }, 500)
+    );
 
-    overlayBid.on("move", () => {
-      let { x, y } = overlayBid.getBounds();
-      store.set("overlayBidBounds", { width, height, x, y });
-    });
+    overlayBid.on(
+      "move",
+      throttle(() => {
+        let bounds = store.get("overlayBidBounds", { width: 1000, height: 1000, x: 0, y: 0 });
+        let { x, y } = overlayBid.getBounds();
+        store.set("overlayBidBounds", { ...bounds, x, y });
+      }, 500)
+    );
 
     overlayBid.on("closed", () => {
       reject(new Error("OverlayBid window was closed before it could finish loading."));
@@ -111,15 +128,23 @@ function createOverlayTimers() {
       resolve(overlayTimers);
     });
 
-    overlayTimers.on("resize", () => {
-      let { width, height } = overlayTimers.getBounds();
-      store.set("overlayTimersBounds", { width, height, x, y });
-    });
+    overlayTimers.on(
+      "resize",
+      throttle(() => {
+        let bounds = store.get("overlayTimersBounds", { width: 1000, height: 1000, x: 0, y: 0 });
+        let { width, height } = overlayTimers.getBounds();
+        store.set("overlayTimersBounds", { ...bounds, width, height });
+      }, 500)
+    );
 
-    overlayTimers.on("move", () => {
-      let { x, y } = overlayTimers.getBounds();
-      store.set("overlayTimersBounds", { width, height, x, y });
-    });
+    overlayTimers.on(
+      "move",
+      throttle(() => {
+        let bounds = store.get("overlayTimersBounds", { width: 1000, height: 1000, x: 0, y: 0 });
+        let { x, y } = overlayTimers.getBounds();
+        store.set("overlayTimersBounds", { ...bounds, x, y });
+      }, 500)
+    );
 
     overlayTimers.on("closed", () => {
       reject(new Error("OverlayTimers window was closed before it could finish loading."));
@@ -161,10 +186,14 @@ function createItemDetailsWindow() {
 
     setOverlayItemDetails(overlayItemDetails);
 
-    overlayItemDetails.on("move", () => {
-      let { x, y } = overlayItemDetails.getBounds();
-      store.set("overlayItemDetailsBounds", { x, y });
-    });
+    overlayItemDetails.on(
+      "move",
+      throttle(() => {
+        let bounds = store.get("overlayItemDetailsBounds", { width: 1000, height: 1000, x: 0, y: 0 });
+        let { x, y } = overlayTimers.getBounds();
+        store.set("overlayItemDetailsBounds", { ...bounds, x, y });
+      }, 500)
+    );
     // overlayItemDetails.webContents.openDevTools();
   });
 }
@@ -199,24 +228,18 @@ function createTrackerWindow() {
       resolve(trackerWindow);
     });
 
-    trackerWindow.on("move", () => {
-      let { x, y } = trackerWindow.getBounds();
-      store.set("trackerWindowBounds", { x, y });
-    });
-
     trackerWindow.webContents.once("did-finish-load", () => {
       resolve(trackerWindow);
     });
 
-    trackerWindow.on("resize", () => {
-      let { width, height } = trackerWindow.getBounds();
-      store.set("trackerWindowBounds", { width, height, x, y });
-    });
-
-    trackerWindow.on("move", () => {
-      let { x, y } = trackerWindow.getBounds();
-      store.set("trackerWindowBounds", { width, height, x, y });
-    });
+    trackerWindow.on(
+      "move",
+      throttle(() => {
+        let bounds = store.get("trackerWindowBounds", { width: 1000, height: 1000, x: 0, y: 0 });
+        let { x, y } = trackerWindow.getBounds();
+        store.set("trackerWindowBounds", { ...bounds, x, y });
+      }, 500)
+    );
 
     trackerWindow.on("closed", () => {
       reject(new Error("trackerWindow window was closed before it could finish loading."));

@@ -172,7 +172,7 @@ function NewTrigger({ selectedTrigger, refreshTriggers, triggerUpdateCancelled }
     audio.play();
   };
   return (
-    <div className="new-trigger-container">
+    <div className={`new-trigger-container ${showNewTrigger ? "show" : ""}`}>
       <div className="trigger-actions">
         {!showNewTrigger && !selectedTrigger && (
           <div className="pill button" onClick={handleNewTriggerClick}>
@@ -192,7 +192,7 @@ function NewTrigger({ selectedTrigger, refreshTriggers, triggerUpdateCancelled }
         )}
       </div>
       {InvalidData && <div className="error">Please fill in all required fields and select at least one action.</div>}
-      <div className={`new-trigger ${showNewTrigger ? "show" : ""}`}>
+      <div className={`new-trigger`}>
         <section>
           <h3>General</h3>
           <Input id="triggerName" value={newTrigger.triggerName} placeholder="" label="Trigger Name" onTextChange={(value) => handleInputChange("triggerName", value)} />
@@ -304,7 +304,6 @@ function NewTrigger({ selectedTrigger, refreshTriggers, triggerUpdateCancelled }
             )}
           </div>
         </section>
-        <hr />
       </div>
     </div>
   );

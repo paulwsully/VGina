@@ -1,35 +1,62 @@
 import React, { useState, useEffect } from "react";
 import NewTrigger from "./NewTrigger";
+import Trigger from "./Trigger";
 import Checkbox from "../Utilities/Checkbox";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faAnglesLeft, faAngleLeft, faAnglesRight, faAngleRight } from "@fortawesome/free-solid-svg-icons";
 import "./Triggers.scss";
 
 function Triggers() {
   const [triggers, setTriggers] = useState([]);
+  const [tags, setTags] = useState([]);
+  const [selectedTags, setSelectedTags] = useState([]);
   const [showTimersOverlay, setShowTimersOverlay] = useState(false);
   const [overlayTimersLocked, setOverlayTimersLocked] = useState(false);
   const [selectedTrigger, setSelectedTrigger] = useState(null);
+  const [isSelected, setIsSelected] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [triggersPerPage] = useState(20); // Number of triggers to display per page
 
   useEffect(() => {
     const fetchSettingsAndTriggers = async () => {
       const storedShowTimersOverlay = await window.electron.ipcRenderer.invoke("storeGet", "showTimersOverlay");
       const storedOverlayTimersLocked = await window.electron.ipcRenderer.invoke("storeGet", "overlayTimersLocked");
       const storedTriggers = await window.electron.ipcRenderer.invoke("storeGet", "triggers");
+      const tags = await window.electron.ipcRenderer.invoke("storeGet", "tags");
 
       setShowTimersOverlay(storedShowTimersOverlay || false);
       setOverlayTimersLocked(storedOverlayTimersLocked || false);
       setTriggers(storedTriggers || []);
+      setTags(tags || []);
       if (storedShowTimersOverlay) window.electron.ipcRenderer.send("open-overlay-timers");
     };
     fetchSettingsAndTriggers();
   }, []);
 
-  const selectTrigger = (trigger) => {
-    setSelectedTrigger(trigger);
+  const toggleTagSelection = (tag) => {
+    setSelectedTags((prevSelectedTags) => (prevSelectedTags.includes(tag) ? prevSelectedTags.filter((t) => t !== tag) : [...prevSelectedTags, tag]));
   };
 
-  const refreshTriggers = async () => {
-    const updatedTriggers = await window.electron.ipcRenderer.invoke("storeGet", "triggers");
-    setTriggers(updatedTriggers || []);
+  const filteredTriggers = triggers.filter((trigger) => selectedTags.every((tag) => trigger.tags?.includes(tag)));
+
+  const pageCount = Math.ceil(filteredTriggers.length / triggersPerPage);
+  const currentTriggers = filteredTriggers.slice(currentPage * triggersPerPage, (currentPage + 1) * triggersPerPage);
+
+  const firstPage = () => setCurrentPage(0);
+  const lastPage = () => setCurrentPage(pageCount - 1);
+  const nextPage = () => setCurrentPage((current) => Math.min(current + 1, pageCount - 1));
+  const prevPage = () => setCurrentPage((current) => Math.max(current - 1, 0));
+
+  const getPageNumbers = () => {
+    const pages = [];
+    const startPage = Math.max(currentPage - 2, 0);
+    const endPage = Math.min(startPage + 4, pageCount - 1);
+
+    for (let page = startPage; page <= endPage; page++) {
+      pages.push(page);
+    }
+
+    return pages;
   };
 
   const handleShowTimersOverlayChange = (checked) => {
@@ -52,9 +79,11 @@ function Triggers() {
     }
   };
 
-  const triggerUpdateCancelled = () => {
-    console.log("cancelled");
-    setSelectedTrigger(null);
+  const refreshTriggers = async () => {
+    const updatedTriggers = await window.electron.ipcRenderer.invoke("storeGet", "triggers");
+    const updatedTags = await window.electron.ipcRenderer.invoke("storeGet", "tags");
+    setTriggers(updatedTriggers || []);
+    setTags(updatedTags || []);
   };
 
   return (
@@ -63,19 +92,53 @@ function Triggers() {
         <Checkbox id="showTimersOverlay" label="Show Timers Overlay" checked={showTimersOverlay} onCheckChange={handleShowTimersOverlayChange} />
         <Checkbox id="lockOverlayTimers" label="Lock Timers Overlay" checked={overlayTimersLocked} onCheckChange={handleLockOverlayChange} />
       </div>
-      <NewTrigger refreshTriggers={refreshTriggers} />
+      <NewTrigger refreshTriggers={refreshTriggers} triggerUpdateCancelled={() => setIsSelected(false)} />
       <div className="triggers">
         <h3>Triggers</h3>
-        {triggers.length === 0 && <div className="null-message">No Triggers. Click "New Trigger" to create one.</div>}
-        {triggers.map((trigger) => (
-          <div key={trigger.id} className="trigger" onClick={() => selectTrigger(trigger)}>
-            <div className="text-primary bold">{trigger.triggerName}</div>
-            <span>{trigger.searchText}</span>
-            {selectedTrigger && selectedTrigger.id === trigger.id && (
-              <NewTrigger key={selectedTrigger.id} selectedTrigger={selectedTrigger} refreshTriggers={refreshTriggers} triggerUpdateCancelled={triggerUpdateCancelled} />
-            )}
+        <div className="trigger-content">
+          <div className="tags">
+            {tags.map((tag) => (
+              <div key={tag} className={`tag pill ${selectedTags.includes(tag) ? "active" : ""}`} onClick={() => toggleTagSelection(tag)}>
+                {tag}
+              </div>
+            ))}
           </div>
-        ))}
+
+          <div className="triggers-page-and-list">
+            <div className="pagination">
+              <span>
+                <button onClick={firstPage} disabled={currentPage === 0}>
+                  <FontAwesomeIcon icon={faAnglesLeft} />
+                </button>
+                <button onClick={prevPage} disabled={currentPage === 0}>
+                  <FontAwesomeIcon icon={faAngleLeft} />
+                </button>
+              </span>
+
+              {getPageNumbers().map((number) => (
+                <button className="num-btn" key={number} onClick={() => setCurrentPage(number)} disabled={number === currentPage}>
+                  {number + 1}
+                </button>
+              ))}
+
+              <span>
+                <button onClick={nextPage} disabled={currentPage >= pageCount - 1}>
+                  <FontAwesomeIcon icon={faAngleRight} />
+                </button>
+                <button onClick={lastPage} disabled={currentPage >= pageCount - 1}>
+                  <FontAwesomeIcon icon={faAnglesRight} />
+                </button>
+              </span>
+            </div>
+            <div className="trigger-list">
+              {currentTriggers.length === 0 ? (
+                <div className="null-message">No Triggers. Click "New Trigger" to create one.</div>
+              ) : (
+                currentTriggers.map((trigger) => <Trigger key={trigger.id} trigger={trigger} isSelected={selectedTags.includes(trigger.id)} refreshTriggers={() => {}} />)
+              )}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
