@@ -41,7 +41,6 @@ export const ginaListeners = () => {
       })
       .catch((err) => {
         console.error("Failed to show save dialog", err);
-        // Optionally, send a message back to the renderer process about the failure
       });
   });
 };

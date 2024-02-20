@@ -4,7 +4,6 @@ import { getOverlayBid, getOverlayTimers } from "./windowManager.js";
 import Store from "electron-store";
 import pkg from "electron-updater";
 const { autoUpdater } = pkg;
-const store = new Store();
 import ks from "node-key-sender";
 import fs from "fs";
 import path from "path";
@@ -43,7 +42,7 @@ function setupAppLifecycle() {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
-  app.whenReady().then(() => {
+  app.whenReady().then(async () => {
     autoUpdater.checkForUpdatesAndNotify();
     copyPackagedSoundsToUserData();
     createWindow();
@@ -86,12 +85,6 @@ function setupAppLifecycle() {
       const text = clipboard.readText();
       await ks.sendText(text);
     });
-    // globalShortcut.register("Escape", () => {
-    //   const itemDetailsWindow = getOverlayItemDetails();
-    //   if (itemDetailsWindow && !itemDetailsWindow.isDestroyed()) {
-    //     itemDetailsWindow.close();
-    //   }
-    // });
     autoUpdater.checkForUpdatesAndNotify();
   });
 

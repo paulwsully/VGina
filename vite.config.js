@@ -8,4 +8,11 @@ export default defineConfig({
     port: 3000,
   },
   plugins: [react(), commonjs()],
+  build: {
+    rollupOptions: {
+      output: {
+        interop: "compat",
+      },
+    },
+  },
 });

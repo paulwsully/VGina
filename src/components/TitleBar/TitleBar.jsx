@@ -81,6 +81,21 @@ const TitleBar = ({ fileName }) => {
         const existingTriggers = (await window.electron.ipcRenderer.invoke("storeGet", "triggers")) || [];
         const updatedTriggers = existingTriggers.concat(remappedTriggers);
         window.electron.ipcRenderer.send("storeSet", "triggers", updatedTriggers);
+
+        // Adjusted approach to filter out tags that match the trigger name
+        const tagsCollection = updatedTriggers.reduce((acc, trigger) => {
+          if (trigger.tags && trigger.tags.length) {
+            const filteredTags = trigger.tags.filter((tag) => tag !== trigger.triggerName); // Filter out tags matching the trigger name
+            acc.push(...filteredTags);
+          }
+          return acc;
+        }, []);
+
+        const uniqueTags = [...new Set(tagsCollection)];
+        console.log(uniqueTags); // Log the de-duplicated and filtered tags array
+
+        // Save the uniqueTags array to electron-store under "tags"
+        window.electron.ipcRenderer.send("storeSet", "tags", uniqueTags);
       }
     } catch (error) {
       console.error("Error importing file:", error);

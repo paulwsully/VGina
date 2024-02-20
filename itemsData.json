@@ -816,6 +816,13 @@
         "QuestData": []
     },
     {
+        "ItemName": "Ethereal Mist Greaves",
+        "URL": "https://wiki.project1999.com/Ethereal_Mist_Greaves",
+        "ItemData": "MAGIC ITEM NO DROP\r\nSlot: HANDS\r\nAC: 12\r\nDEX: +5 INT: +5\r\nSV FIRE: +7\r\nWT: 3.8 Size: SMALL\r\nClass: CLR\r\nRace: HUM ERU HIE DEF DWF HFL GNM",
+        "ItemImage": "https://wiki.project1999.com/images/Item_531.png",
+        "QuestData": []
+    },
+    {
         "ItemName": "Indicolite Helm",
         "URL": "https://wiki.project1999.com/Indicolite_Helm",
         "ItemData": "MAGIC ITEM NO DROP\r\nSlot: HEAD\r\nAC: 20\r\nCHA: +5 INT: +5\r\nWT: 4.5 Size: SMALL\r\nClass: WAR\r\nRace: ALL except IKS",

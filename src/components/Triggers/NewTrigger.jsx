@@ -25,7 +25,7 @@ const triggerReset = {
   timerExpirationVocalCountdownStart: 0,
 };
 
-function NewTrigger({ selectedTrigger, refreshTriggers }) {
+function NewTrigger({ selectedTrigger, refreshTriggers, triggerUpdateCancelled }) {
   const [showNewTrigger, setShowNewTrigger] = useState(false);
   const [isCancelConfirm, setIsCancelConfirm] = useState(false);
   const [selectedSound, setSelectedSound] = useState("");
@@ -156,6 +156,7 @@ function NewTrigger({ selectedTrigger, refreshTriggers }) {
       resetTrigger();
       setShowNewTrigger(false);
       setIsCancelConfirm(false);
+      triggerUpdateCancelled();
     } else {
       setIsCancelConfirm(true);
     }
@@ -173,7 +174,7 @@ function NewTrigger({ selectedTrigger, refreshTriggers }) {
   return (
     <div className="new-trigger-container">
       <div className="trigger-actions">
-        {!showNewTrigger && (
+        {!showNewTrigger && !selectedTrigger && (
           <div className="pill button" onClick={handleNewTriggerClick}>
             <FontAwesomeIcon icon={faPlusCircle} /> New Trigger
           </div>
