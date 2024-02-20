@@ -52,9 +52,9 @@ function NewTrigger({ selectedTrigger, refreshTriggers, triggerUpdateCancelled }
       setNewTrigger(selectedTrigger);
       setSelectedSound(selectedTrigger.sound);
       setselectedTimerExpirationSound(selectedTrigger.timerExpirationSound);
-      setShowNewTrigger(true); // Automatically expand the NewTrigger form
+      setShowNewTrigger(true);
     } else {
-      resetTrigger(); // Resets to default if no trigger is selected
+      resetTrigger();
     }
   }, [selectedTrigger]);
 

@@ -46,16 +46,18 @@
 .pagination {
   width: 100%;
   display: flex;
-  gap: 4px;
+  gap: 8px;
   justify-content: center;
   margin-bottom: 16px;
   span {
-    padding: 0 16px;
+    padding: 0 32px;
+    display: flex;
+    gap: 8px;
   }
   button {
     background: transparent;
     border: 1px solid $color-primary;
-    color: $color-primary;
+    color: white;
     padding: 4px;
     border-radius: 4px;
     height: 30px;
