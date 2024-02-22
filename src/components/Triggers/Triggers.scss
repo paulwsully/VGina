@@ -54,7 +54,7 @@
   flex-direction: column;
   gap: 8px;
   align-items: flex-start;
-  height: calc(100% - 160px);
+  height: 100%;
 }
 
 .trigger {
@@ -183,4 +183,63 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+}
+
+.new-trigger-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  &:hover svg {
+    color: lighten($color-primary, 10%);
+  }
+  svg {
+    font-size: 1.7em;
+    color: $color-primary;
+  }
+}
+
+.new-trigger {
+  z-index: 2;
+  width: 80vw;
+  height: 80vh;
+  padding: 16px;
+  overflow: auto;
+  border-radius: 8px;
+  border: 1px solid #222;
+  background-color: lighten($color-background-light, 2%);
+  position: relative;
+  &-overlay {
+    top: 0;
+    left: 0;
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    position: fixed;
+    align-items: center;
+    justify-content: center;
+    background: rgba(black, 0.9);
+  }
+  section {
+    width: 100%;
+  }
+  .actions {
+    display: flex;
+    gap: 8px;
+  }
+}
+
+.new-trigger-close {
+  cursor: pointer;
+  font-size: 1.5em;
+  position: absolute;
+  right: 8px;
+  top: 2px;
+  color: $color-error;
+  z-index: 1;
+  &:hover {
+    color: lighten($color-error, 5%);
+  }
 }

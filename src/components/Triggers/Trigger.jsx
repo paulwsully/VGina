@@ -5,6 +5,7 @@ function Trigger({ trigger, refreshTriggers }) {
   const [isSelected, setIsSelected] = useState(false);
 
   const toggleSelection = () => {
+    console.log("toggleSelection");
     setIsSelected(!isSelected);
   };
 
@@ -26,7 +27,7 @@ function Trigger({ trigger, refreshTriggers }) {
       </div>
       {isSelected && (
         <div onClick={handleNewTriggerClick}>
-          <NewTrigger key={trigger.id} selectedTrigger={trigger} refreshTriggers={refreshTriggers} triggerUpdateCancelled={() => setIsSelected(false)} />
+          <NewTrigger key={trigger.id} selectedTrigger={trigger} refreshTriggers={refreshTriggers} triggerUpdateCancelled={toggleSelection} />
         </div>
       )}
     </div>

@@ -20,6 +20,9 @@ const Pagination = ({ total, perPage, currentPage, setCurrentPage }) => {
     return pages;
   };
 
+  const formattedTotal = new Intl.NumberFormat("en-US").format(total);
+  const triggerLabel = `trigger${formattedTotal.length > 3 ? "s" : ""}`;
+
   return (
     <div className="pagination">
       <button onClick={firstPage} disabled={currentPage === 0}>
@@ -39,6 +42,7 @@ const Pagination = ({ total, perPage, currentPage, setCurrentPage }) => {
       <button onClick={lastPage} disabled={currentPage >= pageCount - 1}>
         <FontAwesomeIcon icon={faAnglesRight} />
       </button>
+      {formattedTotal} {triggerLabel}
     </div>
   );
 };

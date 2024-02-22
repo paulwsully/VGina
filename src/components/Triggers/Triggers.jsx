@@ -3,6 +3,8 @@ import NewTrigger from "./NewTrigger";
 import Trigger from "./Trigger";
 import Checkbox from "../Utilities/Checkbox";
 import Input from "../Utilities/Input";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faPlusCircle } from "@fortawesome/free-solid-svg-icons";
 import "./Triggers.scss";
 import Pagination from "./Pagination";
 
@@ -63,12 +65,10 @@ function Triggers() {
 
   return (
     <div className="triggers-wrapper">
-      <NewTrigger refreshTriggers={refreshTriggers} triggerUpdateCancelled={() => setIsSelected(false)} />
       <div className="triggers">
-        <hr />
         <div className="trigger-content">
           <div className="tags">
-            {triggers.length} {`trigger${triggers.length === 1 ? "" : "s"}`}
+            <NewTrigger refreshTriggers={refreshTriggers} triggerUpdateCancelled={() => setIsSelected(false)} />
             {triggers.length > triggersPerPage && <Input id="searchText" value={searchText} placeholder="" label="Search..." onTextChange={(value) => handleInputChange("searchText", value)} />}
             {tags.map((tag) => (
               <div key={tag} className={`tag pill ${selectedTags.includes(tag) ? "active" : ""}`} onClick={() => toggleTagSelection(tag)}>
