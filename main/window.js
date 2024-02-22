@@ -11,7 +11,7 @@ const __dirname = path.dirname(__filename);
 const store = new Store();
 const isDev = !app.isPackaged;
 
-function createWindow() {
+function createMainWindow() {
   let { width, height, x, y } = store.get("windowBounds", { width: 1000, height: 1000 });
   const mainWindow = new BrowserWindow({
     x,
@@ -176,9 +176,7 @@ function createItemDetailsWindow() {
       },
     });
 
-    overlayItemDetails.loadURL(
-      isDev ? "http://localhost:3000/dkp-and-loot/overlay/item-details" : `file://${path.join(__dirname, "../dist/index.html#/dkp-and-loot/overlay/item-details").replace(/\\/g, "/")}`
-    );
+    overlayItemDetails.loadURL(isDev ? "http://localhost:3000/dkp-and-loot/overlay/item-details" : `file://${path.join(__dirname, "../dist/index.html#/dkp-and-loot/overlay/item-details").replace(/\\/g, "/")}`);
 
     overlayItemDetails.webContents.once("did-finish-load", () => {
       resolve(overlayItemDetails);
@@ -198,10 +196,10 @@ function createItemDetailsWindow() {
   });
 }
 
-function createTrackerWindow() {
+function createOverlayTracker() {
   return new Promise((resolve, reject) => {
     let { width, height, x, y } = store.get("trackerWindowBounds", { width: 300, height: 300 });
-    const trackerWindow = new BrowserWindow({
+    const overlayTracker = new BrowserWindow({
       x,
       y,
       width,
@@ -222,32 +220,32 @@ function createTrackerWindow() {
       },
     });
 
-    trackerWindow.loadURL(isDev ? "http://localhost:3000/dkp-and-loot/overlay/tracker" : `file://${path.join(__dirname, "../dist/index.html#/dkp-and-loot/overlay/tracker").replace(/\\/g, "/")}`);
+    overlayTracker.loadURL(isDev ? "http://localhost:3000/dkp-and-loot/overlay/tracker" : `file://${path.join(__dirname, "../dist/index.html#/dkp-and-loot/overlay/tracker").replace(/\\/g, "/")}`);
 
-    trackerWindow.webContents.once("did-finish-load", () => {
-      resolve(trackerWindow);
+    overlayTracker.webContents.once("did-finish-load", () => {
+      resolve(overlayTracker);
     });
 
-    trackerWindow.webContents.once("did-finish-load", () => {
-      resolve(trackerWindow);
+    overlayTracker.webContents.once("did-finish-load", () => {
+      resolve(overlayTracker);
     });
 
-    trackerWindow.on(
+    overlayTracker.on(
       "move",
       throttle(() => {
         let bounds = store.get("trackerWindowBounds", { width: 1000, height: 1000, x: 0, y: 0 });
-        let { x, y } = trackerWindow.getBounds();
+        let { x, y } = overlayTracker.getBounds();
         store.set("trackerWindowBounds", { ...bounds, x, y });
       }, 500)
     );
 
-    trackerWindow.on("closed", () => {
+    overlayTracker.on("closed", () => {
       reject(new Error("trackerWindow window was closed before it could finish loading."));
     });
 
-    setOverlayTracker(trackerWindow);
+    setOverlayTracker(overlayTracker);
     // trackerWindow.webContents.openDevTools();
   });
 }
 
-export { createWindow, createOverlayBids, createOverlayTimers, createItemDetailsWindow, createTrackerWindow };
+export { createMainWindow, createOverlayBids, createOverlayTimers, createItemDetailsWindow, createOverlayTracker };

@@ -18,8 +18,9 @@ contextBridge.exposeInMainWorld("electron", {
     const audio = new Audio(soundFilePath);
     audio.play().catch((e) => console.error("Error playing sound:", e));
   },
-  getOverlayBidLocked: () => ipcRenderer.invoke("get-overlayBidLocked"),
-  getOverlayTimersLocked: () => ipcRenderer.invoke("get-overlayTimersLocked"),
+  getlockOverlayBids: () => ipcRenderer.invoke("get-lockOverlayBids"),
+  getlockOverlayTimers: () => ipcRenderer.invoke("get-lockOverlayTimers"),
+  getlockOverlayTracker: () => ipcRenderer.invoke("get-lockOverlayTracker"),
   getActiveTimers: () => ipcRenderer.invoke("get-activeTimers"),
   startFileWatch: () => ipcRenderer.send("start-file-watch"),
   readItemsData: () => ipcRenderer.invoke("read-itemsData"),

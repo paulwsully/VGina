@@ -16,8 +16,8 @@
               document.documentElement.classList.add("timers-root");
           }
           
-          window.electron.getOverlayBidLocked().then((overlayBidLocked) => {
-          if (overlayBidLocked) {
+          window.electron.getlockOverlayBids().then((lockOverlayBids) => {
+          if (lockOverlayBids) {
             document.body.classList.add("no-drag");
           }
         });

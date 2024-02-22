@@ -43,6 +43,10 @@
   display: flex;
 }
 
+.actions .checkbox {
+  min-width: 120px;
+}
+
 .pagination {
   width: 100%;
   display: flex;
@@ -65,10 +69,9 @@
     user-select: none;
     &:disabled {
       opacity: 0.45;
+      border: 1px solid white;
       &:hover {
         background: transparent;
-        border: 1px solid $color-primary;
-        color: $color-primary;
         cursor: default;
       }
     }

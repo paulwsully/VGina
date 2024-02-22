@@ -7,6 +7,7 @@ import { getItemDetailsListeners } from "./itemDetailsListeners.js";
 import { generalListeners } from "./generalListeners.js";
 import { ginaListeners } from "./ginaImportListeners.js";
 import { getTrackerListeners } from "./ipcTrackerListeners.js";
+import { getWindowListeners } from "./windowListeners.js";
 
 ginaListeners();
 generalListeners();
@@ -17,3 +18,4 @@ getBidsListeners();
 setupIpcHandlers();
 setupAppLifecycle();
 getTrackerListeners();
+getWindowListeners();

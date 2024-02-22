@@ -18,8 +18,8 @@ function TimerOverlay({}) {
     updateTimers();
 
     const fetchSettings = async () => {
-      const storedOverlayTimersLocked = await window.electron.ipcRenderer.invoke("storeGet", "overlayTimersLocked");
-      window.electron.ipcRenderer.send(`${storedOverlayTimersLocked ? "lock" : "unlock"}-overlay-timers`);
+      const storedlockOverlayTimers = await window.electron.ipcRenderer.invoke("storeGet", "lockOverlayTimers");
+      window.electron.ipcRenderer.send(`${storedlockOverlayTimers ? "lock" : "unlock"}-overlay-timers`);
     };
 
     fetchSettings();

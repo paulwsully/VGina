@@ -1,6 +1,6 @@
 import { app, globalShortcut, clipboard } from "electron";
-import { createWindow, createOverlayBids, createOverlayTimers, createTrackerWindow } from "./window.js";
-import { getOverlayBid, getOverlayTimers } from "./windowManager.js";
+import { createMainWindow, createOverlayBids, createOverlayTimers, createOverlayTracker } from "./window.js";
+import { getOverlayBid, getOverlayTimers, getOverlayTracker } from "./windowManager.js";
 import Store from "electron-store";
 import pkg from "electron-updater";
 const { autoUpdater } = pkg;
@@ -45,38 +45,42 @@ function setupAppLifecycle() {
   app.whenReady().then(async () => {
     autoUpdater.checkForUpdatesAndNotify();
     copyPackagedSoundsToUserData();
-    createWindow();
+    createMainWindow();
     const store = new Store();
-    const showBidsOverlay = store.get("showBidsOverlay", false);
-    const overlayBidLocked = store.get("overlayBidLocked", false);
-    const showTimersOverlay = store.get("showTimersOverlay", false);
-    const overlayTimersLocked = store.get("overlayTimersLocked", false);
-    const showTrackerOverlay = store.get("tracker", false);
-    const overlayTrackerLocked = store.get("overlayTrackerLocked", false);
-    if (showBidsOverlay) {
+
+    const showOverlayBids = store.get("showOverlayBids", false);
+    const lockOverlayBids = store.get("lockOverlayBids", false);
+
+    const showOverlayTimers = store.get("showOverlayTimers", false);
+    const lockOverlayTimers = store.get("lockOverlayTimers", false);
+
+    const showOverlayTracker = store.get("showOverlayTracker", false);
+    const lockOverlayTracker = store.get("lockOverlayTracker", false);
+
+    if (showOverlayBids) {
       createOverlayBids()
         .then(() => {
           const overlayBidWindow = getOverlayBid();
-          overlayBidWindow.setIgnoreMouseEvents(overlayBidLocked, { forward: true });
-          overlayBidWindow.webContents.executeJavaScript(`document.body.classList.add("${overlayBidLocked ? "no-drag" : "drag"}")`, true);
+          overlayBidWindow.setIgnoreMouseEvents(lockOverlayBids, { forward: true });
+          overlayBidWindow.webContents.executeJavaScript(`document.body.classList.add("${lockOverlayBids ? "no-drag" : "drag"}")`, true);
         })
         .catch((err) => console.log(err));
     }
-    if (showTimersOverlay) {
+    if (showOverlayTimers) {
       createOverlayTimers()
         .then(() => {
           const overlayTimersWindow = getOverlayTimers();
-          overlayTimersWindow.setIgnoreMouseEvents(overlayTimersLocked, { forward: true });
-          overlayTimersWindow.webContents.executeJavaScript(`document.body.classList.add("${overlayTimersLocked ? "no-drag" : "drag"}")`, true);
+          overlayTimersWindow.setIgnoreMouseEvents(lockOverlayTimers, { forward: true });
+          overlayTimersWindow.webContents.executeJavaScript(`document.body.classList.add("${lockOverlayTimers ? "no-drag" : "drag"}")`, true);
         })
         .catch((err) => console.log(err));
     }
-    if (showTrackerOverlay) {
-      createTrackerWindow()
+    if (showOverlayTracker) {
+      createOverlayTracker()
         .then(() => {
-          const overlayTrackerWindow = getOverlayTimers();
-          overlayTrackerWindow.setIgnoreMouseEvents(overlayTrackerLocked, { forward: true });
-          overlayTrackerWindow.webContents.executeJavaScript(`document.body.classList.add("${overlayTrackerLocked ? "no-drag" : "drag"}")`, true);
+          const overlayTrackerWindow = getOverlayTracker();
+          overlayTrackerWindow.setIgnoreMouseEvents(lockOverlayTracker, { forward: true });
+          overlayTrackerWindow.webContents.executeJavaScript(`document.body.classList.add("${lockOverlayTracker ? "no-drag" : "drag"}")`, true);
         })
         .catch((err) => console.log(err));
     }

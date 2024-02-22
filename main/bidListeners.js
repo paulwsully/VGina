@@ -37,7 +37,7 @@ export const getBidsListeners = () => {
       mainWindow.webContents.send("activeBids-updated");
     }
 
-    const locked = store.get("overlayBidLocked", false);
+    const locked = store.get("lockOverlayBids", false);
 
     const overlayBidWindow = getOverlayBid();
     if (overlayBidWindow && !overlayBidWindow.isDestroyed()) {
@@ -54,27 +54,7 @@ export const getBidsListeners = () => {
     event.reply("bids-updated", activeBids);
   });
 
-  ipcMain.handle("get-overlayBidLocked", async () => {
-    return store.get("overlayBidLocked", false);
-  });
-
-  ipcMain.on("close-bid-overlay-window", () => {
-    const overlayBid = getOverlayBid();
-    if (overlayBid && !overlayBid.isDestroyed()) {
-      overlayBid.close();
-    }
-  });
-
-  ipcMain.on("open-bid-overlay-window", (event) => {
-    createOverlayBids()
-      .then((overlayBid) => {
-        const locked = store.get("overlayBidLocked", false);
-        const overlayBidWindow = getOverlayBid();
-        overlayBidWindow.show();
-        overlayBidWindow.setIgnoreMouseEvents(locked, { forward: true });
-      })
-      .catch((error) => {
-        console.error("An error occurred while creating the overlay bids window:", error);
-      });
+  ipcMain.handle("get-lockOverlayBids", async () => {
+    return store.get("lockOverlayBids", false);
   });
 };

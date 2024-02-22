@@ -1,52 +1,18 @@
-let mainWindow = null;
-export function setMainWindow(window) {
-  mainWindow = window;
+const windows = {};
+
+function createWindowAccessor(key) {
+  return {
+    setWindow(window) {
+      windows[key] = window;
+    },
+    getWindow() {
+      return windows[key];
+    },
+  };
 }
 
-export function getMainWindow() {
-  return mainWindow;
-}
-
-/////////////////////////////////////////////////////////////
-
-let overlayBid = null;
-export function setOverlayBid(window) {
-  overlayBid = window;
-}
-
-export function getOverlayBid() {
-  return overlayBid;
-}
-
-/////////////////////////////////////////////////////////////
-
-let overlayTimers = null;
-export function setOverlayTimers(window) {
-  overlayTimers = window;
-}
-
-export function getOverlayTimers() {
-  return overlayTimers;
-}
-
-/////////////////////////////////////////////////////////////
-
-let overlayItemDetails = null;
-export function setOverlayItemDetails(window) {
-  overlayItemDetails = window;
-}
-
-export function getOverlayItemDetails() {
-  return overlayItemDetails;
-}
-
-/////////////////////////////////////////////////////////////
-
-let overlayTracker = null;
-export function setOverlayTracker(window) {
-  overlayTracker = window;
-}
-
-export function getOverlayTracker() {
-  return overlayTracker;
-}
+export const { setWindow: setMainWindow, getWindow: getMainWindow } = createWindowAccessor("mainWindow");
+export const { setWindow: setOverlayBid, getWindow: getOverlayBid } = createWindowAccessor("overlayBid");
+export const { setWindow: setOverlayTimers, getWindow: getOverlayTimers } = createWindowAccessor("overlayTimers");
+export const { setWindow: setOverlayItemDetails, getWindow: getOverlayItemDetails } = createWindowAccessor("overlayItemDetails");
+export const { setWindow: setOverlayTracker, getWindow: getOverlayTracker } = createWindowAccessor("overlayTracker");
