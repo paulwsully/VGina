@@ -14,7 +14,7 @@ function Trigger({ trigger, refreshTriggers }) {
   };
 
   return (
-    <div className={`trigger ${isSelected ? "selected" : ""}`} onClick={toggleSelection}>
+    <div className={`trigger`} onClick={toggleSelection}>
       <div className="text-primary bold">{trigger.triggerName}</div>
       <span>{trigger.searchText}</span>
       <div className="tags">

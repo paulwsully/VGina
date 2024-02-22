@@ -128,6 +128,9 @@ function NewTrigger({ selectedTrigger, refreshTriggers, triggerUpdateCancelled }
     if (!showNewTrigger) {
       setNewTrigger(triggerReset);
     }
+
+    triggerUpdateCancelled();
+    resetTrigger();
     setShowNewTrigger(!showNewTrigger);
   };
 
@@ -164,9 +167,9 @@ function NewTrigger({ selectedTrigger, refreshTriggers, triggerUpdateCancelled }
   };
 
   const handleCancelClick = () => {
+    triggerUpdateCancelled();
     resetTrigger();
     setShowNewTrigger(false);
-    triggerUpdateCancelled();
   };
 
   const resetTrigger = () => {
@@ -197,7 +200,7 @@ function NewTrigger({ selectedTrigger, refreshTriggers, triggerUpdateCancelled }
                 <FontAwesomeIcon icon={faFloppyDisk} /> Save
               </div>
 
-              <div className="pill button error" onClick={handleCancelClick}>
+              <div className="pill button error" onClick={toggleOpenClose}>
                 <FontAwesomeIcon icon={faTimes} /> Cancel
               </div>
             </div>
