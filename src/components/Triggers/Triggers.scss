@@ -61,6 +61,7 @@
   margin: 8px 0;
   cursor: pointer;
   display: flex;
+  position: relative;
   flex-direction: column;
   border-left: 3px solid transparent;
   transition: padding 0.15s ease-in-out, border-left 0.15s ease-in-out;
@@ -71,6 +72,9 @@
     margin: 8px 0;
     padding-left: 16px;
     border-left: 3px solid $color-primary;
+    .pill.error.delete {
+      display: flex;
+    }
   }
 }
 
@@ -241,5 +245,22 @@
   z-index: 1;
   &:hover {
     color: lighten($color-error, 5%);
+  }
+}
+
+.pill.error.delete {
+  position: absolute;
+  right: 0;
+  top: 0;
+  display: none;
+  color: $color-error;
+  z-index: 9999;
+  background: $color-error;
+  color: white;
+  opacity: 0.9;
+  &:hover {
+    background: $color-error;
+    color: white;
+    opacity: 1;
   }
 }

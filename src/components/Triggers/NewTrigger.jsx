@@ -166,12 +166,6 @@ function NewTrigger({ selectedTrigger, refreshTriggers, triggerUpdateCancelled }
     setShowNewTrigger(false);
   };
 
-  const handleCancelClick = () => {
-    triggerUpdateCancelled();
-    resetTrigger();
-    setShowNewTrigger(false);
-  };
-
   const resetTrigger = () => {
     setNewTrigger(triggerReset);
     setSelectedSound("");
