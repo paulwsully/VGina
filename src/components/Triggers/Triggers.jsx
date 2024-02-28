@@ -77,7 +77,7 @@ function Triggers() {
             ))}
           </div>
           {currentTriggers.length === 0 ? (
-            <div className="null-message">No Results</div>
+            <div className="null-message">No Triggers</div>
           ) : (
             <div className="triggers-page-and-list">
               {triggers.length > triggersPerPage && <Pagination total={filteredTriggers.length} perPage={triggersPerPage} currentPage={currentPage} setCurrentPage={setCurrentPage} />}

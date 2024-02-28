@@ -3,6 +3,8 @@ config();
 import { app, ipcMain } from "electron";
 import { getMainWindow, getOverlayBid, getOverlayTimers, getOverlayTracker } from "./windowManager.js";
 import Store from "electron-store";
+import { ref, push } from "firebase/database";
+import database from "./../firebaseConfig.js";
 import { getFunctions, httpsCallable } from "firebase/functions";
 const store = new Store();
 import path from "path";
@@ -175,7 +177,15 @@ function setupIpcHandlers() {
     { actionType: "sound", key: "tell", search: "\\[.*?\\] (\\S+) tells you,", sound: "tell", useRegex: true },
   ];
 
+  function removeTimestamps(text) {
+    return text
+      .split("\n")
+      .map((line) => line.replace(/\[\w+ \w+ \d+ \d+:\d+:\d+ \d+\] /, ""))
+      .join("\n");
+  }
+
   function processNewLine(line) {
+    const lineOnly = removeTimestamps(line);
     if (line) {
       const triggers = store.get("triggers");
       actions.forEach(({ actionType, key, search, sound, useRegex }) => {
@@ -195,7 +205,8 @@ function setupIpcHandlers() {
       }
 
       if (line.includes("**A Magic Die is rolled by") || line.includes("**It could have been any number from")) parseRolls(line);
-      if (line.includes("tells you,")) parseLineForBid(line);
+      if (line.includes("tells you,")) parseLineForBid(line, true);
+      if (line.includes("#bid ")) parseLineForCurrentBid(lineOnly, false);
       if (line.includes("snared")) {
         store.set("latestLine", line);
         getMainWindow().webContents.send("new-line", line);
@@ -214,26 +225,49 @@ function setupIpcHandlers() {
     }
   }
 
-  async function parseLineForBid(line) {
-    const dkpRemoved = line.replace(/dkp/gi, "");
-    const regex = /\[\w+ \w+ \d+ \d+:\d+:\d+ \d+\] (\w+) tells you, '([^']+?)'/;
-    const match = dkpRemoved.match(regex);
+  function parseLineForCurrentBid(line, isPrivate) {
+    const validBidComment = line.startsWith("You say, '#bid ");
+    if (validBidComment) parseLineForBid(line, isPrivate);
+  }
 
-    if (match) {
-      const name = match[1];
-      const messageWithoutDKP = match[2];
-      const dkpMatch = messageWithoutDKP.match(/(\d+)/);
-      const dkp = dkpMatch ? parseInt(dkpMatch[1], 10) : null;
-      const isAlt = /(?:^|\s)alt(?:\s|$)/i.test(match);
-      try {
-        const item = await checkIfRaidDrop(dkpRemoved);
-        if (name && item && dkp) {
-          updateActiveBids({ name, item, dkp, isAlt });
+  async function parseLineForBid(line, isPrivate) {
+    if (isPrivate) {
+      const dkpRemoved = line.replace(/dkp/gi, "");
+      const regex = /\[\w+ \w+ \d+ \d+:\d+:\d+ \d+\] (\w+) tells you, '([^']+?)'/;
+      const match = dkpRemoved.match(regex);
+
+      if (match) {
+        const name = match[1];
+        const messageWithoutDKP = match[2];
+        const dkpMatch = messageWithoutDKP.match(/(\d+)/);
+        const dkp = dkpMatch ? parseInt(dkpMatch[1], 10) : null;
+        const isAlt = /(?:^|\s)alt(?:\s|$)/i.test(match);
+        try {
+          const item = await checkIfRaidDrop(dkpRemoved);
+          if (name && item && dkp) {
+            updateActiveBids({ name, item, dkp, isAlt });
+          }
+        } catch (err) {
+          console.error("Error in parseLineForBid:", err);
         }
-      } catch (err) {
-        console.error("Error in parseLineForBid:", err);
+      } else {
       }
     } else {
+      const item = line.replace("#bid ", "");
+      if (checkIfRaidDrop(item)) {
+        console.log(checkIfRaidDrop(item));
+
+        // Get bid takers name
+        const logFilePath = store.get("logFile", false);
+        const nameMatch = logFilePath.match(/eqlog_(.+?)_pq.proj.txt/);
+        const playerName = nameMatch ? nameMatch[1] : "Unknown";
+
+        // Set bid data
+        const timestamp = new Date().toISOString();
+        const closedBid = { item: checkIfRaidDrop(item), timestamp, bidTaker: playerName };
+        const currentBidsRef = ref(database, "currentBids");
+        push(currentBidsRef, closedBid);
+      }
     }
   }
 
@@ -251,33 +285,33 @@ function setupIpcHandlers() {
 
   function updateActiveBids({ name, item, dkp, isAlt }) {
     const activeBids = store.get("activeBids", []);
-    let updated = false; // Flag to track if update is made
+    let updated = false;
 
     const newActiveBids = activeBids.map((bid) => {
       if (bid.item === item) {
         const bidders = bid.bidders.map((bidder) => {
           if (bidder.name === name) {
-            updated = true; // Mark as updated
-            return { ...bidder, dkp, isAlt }; // Return updated bidder
+            updated = true;
+            return { ...bidder, dkp, isAlt };
           }
-          return bidder; // Return unchanged bidder
+          return bidder;
         });
 
         if (!bidders.some((bidder) => bidder.name === name)) {
-          updated = true; // Mark as updated
-          bidders.push({ name, dkp, isAlt }); // Add new bidder
+          updated = true;
+          bidders.push({ name, dkp, isAlt });
         }
 
-        return { ...bid, bidders }; // Return updated bid
+        return { ...bid, bidders };
       }
-      return bid; // Return unchanged bid
+      return bid;
     });
 
     if (!updated) {
-      newActiveBids.push({ item, bidders: [{ name, dkp, isAlt }] }); // Add new item bid
+      newActiveBids.push({ item, bidders: [{ name, dkp, isAlt }] });
     }
 
-    store.set("activeBids", newActiveBids); // Set with new reference
+    store.set("activeBids", newActiveBids);
     const mainWindow = getMainWindow();
     const overlayBidWindow = getOverlayBid();
     if (mainWindow && !mainWindow.isDestroyed()) {

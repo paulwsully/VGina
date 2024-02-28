@@ -5,6 +5,7 @@ import Triggers from "./components/Triggers/Triggers";
 import DkpAndLoot from "./components/DkpAndLoot/DkpAndLoot";
 import Alerts from "./components/Alerts/Alerts";
 import Bids from "./components/DkpAndLoot/Bids";
+import CurrentBids from "./components/DkpAndLoot/CurrentBids";
 import ItemDetailsWindow from "./components/DkpAndLoot/ItemDetailsWindow";
 import TimerOverlay from "./components/Triggers/TimerOverlay";
 import Tracker from "./components/Tracker/Tracker";
@@ -116,6 +117,14 @@ function App() {
           element={
             <div className="bid-overlay">
               <Bids dkp={sortedData} />
+            </div>
+          }
+        />
+        <Route
+          path="/dkp-and-loot/overlay/current-bids"
+          element={
+            <div className="current-bids-overlay">
+              <CurrentBids />
             </div>
           }
         />

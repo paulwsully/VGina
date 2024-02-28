@@ -1,8 +1,8 @@
 import { config } from "dotenv";
 config();
 import { ipcMain } from "electron";
-import { getOverlayTimers, getOverlayBid, getOverlayTracker } from "./windowManager.js";
-import { createOverlayBids, createOverlayTimers, createOverlayTracker } from "./window.js";
+import { getOverlayTimers, getOverlayBid, getOverlayCurrentBid, getOverlayTracker } from "./windowManager.js";
+import { createOverlayBids, createOverlayCurrentBids, createOverlayTimers, createOverlayTracker } from "./window.js";
 import Store from "electron-store";
 
 const store = new Store();
@@ -53,5 +53,6 @@ const handleOverlay = (overlayKey, getOverlay, createOverlay, eventOnShow, event
 export const getWindowListeners = () => {
   handleOverlay("overlayTimers", getOverlayTimers, createOverlayTimers, "open-showOverlayTimers-window", "close-showOverlayTimers-window", "lock-lockOverlayTimers-window", "unlock-lockOverlayTimers-window");
   handleOverlay("overlayBids", getOverlayBid, createOverlayBids, "open-showOverlayBids-window", "close-showOverlayBids-window", "lock-lockOverlayBids-window", "unlock-lockOverlayBids-window");
+  handleOverlay("overlayCurrentBids", getOverlayCurrentBid, createOverlayCurrentBids, "open-showOverlayCurrentBids-window", "close-showOverlayCurrentBids-window", "lock-lockOverlayCurrentBids-window", "unlock-lockOverlayCurrentBids-window");
   handleOverlay("overlayTracker", getOverlayTracker, createOverlayTracker, "open-showOverlayTracker-window", "close-showOverlayTracker-window", "lock-lockOverlayTracker-window", "unlock-lockOverlayTracker-window");
 };

@@ -1,6 +1,6 @@
 import { app, BrowserWindow } from "electron";
 import throttle from "lodash.throttle";
-import { setMainWindow, setOverlayBid, setOverlayTimers, setOverlayItemDetails, setOverlayTracker } from "./windowManager.js";
+import { setMainWindow, setOverlayBid, setOverlayCurrentBid, setOverlayTimers, setOverlayItemDetails, setOverlayTracker } from "./windowManager.js";
 import { fileURLToPath } from "url";
 import Store from "electron-store";
 import path from "path";
@@ -100,6 +100,58 @@ function createOverlayBids() {
 
     setOverlayBid(overlayBid);
     // overlayBid.webContents.openDevTools();
+  });
+}
+
+function createOverlayCurrentBids() {
+  return new Promise((resolve, reject) => {
+    let { width, height, x, y } = store.get("overlayCurrentBidBounds", { width: 800, height: 300 });
+    const overlayCurrentBid = new BrowserWindow({
+      x,
+      y,
+      width,
+      height: 172 + 16,
+      frame: false,
+      transparent: true,
+      alwaysOnTop: true,
+      webPreferences: {
+        preload: path.join(__dirname, "preload.js"),
+        nodeIntegration: false,
+        contextIsolation: true,
+        webSecurity: false,
+      },
+    });
+
+    overlayCurrentBid.loadURL(isDev ? "http://localhost:3000/dkp-and-loot/overlay/bids" : `file://${path.join(__dirname, "../dist/index.html#/dkp-and-loot/overlay/bids").replace(/\\/g, "/")}`);
+
+    overlayCurrentBid.webContents.once("did-finish-load", () => {
+      resolve(overlayCurrentBid); // Resolve the promise with the overlayCurrentBid window
+    });
+
+    overlayCurrentBid.on(
+      "resize",
+      throttle(() => {
+        let bounds = store.get("overlayCurrentBidBounds", { width: 1000, height: 1000, x: 0, y: 0 });
+        let { width, height } = overlayCurrentBid.getBounds();
+        store.set("overlayCurrentBidBounds", { ...bounds, width, height });
+      }, 500)
+    );
+
+    overlayCurrentBid.on(
+      "move",
+      throttle(() => {
+        let bounds = store.get("overlayCurrentBidBounds", { width: 1000, height: 1000, x: 0, y: 0 });
+        let { x, y } = overlayCurrentBid.getBounds();
+        store.set("overlayCurrentBidBounds", { ...bounds, x, y });
+      }, 500)
+    );
+
+    overlayCurrentBid.on("closed", () => {
+      reject(new Error("OverlayCurrentBid window was closed before it could finish loading."));
+    });
+
+    setOverlayCurrentBid(overlayCurrentBid);
+    // overlayCurrentBid.webContents.openDevTools();
   });
 }
 
@@ -248,4 +300,4 @@ function createOverlayTracker() {
   });
 }
 
-export { createMainWindow, createOverlayBids, createOverlayTimers, createItemDetailsWindow, createOverlayTracker };
+export { createMainWindow, createOverlayBids, createOverlayCurrentBids, createOverlayTimers, createItemDetailsWindow, createOverlayTracker };
