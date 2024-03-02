@@ -24,7 +24,7 @@
     ],
     "publish": {
       "provider": "github",
-      "repo": "EQPal",
+      "repo": "VGina",
       "owner": "paulwsully",
       "private": true,
       "releaseType": "draft"
