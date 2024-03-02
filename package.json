@@ -1,7 +1,7 @@
 {
   "name": "eqpal",
   "private": true,
-  "version": "0.5.0",
+  "version": "0.5.1",
   "main": "main/main.js",
   "type": "module",
   "author": "Manie",
