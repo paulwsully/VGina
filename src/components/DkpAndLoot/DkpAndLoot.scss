@@ -49,6 +49,7 @@
     width: 100%;
     display: flex;
     overflow: auto;
+    align-items: flex-start;
   }
 }
 
@@ -57,10 +58,16 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 8px;
   border: 1px solid rgba(white, 0.1);
   border-radius: 8px;
   background: darken($color-background, 2%);
+  input {
+    padding: 8px 0;
+    text-align: center;
+  }
+  .input-row {
+    gap: 8px;
+  }
   .item-name {
     white-space: nowrap;
     overflow: hidden;
@@ -73,7 +80,6 @@
 .bidders {
   display: flex;
   flex-direction: column;
-  gap: 4px;
   max-height: 90px;
   overflow: auto;
   padding-right: 8px;
@@ -121,11 +127,31 @@
 .bid-bottom {
   width: 100%;
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+  .pill.error {
+    margin: 0;
+  }
+  .input-row {
+    align-items: center;
+    gap: 8px;
+    .input {
+      width: 50px;
+    }
+    .checkbox {
+      margin-bottom: 0;
+    }
+    .checkbox,
+    button {
+      transform: translateY(6px);
+    }
+  }
 }
 
 .bid-close {
   cursor: pointer;
+  margin-top: 4px;
 }
 
 .rolls-container {
@@ -263,4 +289,25 @@ pre {
   pre {
     width: fit-content;
   }
+}
+
+.timer {
+  font-family: "DM Mono";
+}
+
+.bidder-amt {
+  font-size: 0.9em;
+}
+.bidder-amt.error {
+  font-size: 0.9em;
+  margin: 0;
+}
+
+.bid-actions {
+  display: flex;
+  flex-direction: column;
+}
+
+.dialog {
+  font-size: 0.8em;
 }

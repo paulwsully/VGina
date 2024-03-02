@@ -1,11 +1,11 @@
 {
-  "name": "vgina",
+  "name": "eqpal",
   "private": true,
-  "version": "0.4.2",
+  "version": "0.5.0",
   "main": "main/main.js",
   "type": "module",
   "author": "Manie",
-  "description": "VGina is a log parser for the MMORPG, Everquest.",
+  "description": "EQPal is a log parser for the MMORPG, Everquest.",
   "scripts": {
     "dev": "concurrently \"npm run dev:react\" \"npm run dev:electron\"",
     "dev:react": "vite",
@@ -24,12 +24,12 @@
     ],
     "publish": {
       "provider": "github",
-      "repo": "VGina",
+      "repo": "EQPal",
       "owner": "paulwsully",
       "private": true,
       "releaseType": "draft"
     },
-    "appId": "VGina",
+    "appId": "EQPal",
     "mac": {
       "category": "gaming.software"
     },

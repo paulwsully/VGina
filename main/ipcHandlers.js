@@ -1,9 +1,9 @@
 import { config } from "dotenv";
 config();
 import { app, ipcMain } from "electron";
-import { getMainWindow, getOverlayBid, getOverlayTimers, getOverlayTracker } from "./windowManager.js";
+import { getMainWindow, getOverlayBid, getOverlayTimers, getOverlayTracker, getOverlayCurrentBid } from "./windowManager.js";
 import Store from "electron-store";
-import { ref, push } from "firebase/database";
+import { ref, get, set, child, update, push } from "firebase/database";
 import database from "./../firebaseConfig.js";
 import { getFunctions, httpsCallable } from "firebase/functions";
 const store = new Store();
@@ -11,6 +11,7 @@ import path from "path";
 import fs from "fs";
 import { promises as fsPromises, watchFile, readFileSync } from "fs";
 import { sanitizeFilename } from "./util.js";
+import { v4 as uuidv4 } from "uuid";
 
 function setupIpcHandlers() {
   let lastSize = 0;
@@ -207,6 +208,7 @@ function setupIpcHandlers() {
       if (line.includes("**A Magic Die is rolled by") || line.includes("**It could have been any number from")) parseRolls(line);
       if (line.includes("tells you,")) parseLineForBid(line, true);
       if (line.includes("#bid ")) parseLineForCurrentBid(lineOnly, false);
+      if (line.includes("#itemMissing ")) reportMissingITem(lineOnly);
       if (line.includes("snared")) {
         store.set("latestLine", line);
         getMainWindow().webContents.send("new-line", line);
@@ -223,6 +225,18 @@ function setupIpcHandlers() {
         if (line.includes(" is to the left")) getOverlayTracker().webContents.send("send-tracker-direction", "left");
       }
     }
+  }
+
+  function reportMissingITem(lineOnly) {
+    if (lineOnly.includes("' not recognized")) return;
+
+    let item = lineOnly.replace("You say, '#itemMissing ", "");
+    item = item.slice(0, -1);
+    const missingItemsRef = ref(database, "missingItems");
+    const newItemRef = push(missingItemsRef);
+    set(newItemRef, { itemName: item, reportedTime: new Date().toISOString() })
+      .then(() => console.log("New missing item reported:", item))
+      .catch((error) => console.error("Error reporting missing item:", error));
   }
 
   function parseLineForCurrentBid(line, isPrivate) {
@@ -245,7 +259,7 @@ function setupIpcHandlers() {
         try {
           const item = await checkIfRaidDrop(dkpRemoved);
           if (name && item && dkp) {
-            updateActiveBids({ name, item, dkp, isAlt });
+            updateActiveBids(name, item, dkp, isAlt);
           }
         } catch (err) {
           console.error("Error in parseLineForBid:", err);
@@ -257,16 +271,18 @@ function setupIpcHandlers() {
       if (checkIfRaidDrop(item)) {
         console.log(checkIfRaidDrop(item));
 
-        // Get bid takers name
         const logFilePath = store.get("logFile", false);
         const nameMatch = logFilePath.match(/eqlog_(.+?)_pq.proj.txt/);
         const playerName = nameMatch ? nameMatch[1] : "Unknown";
 
-        // Set bid data
         const timestamp = new Date().toISOString();
-        const closedBid = { item: checkIfRaidDrop(item), timestamp, bidTaker: playerName };
-        const currentBidsRef = ref(database, "currentBids");
-        push(currentBidsRef, closedBid);
+        const bidId = uuidv4();
+        const currentBid = { item: checkIfRaidDrop(item), timestamp, bidTaker: playerName, id: bidId, bidders: [] };
+        const currentBidRef = ref(database, `currentBids/${bidId}`);
+
+        set(currentBidRef, currentBid)
+          .then(() => console.log("Bid added successfully"))
+          .catch((error) => console.error("Failed to add bid:", error));
       }
     }
   }
@@ -283,44 +299,53 @@ function setupIpcHandlers() {
     return item ? item.ItemName : undefined;
   }
 
-  function updateActiveBids({ name, item, dkp, isAlt }) {
-    const activeBids = store.get("activeBids", []);
-    let updated = false;
+  async function updateActiveBids(newName, newItem, newAmt, newIsAlt) {
+    const bidsRef = ref(database, "currentBids");
+    try {
+      const snapshot = await get(bidsRef);
+      if (snapshot.exists()) {
+        const bids = snapshot.val();
 
-    const newActiveBids = activeBids.map((bid) => {
-      if (bid.item === item) {
-        const bidders = bid.bidders.map((bidder) => {
-          if (bidder.name === name) {
-            updated = true;
-            return { ...bidder, dkp, isAlt };
+        let matchingBidKey = null;
+        Object.entries(bids).forEach(([key, bid]) => {
+          if (bid.item === newItem) {
+            matchingBidKey = key;
           }
-          return bidder;
         });
 
-        if (!bidders.some((bidder) => bidder.name === name)) {
-          updated = true;
-          bidders.push({ name, dkp, isAlt });
+        if (matchingBidKey) {
+          const bidToUpdateRef = ref(database, `currentBids/${matchingBidKey}`);
+          let bidders = bids[matchingBidKey].bidders ? [...bids[matchingBidKey].bidders] : [];
+
+          if (newAmt > 0) {
+            const index = bidders.findIndex((bidder) => bidder.name === newName);
+            if (index !== -1) {
+              bidders[index] = { name: newName, amt: newAmt, isAlt: newIsAlt };
+            } else {
+              bidders.push({ name: newName, amt: newAmt, isAlt: newIsAlt });
+            }
+          } else {
+            bidders = bidders.filter((bidder) => bidder.name !== newName);
+          }
+
+          const updates = {};
+          updates[`/bidders`] = bidders;
+
+          await update(bidToUpdateRef, updates);
+        } else {
+          console.log("No matching bid found for item:", newItem);
         }
-
-        return { ...bid, bidders };
+      } else {
+        console.log("No current bids found.");
       }
-      return bid;
-    });
-
-    if (!updated) {
-      newActiveBids.push({ item, bidders: [{ name, dkp, isAlt }] });
-    }
-
-    store.set("activeBids", newActiveBids);
-    const mainWindow = getMainWindow();
-    const overlayBidWindow = getOverlayBid();
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send("activeBids-updated", newActiveBids);
-    }
-    if (overlayBidWindow && !overlayBidWindow.isDestroyed()) {
-      overlayBidWindow.webContents.send("activeBids-updated", newActiveBids);
+    } catch (error) {
+      console.error("Failed to update active bids:", error);
     }
   }
+
+  ipcMain.handle("update-bid", async (event, bidData) => {
+    updateActiveBids(bidData.name, bidData.item, bidData.amt, bidData.isAlt, bidData.id);
+  });
 
   function parseRolls(newLine) {
     lines.push(newLine);

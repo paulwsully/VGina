@@ -153,7 +153,7 @@ const TitleBar = ({ fileName }) => {
   return (
     <div className="titlebar">
       <div className="title">
-        VGina
+        EQPal
         <span className="version">Pre-Alpha | {packageJson.version}</span>
       </div>
       {fileName && (

@@ -122,7 +122,9 @@ function createOverlayCurrentBids() {
       },
     });
 
-    overlayCurrentBid.loadURL(isDev ? "http://localhost:3000/dkp-and-loot/overlay/bids" : `file://${path.join(__dirname, "../dist/index.html#/dkp-and-loot/overlay/bids").replace(/\\/g, "/")}`);
+    const componentPath = "/dkp-and-loot/overlay/current-bids";
+
+    overlayCurrentBid.loadURL(isDev ? `http://localhost:3000${componentPath}` : `file://${path.join(__dirname, `../dist/index.html#${componentPath}`).replace(/\\/g, "/")}`);
 
     overlayCurrentBid.webContents.once("did-finish-load", () => {
       resolve(overlayCurrentBid); // Resolve the promise with the overlayCurrentBid window
@@ -240,7 +242,7 @@ function createItemDetailsWindow() {
       "move",
       throttle(() => {
         let bounds = store.get("overlayItemDetailsBounds", { width: 1000, height: 1000, x: 0, y: 0 });
-        let { x, y } = overlayTimers.getBounds();
+        let { x, y } = overlayItemDetails.getBounds();
         store.set("overlayItemDetailsBounds", { ...bounds, x, y });
       }, 500)
     );

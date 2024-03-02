@@ -1,52 +1,44 @@
 import { ipcMain, app } from "electron";
 import { getMainWindow, getOverlayBid } from "./windowManager.js";
-import { createOverlayBids } from "./window.js";
-import { ref, push } from "firebase/database";
+import { ref, get, remove, update } from "firebase/database";
 import database from "./../firebaseConfig.js";
 import Store from "electron-store";
 
 const store = new Store();
 
 export const getBidsListeners = () => {
-  ipcMain.handle("get-bids", async (event) => {
-    try {
-      const activeBids = store.get("activeBids", []);
-      return activeBids;
-    } catch (err) {
-      console.error("Error in get-bids handler:", err);
+  ipcMain.handle("close-bid", async (event, bidId) => {
+    console.log("Received bidId for closing:", bidId);
+    if (!bidId) {
+      console.error("No bid ID provided");
+      return false;
     }
-  });
 
-  ipcMain.handle("close-bid", async (event, { itemName, bidders }) => {
-    const logFilePath = store.get("logFile", false);
-    const nameMatch = logFilePath.match(/eqlog_(.+?)_pq.proj.txt/);
-    const playerName = nameMatch ? nameMatch[1] : "Unknown";
-
-    const timestamp = new Date().toISOString();
-    const closedBid = { item: itemName, bidders, timestamp, bidTaker: playerName };
+    const bidRef = ref(database, `currentBids/${bidId}`);
     const closedBidsRef = ref(database, "closedBids");
-    if (app.isPackaged) {
-      push(closedBidsRef, closedBid);
+
+    try {
+      // Retrieve the bid to be closed
+      const snapshot = await get(bidRef);
+      if (snapshot.exists()) {
+        const bidData = snapshot.val();
+        console.log("Matching bid object to close:", bidData);
+
+        const closedBidUpdate = {};
+        closedBidUpdate[`${bidId}`] = bidData; // Use same bidId for consistency
+        await update(closedBidsRef, closedBidUpdate);
+        await remove(bidRef);
+
+        console.log("Bid successfully moved to closedBids:", bidId);
+        return true;
+      } else {
+        console.log("No matching bid found for ID:", bidId);
+        return false;
+      }
+    } catch (error) {
+      console.error("Failed to close bid:", error);
+      return false;
     }
-
-    const activeBids = store.get("activeBids", []).filter((bid) => bid.item !== itemName);
-    store.set("activeBids", activeBids);
-
-    const mainWindow = getMainWindow();
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send("activeBids-updated");
-    }
-
-    const locked = store.get("lockOverlayBids", false);
-
-    const overlayBidWindow = getOverlayBid();
-    if (overlayBidWindow && !overlayBidWindow.isDestroyed()) {
-      overlayBidWindow.webContents.send("activeBids-updated");
-      overlayBidWindow.setIgnoreMouseEvents(locked);
-      if (locked) overlayBidWindow.webContents.executeJavaScript(`document.body.classList.add("no-drag")`, true);
-    }
-
-    return true;
   });
 
   ipcMain.on("request-bids", async (event) => {

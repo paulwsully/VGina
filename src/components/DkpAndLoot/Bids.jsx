@@ -1,39 +1,51 @@
-import React, { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { ref, onValue, off } from "firebase/database";
+import database from "/firebaseConfig.js";
 import Bid from "./Bid";
 
 function Bids({ dkp }) {
   const [activeBids, setActiveBids] = useState([]);
+  const [name, setname] = useState("white");
 
   useEffect(() => {
-    const getActiveBids = async () => {
-      const currentActiveBids = await window.electron.ipcRenderer.invoke("get-bids");
-      if (Array.isArray(currentActiveBids)) {
-        const sortedActiveBids = currentActiveBids.map((bid) => ({
-          ...bid,
-          bidders: bid.bidders.slice().sort((a, b) => b.dkp - a.dkp),
+    const bidsRef = ref(database, "currentBids");
+    const onBidsChange = (snapshot) => {
+      if (snapshot.exists()) {
+        const bidsData = snapshot.val();
+        const bidsArray = Object.entries(bidsData).map(([key, value]) => ({
+          ...value,
+          id: key,
+          bidders: Array.isArray(value.bidders) ? value.bidders.slice().sort((a, b) => b.amt - a.amt) : [],
         }));
-
-        setActiveBids(sortedActiveBids);
+        setActiveBids(bidsArray);
       } else {
-        console.error("Received data is not an array:", currentActiveBids);
+        setActiveBids([]);
       }
     };
-    getActiveBids();
-    const bidsUpdatedListener = () => {
-      getActiveBids();
+
+    onValue(bidsRef, onBidsChange);
+
+    return () => off(bidsRef, "value", onBidsChange);
+  }, []);
+
+  useEffect(() => {
+    const fetchname = async () => {
+      const logFilePath = await window.electron.ipcRenderer.invoke("storeGet", "logFile");
+      const nameMatch = logFilePath.match(/eqlog_(.+?)_pq.proj.txt/);
+      setname(nameMatch ? nameMatch[1] : "Unknown");
     };
-    window.electron.ipcRenderer.on("activeBids-updated", bidsUpdatedListener);
-    return () => {
-      window.electron.ipcRenderer.removeAllListeners("bids-updated");
-    };
+
+    fetchname();
   }, []);
 
   const findCurrentDKP = (characterName) => {
     for (const className in dkp) {
-      const characterArray = dkp[className];
-      const character = characterArray.find((char) => char.CharacterName === characterName);
-      if (character) {
-        return character.CurrentDKP;
+      if (Object.hasOwnProperty.call(dkp, className)) {
+        const characterArray = dkp[className];
+        const character = characterArray.find((char) => char.CharacterName === characterName);
+        if (character) {
+          return character.CurrentDKP;
+        }
       }
     }
     return null;
@@ -46,7 +58,7 @@ function Bids({ dkp }) {
       ) : (
         <div className="active-bids-list">
           {activeBids.map((bid, index) => (
-            <Bid key={`active-${index}-${bid.item}`} itemName={bid.item} bidders={bid.bidders} findCurrentDKP={findCurrentDKP} />
+            <>{name === bid.bidTaker && <Bid key={`active-${index}-${bid.id}`} itemName={bid.item} bidders={bid.bidders} findCurrentDKP={findCurrentDKP} isAlt={bid.isAlt} bidId={bid.id} />}</>
           ))}
         </div>
       )}

@@ -16,7 +16,8 @@ function Alerts() {
   const overlayOptions = [
     { id: "showOverlayTracker", label: "Tracker", lockId: "lockOverlayTracker", lockLabel: "Locked" },
     { id: "showOverlayTimers", label: "Timers", lockId: "lockOverlayTimers", lockLabel: "Locked" },
-    { id: "showOverlayBids", label: "Bids", lockId: "lockOverlayBids", lockLabel: "Locked" },
+    { id: "showOverlayBids", label: "Bid Taking", lockId: "lockOverlayBids", lockLabel: "Locked" },
+    { id: "showOverlayCurrentBids", label: "Live Bids", lockId: "lockOverlayCurrentBids", lockLabel: "Locked" },
   ];
 
   const [checkboxStates, setCheckboxStates] = useState({});

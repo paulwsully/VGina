@@ -1,6 +1,6 @@
 import { app, globalShortcut, clipboard } from "electron";
-import { createMainWindow, createOverlayBids, createOverlayTimers, createOverlayTracker } from "./window.js";
-import { getOverlayBid, getOverlayTimers, getOverlayTracker } from "./windowManager.js";
+import { createMainWindow, createOverlayBids, createOverlayCurrentBids, createOverlayTimers, createOverlayTracker } from "./window.js";
+import { getOverlayBid, getOverlayCurrentBid, getOverlayTimers, getOverlayTracker } from "./windowManager.js";
 import Store from "electron-store";
 import pkg from "electron-updater";
 const { autoUpdater } = pkg;
@@ -51,6 +51,9 @@ function setupAppLifecycle() {
     const showOverlayBids = store.get("showOverlayBids", false);
     const lockOverlayBids = store.get("lockOverlayBids", false);
 
+    const showOverlayCurrentBids = store.get("showOverlayCurrentBids", false);
+    const lockOverlayCurrentBids = store.get("lockOverlayCurrentBids", false);
+
     const showOverlayTimers = store.get("showOverlayTimers", false);
     const lockOverlayTimers = store.get("lockOverlayTimers", false);
 
@@ -63,6 +66,16 @@ function setupAppLifecycle() {
           const overlayBidWindow = getOverlayBid();
           overlayBidWindow.setIgnoreMouseEvents(lockOverlayBids, { forward: true });
           overlayBidWindow.webContents.executeJavaScript(`document.body.classList.add("${lockOverlayBids ? "no-drag" : "drag"}")`, true);
+        })
+        .catch((err) => console.log(err));
+    }
+
+    if (showOverlayCurrentBids) {
+      createOverlayCurrentBids()
+        .then(() => {
+          const overlayCurrentBidWindow = getOverlayCurrentBid();
+          overlayCurrentBidWindow.setIgnoreMouseEvents(lockOverlayCurrentBids, { forward: true });
+          overlayCurrentBidWindow.webContents.executeJavaScript(`document.body.classList.add("${lockOverlayCurrentBids ? "no-drag" : "drag"}")`, true);
         })
         .catch((err) => console.log(err));
     }

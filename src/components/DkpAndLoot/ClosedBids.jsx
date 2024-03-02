@@ -7,13 +7,19 @@ function ClosedBids({}) {
 
   useEffect(() => {
     const dataRef = ref(database, "/closedBids");
-    onValue(dataRef, (snapshot) => {
-      if (snapshot.exists()) {
-        setClosedBids(snapshot.val());
-      } else {
-        console.error("No data available");
+    onValue(
+      dataRef,
+      (snapshot) => {
+        if (snapshot.exists()) {
+          setClosedBids(snapshot.val());
+        } else {
+          console.error("No data available");
+        }
+      },
+      (error) => {
+        console.error("Firebase read failed: ", error);
       }
-    });
+    );
   }, []);
 
   const sortedBids = Object.entries(closedBids).sort((a, b) => {

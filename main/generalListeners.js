@@ -1,7 +1,7 @@
 import { config } from "dotenv";
 config();
 import { ipcMain, dialog } from "electron";
-import { getMainWindow, getOverlayBid } from "./windowManager.js";
+import { getMainWindow, getOverlayBid, getOverlayCurrentBid } from "./windowManager.js";
 import Store from "electron-store";
 const store = new Store();
 
@@ -32,30 +32,18 @@ export const generalListeners = () => {
     mainWindow.isMaximized() ? mainWindow.unmaximize() : mainWindow.maximize();
   });
 
-  ipcMain.on("enable-click-through", () => {
-    const overlayBidWindow = getOverlayBid();
-    if (overlayBidWindow && !overlayBidWindow.isDestroyed()) {
-      overlayBidWindow.setIgnoreMouseEvents(true, { forward: true });
-      overlayBidWindow.webContents.executeJavaScript(`document.body.classList.add("no-drag")`, true);
-    }
-  });
-
-  ipcMain.on("disable-click-through", () => {
-    const overlayBidWindow = getOverlayBid();
-    if (overlayBidWindow && !overlayBidWindow.isDestroyed()) {
-      overlayBidWindow.setIgnoreMouseEvents(false);
-      overlayBidWindow.webContents.executeJavaScript(`document.body.classList.remove("no-drag")`, true);
-    }
-  });
-
   ipcMain.on("enable-only-click-through", () => {
     const overlayBidWindow = getOverlayBid();
+    const overlayCurrentBidWindow = getOverlayCurrentBid();
     if (overlayBidWindow && !overlayBidWindow.isDestroyed()) overlayBidWindow.setIgnoreMouseEvents(true, { forward: true });
+    if (overlayCurrentBidWindow && !overlayCurrentBidWindow.isDestroyed()) overlayCurrentBidWindow.setIgnoreMouseEvents(true, { forward: true });
   });
 
   ipcMain.on("disable-only-click-through", () => {
     const overlayBidWindow = getOverlayBid();
+    const overlayCurrentBidWindow = getOverlayCurrentBid();
     if (overlayBidWindow && !overlayBidWindow.isDestroyed()) overlayBidWindow.setIgnoreMouseEvents(false);
+    if (overlayCurrentBidWindow && !overlayCurrentBidWindow.isDestroyed()) overlayCurrentBidWindow.setIgnoreMouseEvents(false);
   });
 
   ipcMain.once("stop-file-watch", () => {

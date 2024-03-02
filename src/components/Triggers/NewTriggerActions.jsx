@@ -5,17 +5,7 @@ import SoundItem from "./SoundItem";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlayCircle } from "@fortawesome/free-solid-svg-icons";
 
-const NewTriggerActions = ({
-  newTrigger,
-  soundFiles,
-  selectedSound,
-  selectedTimerExpirationSound,
-  handleCheckboxChange,
-  handleInputChange,
-  handleSoundItemClick,
-  handleTimerExpirationSoundItemClick,
-  playSound,
-}) => (
+const NewTriggerActions = ({ newTrigger, soundFiles, selectedSound, selectedTimerExpirationSound, handleCheckboxChange, handleInputChange, handleSoundItemClick, handleTimerExpirationSoundItemClick, playSound }) => (
   <section>
     <h3>Actions</h3>
     <div className={`panel ${newTrigger.saySomething ? "" : "inactive"}`}>
@@ -48,39 +38,13 @@ const NewTriggerActions = ({
       {newTrigger.setTimer && (
         <div>
           <div className="input-row timer-fields">
-            <Input
-              id="timerHours"
-              type="number"
-              value={newTrigger.timerHours === 0 ? "" : newTrigger.timerHours}
-              placeholder=" "
-              label="HH"
-              onTextChange={(value) => handleInputChange("timerHours", value)}
-            />
-            <Input
-              id="timerMinutes"
-              type="number"
-              value={newTrigger.timerMinutes === 0 ? "" : newTrigger.timerMinutes}
-              placeholder=" "
-              label="MM"
-              onTextChange={(value) => handleInputChange("timerMinutes", value)}
-            />
-            <Input
-              id="timerSeconds"
-              type="number"
-              value={newTrigger.timerSeconds === 0 ? "" : newTrigger.timerSeconds}
-              placeholder=" "
-              label="SS"
-              onTextChange={(value) => handleInputChange("timerSeconds", value)}
-            />
+            <Input id="timerHours" type="number" value={newTrigger.timerHours === 0 ? "" : newTrigger.timerHours} placeholder=" " label="HH" onTextChange={(value) => handleInputChange("timerHours", value)} />
+            <Input id="timerMinutes" type="number" value={newTrigger.timerMinutes === 0 ? "" : newTrigger.timerMinutes} placeholder=" " label="MM" onTextChange={(value) => handleInputChange("timerMinutes", value)} />
+            <Input id="timerSeconds" type="number" value={newTrigger.timerSeconds === 0 ? "" : newTrigger.timerSeconds} placeholder=" " label="SS" onTextChange={(value) => handleInputChange("timerSeconds", value)} />
           </div>
           <h4>Expiration Action</h4>
           <div className="sounds-header">
-            <Checkbox
-              id="doTimerExpirationSound"
-              label="Play a sound"
-              checked={newTrigger.doTimerExpirationSound}
-              onCheckChange={(checked) => handleCheckboxChange("doTimerExpirationSound", checked)}
-            />
+            <Checkbox id="doTimerExpirationSound" label="Play a sound" checked={newTrigger.doTimerExpirationSound} onCheckChange={(checked) => handleCheckboxChange("doTimerExpirationSound", checked)} />
             {newTrigger.doTimerExpirationSound && newTrigger.timerExpirationSound && (
               <span className="pill sound-pill">
                 <div className="play" onClick={() => playSound(newTrigger.timerExpirationSound)}>
@@ -97,12 +61,7 @@ const NewTriggerActions = ({
               ))}
             </div>
           )}
-          <Checkbox
-            id="doTimerExpirationVocalCountdown"
-            label="Vocal countdown"
-            checked={newTrigger.doTimerExpirationVocalCountdown}
-            onCheckChange={(checked) => handleCheckboxChange("doTimerExpirationVocalCountdown", checked)}
-          />
+          <Checkbox id="doTimerExpirationVocalCountdown" label="Vocal countdown" checked={newTrigger.doTimerExpirationVocalCountdown} onCheckChange={(checked) => handleCheckboxChange("doTimerExpirationVocalCountdown", checked)} />
           {newTrigger.doTimerExpirationVocalCountdown && (
             <Input
               id="timerExpirationVocalCountdownStart"

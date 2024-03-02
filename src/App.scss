@@ -12,7 +12,8 @@
   overflow: auto;
 }
 
-.bid-overlay {
+.bid-overlay,
+.current-bids-overlay {
   .active-bids {
     width: 100%;
     background: rgba(black, 0.4);
@@ -22,7 +23,7 @@
     -webkit-app-region: drag;
     overflow-x: hidden;
   }
-  .bid-close {
+  .bid {
     -webkit-app-region: no-drag;
   }
   .actions {
