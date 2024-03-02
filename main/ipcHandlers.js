@@ -1,9 +1,9 @@
 import { config } from "dotenv";
 config();
 import { app, ipcMain } from "electron";
-import { getMainWindow, getOverlayBid, getOverlayTimers, getOverlayTracker, getOverlayCurrentBid } from "./windowManager.js";
+import { getMainWindow, getOverlayTimers, getOverlayTracker } from "./windowManager.js";
 import Store from "electron-store";
-import { ref, get, set, child, update, push } from "firebase/database";
+import { ref, get, set, update, push } from "firebase/database";
 import database from "./../firebaseConfig.js";
 import { getFunctions, httpsCallable } from "firebase/functions";
 const store = new Store();

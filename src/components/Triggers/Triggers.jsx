@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from "react";
 import NewTrigger from "./NewTrigger";
 import Trigger from "./Trigger";
-import Checkbox from "../Utilities/Checkbox";
 import Input from "../Utilities/Input";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlusCircle } from "@fortawesome/free-solid-svg-icons";
 import "./Triggers.scss";
 import Pagination from "./Pagination";
 

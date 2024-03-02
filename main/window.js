@@ -73,7 +73,7 @@ function createOverlayBids() {
     overlayBid.loadURL(isDev ? "http://localhost:3000/dkp-and-loot/overlay/bids" : `file://${path.join(__dirname, "../dist/index.html#/dkp-and-loot/overlay/bids").replace(/\\/g, "/")}`);
 
     overlayBid.webContents.once("did-finish-load", () => {
-      resolve(overlayBid); // Resolve the promise with the overlayBid window
+      resolve(overlayBid);
     });
 
     overlayBid.on(
@@ -127,7 +127,7 @@ function createOverlayCurrentBids() {
     overlayCurrentBid.loadURL(isDev ? `http://localhost:3000${componentPath}` : `file://${path.join(__dirname, `../dist/index.html#${componentPath}`).replace(/\\/g, "/")}`);
 
     overlayCurrentBid.webContents.once("did-finish-load", () => {
-      resolve(overlayCurrentBid); // Resolve the promise with the overlayCurrentBid window
+      resolve(overlayCurrentBid);
     });
 
     overlayCurrentBid.on(

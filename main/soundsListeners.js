@@ -8,7 +8,6 @@ import path from "path";
 import fs from "fs";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { sanitizeFilename } from "./util.js";
-const { writeFile, access: exists } = fsPromises;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

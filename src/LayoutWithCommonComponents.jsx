@@ -1,7 +1,5 @@
-// LayoutWithCommonComponents.jsx
-
 import React from "react";
-import { Outlet } from "react-router-dom"; // Import Outlet
+import { Outlet } from "react-router-dom";
 import RedirectToHome from "./RedirectToHome";
 import TitleBar from "./components/TitleBar/TitleBar";
 import TabBar from "./components/TabBar/TabBar";
