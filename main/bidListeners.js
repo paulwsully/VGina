@@ -1,5 +1,4 @@
-import { ipcMain, app } from "electron";
-import { getMainWindow, getOverlayBid } from "./windowManager.js";
+import { ipcMain } from "electron";
 import { ref, get, remove, update } from "firebase/database";
 import database from "./../firebaseConfig.js";
 import Store from "electron-store";
@@ -18,14 +17,13 @@ export const getBidsListeners = () => {
     const closedBidsRef = ref(database, "closedBids");
 
     try {
-      // Retrieve the bid to be closed
       const snapshot = await get(bidRef);
       if (snapshot.exists()) {
         const bidData = snapshot.val();
         console.log("Matching bid object to close:", bidData);
 
         const closedBidUpdate = {};
-        closedBidUpdate[`${bidId}`] = bidData; // Use same bidId for consistency
+        closedBidUpdate[`${bidId}`] = bidData;
         await update(closedBidsRef, closedBidUpdate);
         await remove(bidRef);
 

@@ -10,6 +10,7 @@ function DkpAndLoot({ sortedData, fileName }) {
   const [isClosedBidsVisible, setIsClosedBidsVisible] = useState(false);
   const [isOfficer, setisOfficer] = useState(false);
 
+  // These will obviously be removed once guild formation and management has been created.
   const officers = ["Mistabone", "Kazyras", "Panniq", "Daddymaf", "Laruso", "Jorran", "Limpy", "Stud", "Kungfubeef", "Manie"];
 
   const toggleDkpListVisibility = () => {
@@ -30,9 +31,6 @@ function DkpAndLoot({ sortedData, fileName }) {
 
   return (
     <div className="dkp-container">
-      {/* <h3>Active Bids</h3>
-      <Bids dkp={sortedData} />
-      <hr /> */}
       {isOfficer && (
         <>
           <h3>Bid Taking</h3>

@@ -8,7 +8,6 @@ function Rolls() {
       try {
         const currentRolls = await window.electron.ipcRenderer.invoke("get-rolls");
         if (Array.isArray(currentRolls)) {
-          // Sort rollers for each roll by roll value in descending order
           const sortedRolls = currentRolls.map((roll) => {
             return {
               ...roll,
