@@ -58,7 +58,7 @@
     "electron-store": "^8.1.0",
     "electron-updater": "^6.1.7",
     "fast-xml-parser": "^4.3.4",
-    "firebase": "^10.7.2",
+    "firebase": "^10.8.1",
     "lodash": "^4.17.21",
     "lodash.throttle": "^4.1.1",
     "node-key-sender": "^1.0.11",
