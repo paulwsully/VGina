@@ -131,6 +131,7 @@ dist
 
 functions
 functions/
+functions*
 .supabase
 google-tts.json
 google-tts-encoded.txt
