@@ -52,7 +52,7 @@ function App() {
         }
         const jsonData = await response.json();
         const sorted = sortByClass(jsonData);
-        setSortedData(sorted); // Set sorted data locally
+        setSortedData(sorted);
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -85,19 +85,13 @@ function App() {
       window.electron.startFileWatch();
     };
 
-    const handleNewLine = (event, line) => {
-      console.log("Received new line:", line);
-    };
-
     window.electron.ipcRenderer.on("file-name", handleFileNameChange);
-    window.electron.ipcRenderer.on("new-line", handleNewLine);
     window.electron.ipcRenderer.on("play-sound", (soundFile) => {
       window.electron.playSound(soundFile);
     });
 
     return () => {
       window.electron.ipcRenderer.removeAllListeners("file-name");
-      window.electron.ipcRenderer.removeAllListeners("new-line");
       window.electron.ipcRenderer.removeAllListeners("play-sound");
       window.electron.ipcRenderer.send("stop-file-watch");
     };

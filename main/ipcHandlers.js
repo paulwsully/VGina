@@ -188,42 +188,57 @@ function setupIpcHandlers() {
   function processNewLine(line) {
     const lineOnly = removeTimestamps(line);
     if (line) {
-      const triggers = store.get("triggers");
-      actions.forEach(({ actionType, key, search, sound, useRegex }) => {
-        if (actionType === "speak") processSpeakAction(line, key, search, sound, useRegex, actionType);
-        if (actionType === "sound") processSoundAction(line, key, search, sound, useRegex, actionType);
-      });
-
-      if (triggers && triggers.length > 0) {
-        triggers.map((trigger, index) => {
-          if (trigger.saySomething) processSpeakAction(line, "", trigger.searchText, trigger.speechText, trigger.searchRegex);
-          if (trigger.playSound) {
-            const soundFile = typeof triggers[index]?.sound === "string" ? triggers[index].sound.replace(".mp3", "") : undefined;
-            processSoundAction(line, "", trigger.searchText, soundFile, trigger.searchRegex);
-          }
-          if (trigger.setTimer) processTimerAction(line, "", trigger.searchText, trigger.searchRegex, trigger);
-        });
-      }
-
       if (line.includes("**A Magic Die is rolled by") || line.includes("**It could have been any number from")) parseRolls(line);
       if (line.includes("tells you,")) parseLineForBid(line, true);
-      if (line.includes("#bid ")) parseLineForCurrentBid(lineOnly, false);
-      if (line.includes("#itemMissing ")) reportMissingITem(lineOnly);
-      if (line.includes("snared")) {
-        store.set("latestLine", line);
-        getMainWindow().webContents.send("new-line", line);
-      }
 
-      if (getOverlayTracker()) {
-        if (line.includes(" is ahead and to the left")) getOverlayTracker().webContents.send("send-tracker-direction", "aheadLeft");
-        if (line.includes(" is straight ahead")) getOverlayTracker().webContents.send("send-tracker-direction", "ahead");
-        if (line.includes(" is ahead and to the right")) getOverlayTracker().webContents.send("send-tracker-direction", "aheadRight");
-        if (line.includes(" is to the right")) getOverlayTracker().webContents.send("send-tracker-direction", "right");
-        if (line.includes(" is behind and to the right")) getOverlayTracker().webContents.send("send-tracker-direction", "behindRight");
-        if (line.includes(" is behind you")) getOverlayTracker().webContents.send("send-tracker-direction", "behind");
-        if (line.includes(" is behind and to the left")) getOverlayTracker().webContents.send("send-tracker-direction", "behindLeft");
-        if (line.includes(" is to the left")) getOverlayTracker().webContents.send("send-tracker-direction", "left");
-      }
+      handleAlerts(line);
+      handleCommands(line, lineOnly);
+      handleTriggers(line);
+      handleTracker(line);
+    }
+  }
+
+  function handleAlerts(line) {
+    actions.forEach(({ actionType, key, search, sound, useRegex }) => {
+      if (actionType === "speak") processSpeakAction(line, key, search, sound, useRegex, actionType);
+      if (actionType === "sound") processSoundAction(line, key, search, sound, useRegex, actionType);
+    });
+  }
+
+  function handleCommands(line, lineOnly) {
+    const regex = /^You say, '#(.*)\s/;
+    const match = line.match(regex);
+    let command;
+    if (match) command = match[1];
+
+    if (command === "bid") parseLineForBid(lineOnly, false);
+    if (command === "itemMissing") reportMissingITem(lineOnly);
+  }
+
+  function handleTriggers(line) {
+    const triggers = store.get("triggers");
+    if (triggers && triggers.length > 0) {
+      triggers.map((trigger, index) => {
+        if (trigger.saySomething) processSpeakAction(line, "", trigger.searchText, trigger.speechText, trigger.searchRegex);
+        if (trigger.playSound) {
+          const soundFile = typeof triggers[index]?.sound === "string" ? triggers[index].sound.replace(".mp3", "") : undefined;
+          processSoundAction(line, "", trigger.searchText, soundFile, trigger.searchRegex);
+        }
+        if (trigger.setTimer) processTimerAction(line, "", trigger.searchText, trigger.searchRegex, trigger);
+      });
+    }
+  }
+
+  function handleTracker(line) {
+    if (getOverlayTracker()) {
+      if (line.includes(" is ahead and to the left")) getOverlayTracker().webContents.send("send-tracker-direction", "aheadLeft");
+      if (line.includes(" is straight ahead")) getOverlayTracker().webContents.send("send-tracker-direction", "ahead");
+      if (line.includes(" is ahead and to the right")) getOverlayTracker().webContents.send("send-tracker-direction", "aheadRight");
+      if (line.includes(" is to the right")) getOverlayTracker().webContents.send("send-tracker-direction", "right");
+      if (line.includes(" is behind and to the right")) getOverlayTracker().webContents.send("send-tracker-direction", "behindRight");
+      if (line.includes(" is behind you")) getOverlayTracker().webContents.send("send-tracker-direction", "behind");
+      if (line.includes(" is behind and to the left")) getOverlayTracker().webContents.send("send-tracker-direction", "behindLeft");
+      if (line.includes(" is to the left")) getOverlayTracker().webContents.send("send-tracker-direction", "left");
     }
   }
 
@@ -237,11 +252,6 @@ function setupIpcHandlers() {
     set(newItemRef, { itemName: item, reportedTime: new Date().toISOString() })
       .then(() => console.log("New missing item reported:", item))
       .catch((error) => console.error("Error reporting missing item:", error));
-  }
-
-  function parseLineForCurrentBid(line, isPrivate) {
-    const validBidComment = line.startsWith("You say, '#bid ");
-    if (validBidComment) parseLineForBid(line, isPrivate);
   }
 
   async function parseLineForBid(line, isPrivate) {
