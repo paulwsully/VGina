@@ -11,7 +11,7 @@ function DkpAndLoot({ sortedData, fileName }) {
   const [isOfficer, setisOfficer] = useState(false);
 
   // These will obviously be removed once guild formation and management has been created.
-  const officers = ["Mistabone", "Kazyras", "Panniq", "Daddymaf", "Laruso", "Jorran", "Limpy", "Stud", "Kungfubeef", "Manie"];
+  const officers = ["Mistabone", "Kazyras", "Panniq", "Broketoof", "Macail", "Vonerick", "Lianthia", "Meno", "Limpy", "Biggest", "Typheria", "Manie", "Laruso"];
 
   const toggleDkpListVisibility = () => {
     setIsDkpListVisible(!isDkpListVisible);

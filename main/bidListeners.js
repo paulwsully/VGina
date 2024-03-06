@@ -7,11 +7,7 @@ const store = new Store();
 
 export const getBidsListeners = () => {
   ipcMain.handle("close-bid", async (event, bidId) => {
-    console.log("Received bidId for closing:", bidId);
-    if (!bidId) {
-      console.error("No bid ID provided");
-      return false;
-    }
+    if (!bidId) return false;
 
     const bidRef = ref(database, `currentBids/${bidId}`);
     const closedBidsRef = ref(database, "closedBids");
@@ -20,14 +16,10 @@ export const getBidsListeners = () => {
       const snapshot = await get(bidRef);
       if (snapshot.exists()) {
         const bidData = snapshot.val();
-        console.log("Matching bid object to close:", bidData);
-
         const closedBidUpdate = {};
         closedBidUpdate[`${bidId}`] = bidData;
         await update(closedBidsRef, closedBidUpdate);
         await remove(bidRef);
-
-        console.log("Bid successfully moved to closedBids:", bidId);
         return true;
       } else {
         console.log("No matching bid found for ID:", bidId);

@@ -65,7 +65,6 @@ function Bid({ itemName, bidders = [], findCurrentDKP = "", isPublic = false, ti
   };
 
   const handleMouseEnter = async (event) => {
-    console.log("enter");
     window.electron.ipcRenderer.send("disable-only-click-through");
   };
 
@@ -77,9 +76,13 @@ function Bid({ itemName, bidders = [], findCurrentDKP = "", isPublic = false, ti
   let paysAmount = hasMultipleBidders ? bidders[1].amt + 1 : null;
 
   const closeBid = async () => {
-    console.log(bidDetails);
-    console.log(bidId);
-    await window.electron.ipcRenderer.invoke("close-bid", bidId);
+    try {
+      const response = await window.electron.ipcRenderer.invoke("close-bid", bidId);
+      // window.electron.ipcRenderer.send("enable-only-click-through");
+      window.electron.ipcRenderer.send("disable-only-click-through");
+    } catch (error) {
+      console.error("Error closing bid:", error);
+    }
   };
 
   const handleInputChange = (field, value) => {

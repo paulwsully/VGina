@@ -205,14 +205,20 @@ function setupIpcHandlers() {
     });
   }
 
-  function handleCommands(line, lineOnly) {
-    const regex = /^You say, '#(.*)\s/;
+  function handleCommands(line) {
+    const logFilePath = store.get("logFile", false);
+    const nameMatch = logFilePath.match(/eqlog_(.+?)_pq.proj.txt/);
+    const playerName = nameMatch ? nameMatch[1] : "Unknown";
+    const regex = new RegExp(`\\[(.*?)\\] ${playerName} (\\w+) (.*)`);
     const match = line.match(regex);
-    let command;
-    if (match) command = match[1];
 
-    if (command === "bid") parseLineForBid(lineOnly, false);
-    if (command === "itemMissing") reportMissingITem(lineOnly);
+    if (match) {
+      const command = match[2];
+      const argument = match[3];
+
+      if (command === "bid") parseLineForBid(argument, false);
+      if (command === "report") reportMissingItem(argument);
+    }
   }
 
   function handleTriggers(line) {
@@ -242,21 +248,17 @@ function setupIpcHandlers() {
     }
   }
 
-  function reportMissingITem(lineOnly) {
-    if (lineOnly.includes("' not recognized")) return;
-
-    let item = lineOnly.replace("You say, '#itemMissing ", "");
-    item = item.slice(0, -1);
+  function reportMissingItem(item) {
     const missingItemsRef = ref(database, "missingItems");
     const newItemRef = push(missingItemsRef);
-    set(newItemRef, { itemName: item, reportedTime: new Date().toISOString() })
+    set(newItemRef, { itemName: item })
       .then(() => console.log("New missing item reported:", item))
       .catch((error) => console.error("Error reporting missing item:", error));
   }
 
-  async function parseLineForBid(line, isPrivate) {
+  async function parseLineForBid(item, isPrivate) {
     if (isPrivate) {
-      const dkpRemoved = line.replace(/dkp/gi, "");
+      const dkpRemoved = item.replace(/dkp/gi, "");
       const regex = /\[\w+ \w+ \d+ \d+:\d+:\d+ \d+\] (\w+) tells you, '([^']+?)'/;
       const match = dkpRemoved.match(regex);
 
@@ -267,20 +269,15 @@ function setupIpcHandlers() {
         const dkp = dkpMatch ? parseInt(dkpMatch[1], 10) : null;
         const isAlt = /(?:^|\s)alt(?:\s|$)/i.test(match);
         try {
-          const item = await checkIfRaidDrop(dkpRemoved);
-          if (name && item && dkp) {
-            updateActiveBids(name, item, dkp, isAlt);
+          if (name && item) {
+            updateActiveBids(name, checkIfRaidDrop(item), dkp, isAlt);
           }
         } catch (err) {
           console.error("Error in parseLineForBid:", err);
         }
-      } else {
       }
     } else {
-      const item = line.replace("#bid ", "");
       if (checkIfRaidDrop(item)) {
-        console.log(checkIfRaidDrop(item));
-
         const logFilePath = store.get("logFile", false);
         const nameMatch = logFilePath.match(/eqlog_(.+?)_pq.proj.txt/);
         const playerName = nameMatch ? nameMatch[1] : "Unknown";
