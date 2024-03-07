@@ -1,3 +1,58 @@
+### EQPal - v0.5.3
+
+### Changes
+
+- Fixed a missing file issue that was causing the `:bid <ITEM_LINK>` to not work properly
+
+Known Issues
+https://github.com/paulwsully/VGina/issues
+
+Help Docs
+https://vgina.snazzydocs.com/welcome (Major WIP!)
+
+====================================================================================
+
+### EQPal - v0.5.2
+
+### Changes
+
+- Fixed the in-game bids not registering as bids
+- Updated the hardcoded `clientID` for OpenDKP to use ECGs
+  - This hardcoded value will be updated to a dynamic one later when guilds are integrated
+- Updated the hardcoded list of officers
+  - This hardcoded list will be moved into guild logic later when guilds are integrated
+- Updated bid commands for bid takers
+  - `:bid <ITEM_NAME>` will now start a bid for a given item
+  - `:report <ITEM_NAME>` submits any missing items to be added to the list of raid drops
+
+Known Issues
+https://github.com/paulwsully/VGina/issues
+
+Help Docs
+https://vgina.snazzydocs.com/welcome (Major WIP!)
+
+====================================================================================
+
+### EQPal - v0.5.1
+
+### Changes
+
+- Fixed an issue with .gitignore not properly keeping a folder from being added to the repo. Huge thanks, Grindlord for spotting this!
+
+### Known Issues
+
+https://github.com/paulwsully/VGina/issues
+
+### Help Docs
+
+https://vgina.snazzydocs.com/welcome (Major WIP!)
+
+**Notes**
+
+- This _shouldn't_ impact users still on v0.5.0, but if your voice triggers stop working, just update to v0.5.1 and you should be good to go.
+
+====================================================================================
+
 ### VGina - v0.5.0
 
 ### Changes
