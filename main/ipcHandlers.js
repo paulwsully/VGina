@@ -190,18 +190,18 @@ function setupIpcHandlers() {
     if (line) {
       const triggers = store.get("triggers");
       actions.forEach(({ actionType, key, search, sound, useRegex }) => {
-        if (actionType === "speak") processSpeakAction(line, key, search, sound, useRegex, actionType);
-        if (actionType === "sound") processSoundAction(line, key, search, sound, useRegex, actionType);
+        if (actionType === "speak") processSpeakAction(lineOnly, key, search, sound, useRegex, actionType);
+        if (actionType === "sound") processSoundAction(lineOnly, key, search, sound, useRegex, actionType);
       });
 
       if (triggers && triggers.length > 0) {
         triggers.map((trigger, index) => {
-          if (trigger.saySomething) processSpeakAction(line, "", trigger.searchText, trigger.speechText, trigger.searchRegex);
+          if (trigger.saySomething) processSpeakAction(lineOnly, "", trigger.searchText, trigger.speechText, trigger.searchRegex);
           if (trigger.playSound) {
             const soundFile = typeof triggers[index]?.sound === "string" ? triggers[index].sound.replace(".mp3", "") : undefined;
-            processSoundAction(line, "", trigger.searchText, soundFile, trigger.searchRegex);
+            processSoundAction(lineOnly, "", trigger.searchText, soundFile, trigger.searchRegex);
           }
-          if (trigger.setTimer) processTimerAction(line, "", trigger.searchText, trigger.searchRegex, trigger);
+          if (trigger.setTimer) processTimerAction(lineOnly, "", trigger.searchText, trigger.searchRegex, trigger);
         });
       }
 
