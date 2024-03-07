@@ -9,9 +9,10 @@ import { getFunctions, httpsCallable } from "firebase/functions";
 const store = new Store();
 import path from "path";
 import fs from "fs";
-import { promises as fsPromises, watchFile, readFileSync } from "fs";
+import { promises as fsPromises, watchFile } from "fs";
 import { sanitizeFilename } from "./util.js";
 import { v4 as uuidv4 } from "uuid";
+import { itemsData } from "./itemsData.js";
 
 function setupIpcHandlers() {
   let lastSize = 0;
@@ -295,7 +296,6 @@ function setupIpcHandlers() {
   }
 
   function checkIfRaidDrop(line) {
-    const itemsData = JSON.parse(readFileSync("itemsData.json", "utf8"));
     const cleanLine = line.replace(/[\W_]+/g, "").toLowerCase();
 
     const item = itemsData.find((item) => {

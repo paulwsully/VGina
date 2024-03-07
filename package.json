@@ -43,8 +43,7 @@
       "dist/**/*",
       "main/**/*",
       "package.json",
-      "firebaseConfig.js",
-      "itemsData.json"
+      "firebaseConfig.js"
     ]
   },
   "dependencies": {

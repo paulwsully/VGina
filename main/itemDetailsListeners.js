@@ -5,18 +5,11 @@ import { getOverlayItemDetails } from "./windowManager.js";
 import { createItemDetailsWindow } from "./window.js";
 import Store from "electron-store";
 const store = new Store();
-import path from "path";
-import fs from "fs";
-import { fileURLToPath } from "url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { itemsData } from "./itemsData.js";
 
 export const getItemDetailsListeners = () => {
   ipcMain.handle("read-itemsData", async (event) => {
-    const jsonPath = path.join(__dirname, "./../itemsData.json");
-    const data = fs.readFileSync(jsonPath, "utf8");
-    return JSON.parse(data);
+    return itemsData;
   });
 
   ipcMain.handle("set-foundItem", async (event, itemData) => {
