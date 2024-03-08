@@ -64,14 +64,18 @@ function Triggers() {
     <div className="triggers-wrapper">
       <div className="triggers">
         <div className="trigger-content">
-          <div className="tags">
+          <div className="tags-container">
             <NewTrigger refreshTriggers={refreshTriggers} triggerUpdateCancelled={() => setIsSelected(false)} />
             {triggers.length > triggersPerPage && <Input id="searchText" value={searchText} placeholder="" label="Search..." onTextChange={(value) => handleInputChange("searchText", value)} />}
-            {tags.map((tag) => (
-              <div key={tag} className={`tag pill ${selectedTags.includes(tag) ? "active" : ""}`} onClick={() => toggleTagSelection(tag)}>
-                {tag}
-              </div>
-            ))}
+            <hr />
+            <h4>Filter tags</h4>
+            <div className="tags">
+              {tags.map((tag) => (
+                <div key={tag} className={`tag pill ${selectedTags.includes(tag) ? "active" : ""}`} onClick={() => toggleTagSelection(tag)}>
+                  {tag}
+                </div>
+              ))}
+            </div>
           </div>
           {currentTriggers.length === 0 ? (
             <div className="null-message">No Triggers</div>
