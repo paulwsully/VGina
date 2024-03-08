@@ -189,6 +189,23 @@ function setupIpcHandlers() {
   function processNewLine(line) {
     const lineOnly = removeTimestamps(line);
     if (line) {
+      const triggers = store.get("triggers");
+      actions.forEach(({ actionType, key, search, sound, useRegex }) => {
+        if (actionType === "speak") processSpeakAction(lineOnly, key, search, sound, useRegex, actionType);
+        if (actionType === "sound") processSoundAction(lineOnly, key, search, sound, useRegex, actionType);
+      });
+
+      if (triggers && triggers.length > 0) {
+        triggers.map((trigger, index) => {
+          if (trigger.saySomething) processSpeakAction(lineOnly, "", trigger.searchText, trigger.speechText, trigger.searchRegex);
+          if (trigger.playSound) {
+            const soundFile = typeof triggers[index]?.sound === "string" ? triggers[index].sound.replace(".mp3", "") : undefined;
+            processSoundAction(lineOnly, "", trigger.searchText, soundFile, trigger.searchRegex);
+          }
+          if (trigger.setTimer) processTimerAction(lineOnly, "", trigger.searchText, trigger.searchRegex, trigger);
+        });
+      }
+
       if (line.includes("**A Magic Die is rolled by") || line.includes("**It could have been any number from")) parseRolls(line);
       if (line.includes("tells you,")) parseLineForBid(line, true);
 
