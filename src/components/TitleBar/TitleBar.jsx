@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faWindowMinimize, faWindowMaximize, faTimes, faFolderOpen, faArrowUp, faFileImport } from "@fortawesome/free-solid-svg-icons";
 import { v4 as uuidv4 } from "uuid";
@@ -7,6 +7,17 @@ import packageJson from "../../../package.json";
 import "./TitleBar.scss";
 
 const TitleBar = ({ fileName }) => {
+  const [updateAvailable, setUpdateAvailable] = useState(false);
+
+  useEffect(() => {
+    window.electron.ipcRenderer.on("update-available", () => setUpdateAvailable(true));
+    window.electron.ipcRenderer.on("update-not-available", () => setUpdateAvailable(false));
+    return () => {
+      window.electron.ipcRenderer.removeAllListeners("update-available");
+      window.electron.ipcRenderer.removeAllListeners("update-not-available");
+    };
+  }, []);
+
   const handleMinimize = () => window.electron.ipcRenderer.send("minimize-app");
   const handleMaximize = () => window.electron.ipcRenderer.send("maximize-app");
   const handleClose = () => window.electron.ipcRenderer.send("close-app");
@@ -21,6 +32,10 @@ const TitleBar = ({ fileName }) => {
     } catch (error) {
       console.error("Error opening file:", error);
     }
+  };
+
+  const handleUpdateClick = () => {
+    window.electron.ipcRenderer.send("install-update");
   };
 
   const handleFileImport = async () => {
@@ -160,6 +175,11 @@ const TitleBar = ({ fileName }) => {
         <div className="watching">
           <div className="label">Watching: </div>
           {fileName}
+        </div>
+      )}
+      {updateAvailable && (
+        <div className="update-button" onClick={handleUpdateClick}>
+          Update Available
         </div>
       )}
       <div className="window-controls">

@@ -8,6 +8,12 @@ contextBridge.exposeInMainWorld("electron", {
     on: (channel, func) => {
       const subscription = (event, ...args) => func(...args);
       ipcRenderer.on(channel, subscription);
+
+      if (channel === "update-available") {
+        ipcRenderer.on("update-available", () => func());
+      } else if (channel === "update-not-available") {
+        ipcRenderer.on("update-not-available", () => func());
+      }
     },
     invoke: (channel, ...args) => ipcRenderer.invoke(channel, ...args),
     removeAllListeners: (channel) => ipcRenderer.removeAllListeners(channel),

@@ -17,6 +17,7 @@ export const generalListeners = () => {
   ipcMain.handle("get-last-tab", async () => store.get("lastActiveTab"));
   ipcMain.handle("get-rolls", async () => store.get("rolls", []));
   ipcMain.handle("get-triggers", async () => store.get("triggers", []));
+  ipcMain.on("install-update", () => autoUpdater.quitAndInstall());
 
   ipcMain.handle("open-file-dialog", async () => {
     try {

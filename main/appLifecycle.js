@@ -43,7 +43,6 @@ function setupAppLifecycle() {
   }
 
   app.whenReady().then(async () => {
-    autoUpdater.checkForUpdatesAndNotify();
     copyPackagedSoundsToUserData();
     createMainWindow();
     const store = new Store();
@@ -69,7 +68,6 @@ function setupAppLifecycle() {
         })
         .catch((err) => console.log(err));
     }
-
     if (showOverlayCurrentBids) {
       createOverlayCurrentBids()
         .then(() => {
@@ -119,16 +117,9 @@ function setupAppLifecycle() {
     console.error(`Update error: ${error}`);
   });
 
-  autoUpdater.on("update-available", () => {
-    console.log("Update available");
-  });
-
-  autoUpdater.on("update-not-available", () => {
-    console.log("Update not available");
-  });
-
   autoUpdater.on("update-downloaded", () => {
     console.log("Update downloaded; will install now");
+    autoUpdater.quitAndInstall();
   });
 }
 
