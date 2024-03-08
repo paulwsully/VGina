@@ -1,3 +1,17 @@
+### EQPal - v0.5.4
+
+### Changes
+
+- Working on getting the updater working.
+
+Known Issues
+https://github.com/paulwsully/VGina/issues
+
+Help Docs
+https://vgina.snazzydocs.com/welcome (Major WIP!)
+
+====================================================================================
+
 ### EQPal - v0.5.3
 
 ### Changes
