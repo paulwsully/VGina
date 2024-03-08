@@ -10,12 +10,13 @@
     "dev": "concurrently \"npm run dev:react\" \"npm run dev:electron\"",
     "dev:react": "vite",
     "dev:electron": "electron .",
-    "build:react": "vite build",
+    "build:react": "vite build --mode=production",
     "pack": "electron-builder --dir",
-    "dist:local": "npm run build:react && electron-builder --publish never",
-    "dist:publish": "cross-env GH_TOKEN=${GH_TOKEN} npm run build:react && electron-builder --publish always",
+    "dist:local": "npm run build:react && electron-builder --publish never --config.compression=maximum",
+    "dist:publish": "cross-env GH_TOKEN=${GH_TOKEN} npm run build:react && electron-builder --publish always --config.compression=maximum",
     "deploy:functions": "cd functions && firebase deploy --only functions && cd ../",
-    "postinstall": "electron-builder install-app-deps"
+    "postinstall": "electron-builder install-app-deps",
+    "analyze": "source-map-explorer build/**/*.{js,js.map}"
   },
   "build": {
     "asar": true,
@@ -52,7 +53,6 @@
     "@fortawesome/react-fontawesome": "^0.2.0",
     "@google-cloud/text-to-speech": "^5.0.2",
     "@supabase/supabase-js": "^2.39.6",
-    "concurrently": "^8.2.2",
     "dotenv": "^16.4.1",
     "electron-store": "^8.1.0",
     "electron-updater": "^6.1.7",
@@ -79,6 +79,7 @@
     "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.5",
+    "source-map-explorer": "^2.5.3",
     "vite": "^5.0.8"
   }
 }
