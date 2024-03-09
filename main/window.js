@@ -70,6 +70,8 @@ function createOverlayBids() {
       },
     });
 
+    overlayBid.setAlwaysOnTop(true, "normal");
+
     overlayBid.loadURL(isDev ? "http://localhost:3000/dkp-and-loot/overlay/bids" : `file://${path.join(__dirname, "../dist/index.html#/dkp-and-loot/overlay/bids").replace(/\\/g, "/")}`);
 
     overlayBid.webContents.once("did-finish-load", () => {
@@ -121,6 +123,8 @@ function createOverlayCurrentBids() {
         webSecurity: false,
       },
     });
+
+    overlayCurrentBid.setAlwaysOnTop(true, "normal");
 
     const componentPath = "/dkp-and-loot/overlay/current-bids";
 
@@ -176,6 +180,8 @@ function createOverlayTimers() {
       },
     });
 
+    overlayTimers.setAlwaysOnTop(true, "normal");
+
     overlayTimers.loadURL(isDev ? "http://localhost:3000/dkp-and-loot/overlay/timers" : `file://${path.join(__dirname, "../dist/index.html#/dkp-and-loot/overlay/timers").replace(/\\/g, "/")}`);
 
     overlayTimers.webContents.once("did-finish-load", () => {
@@ -230,6 +236,8 @@ function createItemDetailsWindow() {
       },
     });
 
+    overlayItemDetails.setAlwaysOnTop(true, "normal");
+
     overlayItemDetails.loadURL(isDev ? "http://localhost:3000/dkp-and-loot/overlay/item-details" : `file://${path.join(__dirname, "../dist/index.html#/dkp-and-loot/overlay/item-details").replace(/\\/g, "/")}`);
 
     overlayItemDetails.webContents.once("did-finish-load", () => {
@@ -273,6 +281,8 @@ function createOverlayTracker() {
         webSecurity: false,
       },
     });
+
+    overlayTracker.setAlwaysOnTop(true, "normal");
 
     overlayTracker.loadURL(isDev ? "http://localhost:3000/dkp-and-loot/overlay/tracker" : `file://${path.join(__dirname, "../dist/index.html#/dkp-and-loot/overlay/tracker").replace(/\\/g, "/")}`);
 
