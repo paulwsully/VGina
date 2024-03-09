@@ -1,3 +1,21 @@
+### EQPal - v0.5.5
+
+### Changes
+
+- Fixed the overlay windows sinking behind other windows on the desktop while in full screen.
+- Officers can now take bids again.
+  - Officers need to enter `/gu bid <ITEM_LINK>` in order to start a bid.
+- Added a speech preview when adding speech to be spoken in a trigger.
+  - Previewing the speech will eliminate the delay when running a trigger for the first time. It is HIGHLY recommended to always preview the speech before attempting to use the trigger.
+
+Known Issues
+https://github.com/paulwsully/VGina/issues
+
+Help Docs
+https://vgina.snazzydocs.com/welcome (Major WIP!)
+
+====================================================================================
+
 ### EQPal - v0.5.4
 
 ### Changes
