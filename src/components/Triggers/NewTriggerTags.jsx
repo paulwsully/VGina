@@ -10,15 +10,14 @@ function NewTriggerTags({ tags: defaultTags, handleTagInputChange }) {
 
   const handleChange = (e) => {
     const value = e.target.value;
-    setInputValue(value); // Update the input with the new value
+    setInputValue(value);
 
     const newTags = value
       .split(",")
       .map((tag) => tag.trim())
-      .filter((tag) => tag !== ""); // Convert input string back into an array of tags
-    setTags(newTags); // Update the tags state
+      .filter((tag) => tag !== "");
+    setTags(newTags);
 
-    // Call the parent component's function to update its state.
     handleTagInputChange(value);
   };
 

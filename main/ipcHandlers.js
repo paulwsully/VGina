@@ -1,6 +1,6 @@
 import { config } from "dotenv";
 config();
-import { app, ipcMain } from "electron";
+import { app, ipcMain, clipboard } from "electron";
 import { getMainWindow, getOverlayTimers, getOverlayTracker } from "./windowManager.js";
 import Store from "electron-store";
 import { ref, get, set, update, push } from "firebase/database";
@@ -210,7 +210,7 @@ function setupIpcHandlers() {
       if (line.includes("tells you,")) parseLineForBid(line, true);
 
       handleAlerts(line);
-      handleCommands(line, lineOnly);
+      handleCommands(line);
       handleTriggers(line);
       handleTracker(line);
     }
@@ -227,12 +227,12 @@ function setupIpcHandlers() {
     const logFilePath = store.get("logFile", false);
     const nameMatch = logFilePath.match(/eqlog_(.+?)_pq.proj.txt/);
     const playerName = nameMatch ? nameMatch[1] : "Unknown";
-    const regex = new RegExp(`\\[(.*?)\\] ${playerName} (\\w+) (.*)`);
+    const regex = new RegExp(`\\[(.*?)\\] ${playerName} (\\w+) (.*)|You say to your guild, 'bid (.*)`);
     const match = line.match(regex);
 
     if (match) {
-      const command = match[2];
-      const argument = match[3];
+      const command = match[2] || "bid";
+      const argument = match[3] || match[4];
 
       if (command === "bid") parseLineForBid(argument, false);
       if (command === "report") reportMissingItem(argument);
@@ -306,7 +306,10 @@ function setupIpcHandlers() {
         const currentBidRef = ref(database, `currentBids/${bidId}`);
 
         set(currentBidRef, currentBid)
-          .then(() => console.log("Bid added successfully"))
+          .then(() => {
+            console.log("Bid added successfully");
+            clipboard.writeText(`/gu ${item} Bids to me`);
+          })
           .catch((error) => console.error("Failed to add bid:", error));
       }
     }

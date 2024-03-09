@@ -95,7 +95,7 @@ function setupAppLifecycle() {
         })
         .catch((err) => console.log(err));
     }
-    globalShortcut.register("CommandOrControl+Alt+Z", async () => {
+    globalShortcut.register("Alt+V", async () => {
       await sleep(500);
       const text = clipboard.readText();
       await ks.sendText(text);
