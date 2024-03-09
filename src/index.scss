@@ -156,3 +156,22 @@ body.no-drag {
 button.pill {
   cursor: pointer;
 }
+
+.speech-preview {
+  .input-row {
+    gap: 8px;
+  }
+}
+
+.note {
+  border-left: 3px solid rgba(white, 0.75);
+  padding: 8px;
+  background: rgba(white, 0.02);
+  margin: 16px 0;
+  display: flex;
+  font-weight: 700;
+  color: rgba(white, 0.75);
+  &.small {
+    font-size: 0.8em;
+  }
+}
