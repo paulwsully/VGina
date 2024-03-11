@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { BrowserRouter, HashRouter, Route, Routes } from "react-router-dom";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "./../firebaseConfig";
 import LayoutWithCommonComponents from "./LayoutWithCommonComponents";
 import Triggers from "./components/Triggers/Triggers";
 import DkpAndLoot from "./components/DkpAndLoot/DkpAndLoot";
 import Alerts from "./components/Alerts/Alerts";
 import Bids from "./components/DkpAndLoot/Bids";
+import Guild from "./components/Guild/Guild";
 import CurrentBids from "./components/DkpAndLoot/CurrentBids";
 import ItemDetailsWindow from "./components/DkpAndLoot/ItemDetailsWindow";
 import TimerOverlay from "./components/Triggers/TimerOverlay";
@@ -15,9 +18,11 @@ function App() {
   const isDev = process.env.NODE_ENV === "development";
   const Router = isDev ? BrowserRouter : HashRouter;
   const [fileName, setFileName] = useState("");
+  const [user, setuser] = useState(null);
   const [tabs] = useState([
     { label: "Triggers", path: "/triggers" },
     { label: "DKP & Loot", path: "/dkp-and-loot" },
+    { label: "Guild", path: "/guild" },
     { label: "Alerts and Options", path: "/alerts" },
   ]);
   const [sortedData, setSortedData] = useState(null);
@@ -97,12 +102,27 @@ function App() {
     };
   }, []);
 
+  useEffect(() => {
+    const userSubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setuser(user);
+      } else {
+        setuser(null);
+      }
+    });
+    return () => {
+      console.log("Unsubscribing from auth state changes");
+      userSubscribe();
+    };
+  }, []);
+
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<LayoutWithCommonComponents fileName={fileName} tabs={tabs} />}>
+        <Route path="/" element={<LayoutWithCommonComponents fileName={fileName} tabs={tabs} user={user} />}>
           <Route index element={<div>Select a file to watch</div>} />
           <Route path="triggers" element={<Triggers />} />
+          <Route path="guild" element={<Guild user={user} />} />
           <Route path="dkp-and-loot" element={<DkpAndLoot sortedData={sortedData} fileName={fileName} />} />
           <Route path="alerts" element={<Alerts />} />
         </Route>

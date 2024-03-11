@@ -1,0 +1,48 @@
+@import "../../styles/variables";
+
+.topbar {
+  padding: 8px 16px;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  background-color: lighten($color-background-dark, 2.5%);
+  font-size: 0.8em;
+  .user-or-signin {
+    .pill {
+      cursor: pointer;
+    }
+  }
+  .user-options {
+    position: relative;
+    svg {
+      cursor: pointer;
+      padding: 4px 16px;
+      &:hover {
+        color: $color-primary;
+      }
+    }
+  }
+  .user-options-menu {
+    display: none;
+    position: absolute;
+    right: 0;
+    width: 90px;
+    background: $color-background-dark;
+    border: 1px solid rgba(white, 0.1);
+    padding: 8px;
+    border-radius: 4px;
+    text-align: right;
+    z-index: 9;
+    &-item {
+      padding: 4px;
+      user-select: none;
+      cursor: pointer;
+      &:hover {
+        color: $color-primary;
+      }
+    }
+    &.active {
+      display: block;
+    }
+  }
+}

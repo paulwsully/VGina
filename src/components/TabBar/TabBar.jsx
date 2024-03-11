@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import { NavLink } from "react-router-dom";
 import "./Tabs.scss";
 
-const TabBar = ({ tabs }) => {
+const TabBar = ({ tabs, user }) => {
   const underlineRef = useRef(null);
   const tabBarRef = useRef(null);
   const [activeTab, setActiveTab] = useState(null);
@@ -64,12 +64,18 @@ const TabBar = ({ tabs }) => {
   }, [hoverTab]);
 
   return (
-    <div className="tab-bar" ref={tabBarRef} onMouseOver={handleMouseOver} onMouseOut={handleMouseOut}>
-      {tabs.map((tab) => (
-        <NavLink key={tab.path} to={tab.path} className={getNavLinkClass} onClick={handleTabClick}>
-          {tab.label}
-        </NavLink>
-      ))}
+    <div className="tabbar" ref={tabBarRef} onMouseOver={handleMouseOver} onMouseOut={handleMouseOut}>
+      {tabs.map((tab) => {
+        // Skip rendering the "DKP & Loot" tab if user is null
+        if (!user && tab.label === "DKP & Loot") {
+          return null;
+        }
+        return (
+          <NavLink key={tab.path} to={tab.path} className={getNavLinkClass} onClick={handleTabClick}>
+            {tab.label}
+          </NavLink>
+        );
+      })}
       <div id="underline" ref={underlineRef}></div>
     </div>
   );
