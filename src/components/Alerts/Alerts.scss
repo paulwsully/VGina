@@ -1,1 +1,9 @@
 @import "../../styles/variables";
+
+.options-and-options {
+  display: flex;
+  gap: 16px;
+  .panel {
+    min-width: 300px;
+  }
+}

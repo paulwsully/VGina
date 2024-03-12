@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { signInWithGoogle, signOutUser } from "./../Utilities/googleAuth";
-import "./TopBar.scss";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEllipsisV } from "@fortawesome/free-solid-svg-icons";
+import "./TopBar.scss";
 
 const TopBar = ({ user }) => {
   const [menuActive, setMenuActive] = useState(false);

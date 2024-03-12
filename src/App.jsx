@@ -23,7 +23,7 @@ function App() {
     { label: "Triggers", path: "/triggers" },
     { label: "DKP & Loot", path: "/dkp-and-loot" },
     { label: "Guild", path: "/guild" },
-    { label: "Alerts and Options", path: "/alerts" },
+    { label: "Options and Overlays", path: "/alerts" },
   ]);
   const [sortedData, setSortedData] = useState(null);
 
@@ -123,7 +123,7 @@ function App() {
           <Route index element={<div>Select a file to watch</div>} />
           <Route path="triggers" element={<Triggers />} />
           <Route path="guild" element={<Guild user={user} />} />
-          <Route path="dkp-and-loot" element={<DkpAndLoot sortedData={sortedData} fileName={fileName} />} />
+          <Route path="dkp-and-loot" element={<DkpAndLoot sortedData={sortedData} fileName={fileName} user={user} />} />
           <Route path="alerts" element={<Alerts />} />
         </Route>
         <Route

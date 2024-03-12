@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
+import { Navigate } from "react-router-dom"; // Make sure to import Navigate
 import Bids from "./Bids";
 import Rolls from "./Rolls";
 import GuildDKP from "./GuildDKP";
 import ClosedBids from "./ClosedBids";
 import "./DkpAndLoot.scss";
 
-function DkpAndLoot({ sortedData, fileName }) {
+function DkpAndLoot({ sortedData, fileName, user }) {
   const [isDkpListVisible, setIsDkpListVisible] = useState(false);
   const [isClosedBidsVisible, setIsClosedBidsVisible] = useState(false);
   const [isOfficer, setisOfficer] = useState(false);
@@ -27,7 +28,11 @@ function DkpAndLoot({ sortedData, fileName }) {
 
   useEffect(() => {
     checkIfIsOfficer();
-  });
+  }, [fileName]); // Added fileName as a dependency
+
+  if (!user) {
+    return <Navigate to="/" replace />;
+  }
 
   return (
     <div className="dkp-container">

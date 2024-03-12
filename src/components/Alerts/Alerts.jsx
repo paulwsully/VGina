@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Checkbox from "../Utilities/Checkbox";
+import "./Alerts.scss";
 
 function Alerts() {
   const alertCheckboxes = [
@@ -46,20 +47,24 @@ function Alerts() {
   };
 
   return (
-    <div className="alerts">
-      <h3>Alerts</h3>
-      {alertCheckboxes.map(({ id, label }) => (
-        <Checkbox key={id} id={id} label={label} checked={checkboxStates[id] || false} onCheckChange={(checked) => handleCheckboxChange(id, checked)} />
-      ))}
-      <hr />
-      <h3>Options</h3>
-      <h4 className="label">Overlays</h4>
-      {overlayOptions.map(({ id, label, lockId, lockLabel }) => (
-        <div className="actions" key={id}>
-          <Checkbox id={id} label={label} checked={checkboxStates[id] || false} onCheckChange={(checked) => handleCheckboxChange(id, checked)} />
-          {checkboxStates[id] && <Checkbox id={lockId} label={lockLabel} checked={checkboxStates[lockId] || false} onCheckChange={(checked) => handleCheckboxChange(lockId, checked)} />}
-        </div>
-      ))}
+    <div className="options-and-options">
+      <div className="panel">
+        <h3>Options</h3>
+        <hr />
+        {alertCheckboxes.map(({ id, label }) => (
+          <Checkbox key={id} id={id} label={label} checked={checkboxStates[id] || false} onCheckChange={(checked) => handleCheckboxChange(id, checked)} />
+        ))}
+      </div>
+      <div className="panel">
+        <h3>Overlays</h3>
+        <hr />
+        {overlayOptions.map(({ id, label, lockId, lockLabel }) => (
+          <div className="actions" key={id}>
+            <Checkbox id={id} label={label} checked={checkboxStates[id] || false} onCheckChange={(checked) => handleCheckboxChange(id, checked)} />
+            {checkboxStates[id] && <Checkbox id={lockId} label={lockLabel} checked={checkboxStates[lockId] || false} onCheckChange={(checked) => handleCheckboxChange(lockId, checked)} />}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

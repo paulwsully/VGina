@@ -122,9 +122,21 @@ hr {
   font-weight: 700;
 }
 
+.no-triggers,
+.no-guilds {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  gap: 32px;
+}
+
 .null-message {
   font-weight: 700;
-  color: rgba(white, 0.5);
+  font-size: 2em;
+  color: rgba(white, 1);
 }
 
 .no-drag {

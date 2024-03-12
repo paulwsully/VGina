@@ -63,23 +63,27 @@ function Triggers() {
   return (
     <div className="triggers-wrapper">
       <div className="triggers">
-        <div className="trigger-content">
-          <div className="tags-container">
+        {currentTriggers.length === 0 ? (
+          <div className="no-triggers">
+            <div className="null-message">Let's create a trigger</div>
             <NewTrigger refreshTriggers={refreshTriggers} triggerUpdateCancelled={() => setIsSelected(false)} />
-            {triggers.length > triggersPerPage && <Input id="searchText" value={searchText} placeholder="" label="Search..." onTextChange={(value) => handleInputChange("searchText", value)} />}
-            <hr />
-            <h4>Filter tags</h4>
-            <div className="tags">
-              {tags.map((tag) => (
-                <div key={tag} className={`tag pill ${selectedTags.includes(tag) ? "active" : ""}`} onClick={() => toggleTagSelection(tag)}>
-                  {tag}
-                </div>
-              ))}
-            </div>
           </div>
-          {currentTriggers.length === 0 ? (
-            <div className="null-message">No Triggers</div>
-          ) : (
+        ) : (
+          <div className="trigger-content">
+            <div className="tags-container">
+              <NewTrigger refreshTriggers={refreshTriggers} triggerUpdateCancelled={() => setIsSelected(false)} />
+              {triggers.length > triggersPerPage && <Input id="searchText" value={searchText} placeholder="" label="Search..." onTextChange={(value) => handleInputChange("searchText", value)} />}
+              <hr />
+              <h4>Filter tags</h4>
+              <div className="tags">
+                {tags.map((tag) => (
+                  <div key={tag} className={`tag pill ${selectedTags.includes(tag) ? "active" : ""}`} onClick={() => toggleTagSelection(tag)}>
+                    {tag}
+                  </div>
+                ))}
+              </div>
+            </div>
+
             <div className="triggers-page-and-list">
               {triggers.length > triggersPerPage && <Pagination total={filteredTriggers.length} perPage={triggersPerPage} currentPage={currentPage} setCurrentPage={setCurrentPage} />}
               <div className="trigger-list">
@@ -88,8 +92,8 @@ function Triggers() {
                 ))}
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
