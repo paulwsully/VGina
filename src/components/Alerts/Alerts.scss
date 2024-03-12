@@ -1,9 +1,12 @@
 @import "../../styles/variables";
 
-.options-and-options {
+.options-and-overlays {
   display: flex;
   gap: 16px;
+  p {
+    font-size: 0.9em;
+  }
   .panel {
-    min-width: 300px;
+    width: 300px;
   }
 }

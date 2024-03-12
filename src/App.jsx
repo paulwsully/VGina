@@ -21,8 +21,8 @@ function App() {
   const [user, setuser] = useState(null);
   const [tabs] = useState([
     { label: "Triggers", path: "/triggers" },
-    { label: "DKP & Loot", path: "/dkp-and-loot" },
     { label: "Guild", path: "/guild" },
+    { label: "DKP & Loot", path: "/dkp-and-loot" },
     { label: "Options and Overlays", path: "/alerts" },
   ]);
   const [sortedData, setSortedData] = useState(null);
@@ -111,7 +111,6 @@ function App() {
       }
     });
     return () => {
-      console.log("Unsubscribing from auth state changes");
       userSubscribe();
     };
   }, []);

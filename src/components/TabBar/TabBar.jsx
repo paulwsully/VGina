@@ -18,7 +18,6 @@ const TabBar = ({ tabs, user }) => {
   }, []);
 
   useEffect(() => {
-    // This effect is for initializing the active tab based on the last tab or defaults.
     window.electron.ipcRenderer
       .invoke("get-last-tab")
       .then((lastTab) => {
@@ -40,7 +39,7 @@ const TabBar = ({ tabs, user }) => {
   return (
     <div className="tabbar">
       {tabs.map((tab) => {
-        if (!user && tab.label === "DKP & Loot") {
+        if (!user && (tab.label === "DKP & Loot" || tab.label === "Guild")) {
           return null;
         }
         return (

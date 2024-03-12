@@ -1,9 +1,14 @@
 import React from "react";
 import { useState } from "react";
+import { Navigate } from "react-router-dom";
 import "./Guild.scss";
 
 function Guild({ user }) {
   const [guild, setguild] = useState(null);
+
+  if (!user) {
+    return <Navigate to="/" replace />;
+  }
   return (
     <div className="guild-wrapper">
       <div className="guild-container">

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Navigate } from "react-router-dom"; // Make sure to import Navigate
+import { Navigate } from "react-router-dom";
 import Bids from "./Bids";
 import Rolls from "./Rolls";
 import GuildDKP from "./GuildDKP";
@@ -28,7 +28,7 @@ function DkpAndLoot({ sortedData, fileName, user }) {
 
   useEffect(() => {
     checkIfIsOfficer();
-  }, [fileName]); // Added fileName as a dependency
+  }, [fileName]);
 
   if (!user) {
     return <Navigate to="/" replace />;
@@ -37,28 +37,28 @@ function DkpAndLoot({ sortedData, fileName, user }) {
   return (
     <div className="dkp-container">
       {isOfficer && (
-        <>
+        <div className="panel">
           <h3>Bid Taking</h3>
           <Bids dkp={sortedData} />
-          <hr />
-        </>
+        </div>
       )}
-      <h3>Rolls</h3>
-      <Rolls />
-      <hr />
-      <h3 onClick={toggleDkpListVisibility} style={{ cursor: "pointer" }}>
-        Guild DKP {isDkpListVisible ? "-" : "+"}
-      </h3>
-      {isDkpListVisible && <GuildDKP sortedData={sortedData} />}
-      <hr />
+      <div className="panel">
+        <h3>Rolls</h3>
+        <Rolls />
+      </div>
+      <div className="panel">
+        <h3 onClick={toggleDkpListVisibility} style={{ cursor: "pointer" }}>
+          Guild DKP {isDkpListVisible ? "-" : "+"}
+        </h3>
+        {isDkpListVisible && <GuildDKP sortedData={sortedData} />}
+      </div>
       {isOfficer && (
-        <>
+        <div className="panel">
           <h3 onClick={toggleClosedBidsVisibility} style={{ cursor: "pointer" }}>
             Closed Bids {isClosedBidsVisible ? "-" : "+"}
           </h3>
           {isClosedBidsVisible && <ClosedBids />}
-          <hr />
-        </>
+        </div>
       )}
     </div>
   );

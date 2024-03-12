@@ -47,9 +47,10 @@ function Alerts() {
   };
 
   return (
-    <div className="options-and-options">
+    <div className="options-and-overlays">
       <div className="panel">
         <h3>Options</h3>
+        <p>Receive alerts for all checked options below.</p>
         <hr />
         {alertCheckboxes.map(({ id, label }) => (
           <Checkbox key={id} id={id} label={label} checked={checkboxStates[id] || false} onCheckChange={(checked) => handleCheckboxChange(id, checked)} />
@@ -57,6 +58,7 @@ function Alerts() {
       </div>
       <div className="panel">
         <h3>Overlays</h3>
+        <p>Just check the boxes for the overlays you want to use.</p>
         <hr />
         {overlayOptions.map(({ id, label, lockId, lockLabel }) => (
           <div className="actions" key={id}>
