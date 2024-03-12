@@ -2,17 +2,17 @@ import { config } from "dotenv";
 config();
 import { app, ipcMain, clipboard } from "electron";
 import { getMainWindow, getOverlayTimers, getOverlayTracker } from "./windowManager.js";
-import Store from "electron-store";
 import { ref, get, set, update, push } from "firebase/database";
-import database from "./../firebaseConfig.js";
 import { getFunctions, httpsCallable } from "firebase/functions";
-const store = new Store();
-import path from "path";
-import fs from "fs";
 import { promises as fsPromises, watchFile } from "fs";
 import { sanitizeFilename } from "./util.js";
 import { v4 as uuidv4 } from "uuid";
 import { itemsData } from "./itemsData.js";
+import Store from "electron-store";
+import database from "./../firebaseConfig.js";
+import path from "path";
+import fs from "fs";
+const store = new Store();
 
 function setupIpcHandlers() {
   let lastSize = 0;

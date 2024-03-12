@@ -6,6 +6,7 @@ import "./Triggers.scss";
 import NewTriggerGeneral from "./NewTriggerGeneral";
 import NewTriggerTags from "./NewTriggerTags";
 import NewTriggerActions from "./NewTriggerActions";
+import Overlay from "../Utilities/Overlay";
 
 const triggerReset = {
   saySomething: false,
@@ -187,7 +188,7 @@ function NewTrigger({ selectedTrigger, refreshTriggers, triggerUpdateCancelled }
       </div>
       {InvalidData && <div className="error">Please fill in all required fields and select at least one action.</div>}
       {showNewTrigger && (
-        <div className="new-trigger-overlay">
+        <Overlay toggleOpenClose={toggleOpenClose}>
           <div className={`new-trigger`}>
             <div className="actions">
               <div className="pill button" onClick={handleSaveNewTrigger}>
@@ -197,9 +198,6 @@ function NewTrigger({ selectedTrigger, refreshTriggers, triggerUpdateCancelled }
               <div className="pill button error" onClick={toggleOpenClose}>
                 <FontAwesomeIcon icon={faTimes} /> Cancel
               </div>
-            </div>
-            <div className="new-trigger-close" onClick={toggleOpenClose}>
-              <FontAwesomeIcon icon={faTimesCircle} />
             </div>
             <NewTriggerGeneral newTrigger={newTrigger} handleInputChange={handleInputChange} handleCheckboxChange={handleCheckboxChange} />
             <NewTriggerTags tags={newTrigger.tags} handleTagInputChange={handleTagInputChange} />
@@ -216,7 +214,7 @@ function NewTrigger({ selectedTrigger, refreshTriggers, triggerUpdateCancelled }
               playSound={playSound}
             />
           </div>
-        </div>
+        </Overlay>
       )}
     </div>
   );

@@ -28,42 +28,40 @@ function App() {
   const [sortedData, setSortedData] = useState(null);
 
   useEffect(() => {
-    const sortByClass = (data) => {
-      const sorted = {};
-      if (data && data.Models) {
-        data.Models.forEach((character) => {
-          const characterClass = character.CharacterClass;
-          if (!sorted[characterClass]) {
-            sorted[characterClass] = [];
-          }
-          sorted[characterClass].push(character);
-        });
-      }
-      return sorted;
-    };
-
-    const fetchData = async () => {
-      try {
-        const response = await fetch("https://7gnjtigho4.execute-api.us-east-2.amazonaws.com/prod/dkp", {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json, fsdftext/plain",
-            clientid: "92811f1b28ec0",
-          },
-        });
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        const jsonData = await response.json();
-        const sorted = sortByClass(jsonData);
-        setSortedData(sorted);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      }
-    };
-
-    fetchData();
+    // const sortByClass = (data) => {
+    //   const sorted = {};
+    //   if (data && data.Models) {
+    //     data.Models.forEach((character) => {
+    //       const characterClass = character.CharacterClass;
+    //       if (!sorted[characterClass]) {
+    //         sorted[characterClass] = [];
+    //       }
+    //       sorted[characterClass].push(character);
+    //     });
+    //   }
+    //   return sorted;
+    // };
+    // const fetchData = async () => {
+    //   try {
+    //     const response = await fetch("https://7gnjtigho4.execute-api.us-east-2.amazonaws.com/prod/dkp", {
+    //       method: "GET",
+    //       headers: {
+    //         Accept: "application/json",
+    //         "Content-Type": "application/json, fsdftext/plain",
+    //         clientid: "92811f1b28ec0",
+    //       },
+    //     });
+    //     if (!response.ok) {
+    //       throw new Error(`HTTP error! Status: ${response.status}`);
+    //     }
+    //     const jsonData = await response.json();
+    //     const sorted = sortByClass(jsonData);
+    //     setSortedData(sorted);
+    //   } catch (error) {
+    //     console.error("Error fetching data:", error);
+    //   }
+    // };
+    // fetchData();
   }, []);
 
   const extractFileName = (path) => {
@@ -118,11 +116,10 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<LayoutWithCommonComponents fileName={fileName} tabs={tabs} user={user} />}>
-          <Route index element={<div>Select a file to watch</div>} />
-          <Route path="triggers" element={<Triggers />} />
+        <Route path="/" element={<LayoutWithCommonComponents tabs={tabs} user={user} />}>
+          <Route index path="triggers" element={<Triggers />} />
           <Route path="guild" element={<Guild user={user} />} />
-          <Route path="dkp-and-loot" element={<DkpAndLoot sortedData={sortedData} fileName={fileName} user={user} />} />
+          <Route path="dkp-and-loot" element={<DkpAndLoot sortedData={sortedData} user={user} />} />
           <Route path="alerts" element={<Alerts />} />
         </Route>
         <Route

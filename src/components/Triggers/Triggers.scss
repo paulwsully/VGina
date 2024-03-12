@@ -215,12 +215,13 @@
   overflow: auto;
   border-radius: 8px;
   border: 1px solid #222;
-  background-color: lighten($color-background-light, 2%);
+  background: #010103;
+  background: radial-gradient(at right bottom, #010103, #01040e);
   position: relative;
   &-overlay {
     top: 0;
     left: 0;
-    z-index: 2;
+    z-index: 3;
     width: 100%;
     height: 100%;
     display: flex;
@@ -240,11 +241,11 @@
 
 .new-trigger-close {
   cursor: pointer;
-  font-size: 1.5em;
+  font-size: 4em;
   position: absolute;
-  right: 8px;
-  top: 2px;
-  color: $color-error;
+  right: 32px;
+  top: 42px;
+  color: white;
   z-index: 1;
   &:hover {
     color: lighten($color-error, 5%);

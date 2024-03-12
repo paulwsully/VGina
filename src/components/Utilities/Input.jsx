@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "./Input.scss";
 
-const Input = ({ id, placeholder, value, label, onTextChange, large, onEnter }) => {
+const Input = ({ id, placeholder, value, label, onTextChange, large, onEnter, list, type }) => {
   const [inputValue, setInputValue] = useState(value);
 
   useEffect(() => {
@@ -27,7 +27,7 @@ const Input = ({ id, placeholder, value, label, onTextChange, large, onEnter }) 
 
   return (
     <label htmlFor={id} className={`input ${large ? "input-large" : ""}`}>
-      <input type="text" id={id} value={inputValue} placeholder={placeholder} onChange={handleChange} onKeyUp={handleKeyUp} onBlur={handleBlur} />
+      <input type={type} id={id} value={inputValue} placeholder={placeholder} onChange={handleChange} onKeyUp={handleKeyUp} onBlur={handleBlur} list={list} />
       <span>{label}</span>
     </label>
   );

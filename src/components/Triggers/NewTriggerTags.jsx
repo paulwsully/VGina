@@ -24,7 +24,7 @@ function NewTriggerTags({ tags: defaultTags, handleTagInputChange }) {
   return (
     <section>
       <label className="input">
-        <input type="text" value={inputValue} placeholder="Add tags" onChange={handleChange} />
+        <input type="text" value={inputValue} placeholder="" onChange={handleChange} />
         <span>Tags</span>
       </label>
       <div className="tags">

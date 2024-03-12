@@ -19,13 +19,11 @@ export const generalListeners = () => {
   ipcMain.handle("get-triggers", async () => store.get("triggers", []));
   ipcMain.on("install-update", () => autoUpdater.quitAndInstall());
 
-  ipcMain.handle("open-file-dialog", async () => {
-    try {
-      const result = await dialog.showOpenDialog(getMainWindow(), { properties: ["openFile"] });
-      return result;
-    } catch (err) {
-      console.error("Error in open-file-dialog handler:", err);
-    }
+  ipcMain.handle("open-directory-dialog", async () => {
+    const { filePaths } = await dialog.showOpenDialog({
+      properties: ["openDirectory"],
+    });
+    return { filePaths };
   });
 
   ipcMain.on("maximize-app", () => {
