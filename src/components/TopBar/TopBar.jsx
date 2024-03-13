@@ -27,6 +27,7 @@ const TopBar = ({ user }) => {
   const updateWatchedCharacter = (character) => {
     setwatchedCharacter(character);
     window.electron.ipcRenderer.send("storeSet", "watchedCharacter", character);
+    window.electron.ipcRenderer.send("start-file-watch");
   };
 
   useEffect(() => {
@@ -300,22 +301,22 @@ const TopBar = ({ user }) => {
           </div>
         )}
       </div>
-      {user && (
-        <div className="user-options">
-          <div className="user-options-menu-item" onClick={handleOpenLogFile}>
-            <FontAwesomeIcon icon={faFolderOpen} />
-            Select Log Directory
-          </div>
-          <div className="user-options-menu-item" onClick={handleFileImport}>
-            <FontAwesomeIcon icon={faArrowUpFromBracket} />
-            Import from GINA
-          </div>
+      <div className="user-options">
+        <div className="user-options-menu-item" onClick={handleOpenLogFile}>
+          <FontAwesomeIcon icon={faFolderOpen} />
+          Select Log Directory
+        </div>
+        <div className="user-options-menu-item" onClick={handleFileImport}>
+          <FontAwesomeIcon icon={faArrowUpFromBracket} />
+          Import from GINA
+        </div>
+        {user && (
           <div className="user-options-menu-item" onClick={handleSignOut}>
             <FontAwesomeIcon icon={faArrowRightFromBracket} />
             Sign out
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };

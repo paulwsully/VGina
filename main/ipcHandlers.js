@@ -4,14 +4,13 @@ import { app, ipcMain, clipboard } from "electron";
 import { getMainWindow, getOverlayTimers, getOverlayTracker } from "./windowManager.js";
 import { ref, get, set, update, push } from "firebase/database";
 import { getFunctions, httpsCallable } from "firebase/functions";
-import { promises as fsPromises, watchFile } from "fs";
+import { promises as fsPromises, watchFile, unwatchFile } from "fs";
 import { sanitizeFilename } from "./util.js";
 import { v4 as uuidv4 } from "uuid";
 import { itemsData } from "./itemsData.js";
 import Store from "electron-store";
 import database from "./../firebaseConfig.js";
 import path from "path";
-import fs from "fs";
 const store = new Store();
 
 function setupIpcHandlers() {
@@ -20,31 +19,54 @@ function setupIpcHandlers() {
   let currentRoller = null;
   let lines = [];
 
-  ipcMain.on("start-file-watch", async () => {
+  let currentWatcher = null;
+  let lastFile = "";
+
+  const startWatching = async (directoryPath) => {
     try {
-      const filePath = store.get("logFile");
-      if (!filePath) return;
+      const files = await fsPromises.readdir(directoryPath);
+      const logFiles = files.filter((file) => file.match(/eqlog_.*_pq\.proj\.txt$/));
+      let latestFile = "";
+      let latestMtime = new Date(0);
 
-      const stats = await fsPromises.stat(filePath);
-      lastSize = stats.size;
-
-      watchFile(filePath, { interval: 100 }, async (curr) => {
-        if (curr.size > lastSize) {
-          const fd = await fsPromises.open(filePath, "r");
-          const bufferSize = curr.size - lastSize;
-          const buffer = Buffer.alloc(bufferSize);
-          await fd.read(buffer, 0, bufferSize, lastSize);
-          await fd.close();
-          const newContent = buffer.toString("utf8");
-          const newLines = newContent.split("\n").filter((line) => line !== "");
-          debouncedProcessNewLines(newLines);
-
-          lastSize = curr.size;
+      for (const file of logFiles) {
+        const stats = await fsPromises.stat(path.join(directoryPath, file));
+        if (stats.mtime > latestMtime) {
+          latestMtime = stats.mtime;
+          latestFile = file;
         }
-      });
+      }
+
+      if (latestFile && latestFile !== lastFile) {
+        if (currentWatcher) {
+          unwatchFile(lastFile);
+        }
+        const fullPath = path.join(directoryPath, latestFile).replace(/\\/g, "/");
+        lastSize = (await fsPromises.stat(fullPath)).size;
+        lastFile = fullPath;
+
+        currentWatcher = watchFile(fullPath, { interval: 100 }, async (curr) => {
+          if (curr.size > lastSize) {
+            const fd = await fsPromises.open(fullPath, "r");
+            const bufferSize = curr.size - lastSize;
+            const buffer = Buffer.alloc(bufferSize);
+            await fd.read(buffer, 0, bufferSize, lastSize);
+            await fd.close();
+            const newContent = buffer.toString("utf8");
+            const newLines = newContent.split("\n").filter((line) => line !== "");
+            debouncedProcessNewLines(newLines);
+            lastSize = curr.size;
+          }
+        });
+      }
     } catch (err) {
-      console.error("Error in start-file-watch handler:", err);
+      console.error("Error in file watching logic:", err);
     }
+  };
+
+  ipcMain.on("start-file-watch", () => {
+    const logDirectory = store.get("logDirectory").replace(/\\/g, "/");
+    setInterval(() => startWatching(logDirectory), 5000);
   });
 
   function updateRolls() {
@@ -224,9 +246,9 @@ function setupIpcHandlers() {
   }
 
   function handleCommands(line) {
-    const logFilePath = store.get("logFile", false);
-    const nameMatch = logFilePath.match(/eqlog_(.+?)_pq.proj.txt/);
-    const playerName = nameMatch ? nameMatch[1] : "Unknown";
+    let logFilePath = `${store.get("logDirectory")}/eqlog_${store.get("watchedCharacter").name}_pq.proj.txt`;
+    logFilePath = logFilePath.replace(/\\/g, "/");
+    const playerName = store.get("watchedCharacter").name;
     const regex = new RegExp(`\\[(.*?)\\] ${playerName} (\\w+) (.*)|You say to your guild, 'bid (.*)`);
     const match = line.match(regex);
 

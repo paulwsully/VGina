@@ -17,7 +17,6 @@ import "./App.scss";
 function App() {
   const isDev = process.env.NODE_ENV === "development";
   const Router = isDev ? BrowserRouter : HashRouter;
-  const [fileName, setFileName] = useState("");
   const [user, setuser] = useState(null);
   const [tabs] = useState([
     { label: "Triggers", path: "/triggers" },
@@ -64,31 +63,7 @@ function App() {
     // fetchData();
   }, []);
 
-  const extractFileName = (path) => {
-    return path.split(/[/\\]/).pop().replace("eqlog_", "").replace("_pq.proj.txt", "");
-  };
-
   useEffect(() => {
-    const fetchInitialFileName = async () => {
-      try {
-        const initialFilePath = await window.electron.ipcRenderer.invoke("storeGet", "logFile");
-        if (initialFilePath) {
-          setFileName(extractFileName(initialFilePath));
-          window.electron.ipcRenderer.send("start-file-watch");
-        }
-      } catch (error) {
-        console.error("Error fetching initial file name:", error);
-      }
-    };
-
-    fetchInitialFileName();
-
-    const handleFileNameChange = (path) => {
-      setFileName(extractFileName(path));
-      window.electron.startFileWatch();
-    };
-
-    window.electron.ipcRenderer.on("file-name", handleFileNameChange);
     window.electron.ipcRenderer.on("play-sound", (soundFile) => {
       window.electron.playSound(soundFile);
     });
