@@ -87,6 +87,7 @@ function Triggers() {
             <div className="triggers-page-and-list">
               {triggers.length > triggersPerPage && <Pagination total={filteredTriggers.length} perPage={triggersPerPage} currentPage={currentPage} setCurrentPage={setCurrentPage} />}
               <div className="trigger-list">
+                <h3>Triggers</h3>
                 {currentTriggers.map((trigger) => (
                   <Trigger key={trigger.id} trigger={trigger} isSelected={selectedTags.includes(trigger.id)} refreshTriggers={refreshTriggers} />
                 ))}

@@ -34,7 +34,7 @@ function Trigger({ trigger, refreshTriggers }) {
   };
 
   return (
-    <div className={`trigger`}>
+    <div className={`trigger panel`}>
       <div className="text-primary bold" onClick={toggleSelection}>
         {trigger.triggerName}
       </div>
