@@ -23,7 +23,7 @@ function setupIpcHandlers() {
   let lastFile = "";
 
   const startWatching = async (directoryPath) => {
-    console.log("Looking for new log file to watch");
+    // console.log("Looking for new log file to watch");
     try {
       const files = await fsPromises.readdir(directoryPath);
       const logFiles = files.filter((file) => file.match(/eqlog_(.*?)_pq\.proj\.txt$/));
@@ -131,24 +131,22 @@ function setupIpcHandlers() {
       const mainWindow = getMainWindow();
 
       try {
-        await fsPromises.access(soundFilePath, fs.constants.F_OK);
+        await fsPromises.stat(soundFilePath);
+        mainWindow && mainWindow.webContents.send("play-sound", soundFilePath);
       } catch (error) {
         const functions = getFunctions();
         const speech = httpsCallable(functions, "processSpeakAction");
-
         speech(sound)
-          .then((result) => {
+          .then(async (result) => {
             const audioBuffer = Buffer.from(result.data.audioContent, "base64");
-
-            fsPromises.mkdir(path.dirname(soundFilePath), { recursive: true });
-            fsPromises.writeFile(soundFilePath, audioBuffer);
+            await fsPromises.mkdir(path.dirname(soundFilePath), { recursive: true });
+            await fsPromises.writeFile(soundFilePath, audioBuffer);
             mainWindow && mainWindow.webContents.send("play-sound", soundFilePath);
           })
           .catch((error) => {
             console.error("Error:", error);
           });
       }
-      mainWindow && mainWindow.webContents.send("play-sound", soundFilePath);
     }
   }
 
@@ -229,22 +227,22 @@ function setupIpcHandlers() {
   function processNewLine(line) {
     const lineOnly = removeTimestamps(line);
     if (line) {
-      const triggers = store.get("triggers");
-      actions.forEach(({ actionType, key, search, sound, useRegex }) => {
-        if (actionType === "speak") processSpeakAction(lineOnly, key, search, sound, useRegex, actionType);
-        if (actionType === "sound") processSoundAction(lineOnly, key, search, sound, useRegex, actionType);
-      });
+      // const triggers = store.get("triggers");
+      // actions.forEach(({ actionType, key, search, sound, useRegex }) => {
+      //   if (actionType === "speak") processSpeakAction(lineOnly, key, search, sound, useRegex, actionType);
+      //   if (actionType === "sound") processSoundAction(lineOnly, key, search, sound, useRegex, actionType);
+      // });
 
-      if (triggers && triggers.length > 0) {
-        triggers.map((trigger, index) => {
-          if (trigger.saySomething) processSpeakAction(lineOnly, "", trigger.searchText, trigger.speechText, trigger.searchRegex);
-          if (trigger.playSound) {
-            const soundFile = typeof triggers[index]?.sound === "string" ? triggers[index].sound.replace(".mp3", "") : undefined;
-            processSoundAction(lineOnly, "", trigger.searchText, soundFile, trigger.searchRegex);
-          }
-          if (trigger.setTimer) processTimerAction(lineOnly, "", trigger.searchText, trigger.searchRegex, trigger);
-        });
-      }
+      // if (triggers && triggers.length > 0) {
+      //   triggers.map((trigger, index) => {
+      //     if (trigger.saySomething) processSpeakAction(lineOnly, "", trigger.searchText, trigger.speechText, trigger.searchRegex);
+      //     if (trigger.playSound) {
+      //       const soundFile = typeof triggers[index]?.sound === "string" ? triggers[index].sound.replace(".mp3", "") : undefined;
+      //       processSoundAction(lineOnly, "", trigger.searchText, soundFile, trigger.searchRegex);
+      //     }
+      //     if (trigger.setTimer) processTimerAction(lineOnly, "", trigger.searchText, trigger.searchRegex, trigger);
+      //   });
+      // }
 
       if (line.includes("**A Magic Die is rolled by") || line.includes("**It could have been any number from")) parseRolls(line);
       if (line.includes("tells you,")) parseLineForBid(line, true);

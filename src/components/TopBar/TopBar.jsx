@@ -12,6 +12,7 @@ const TopBar = ({ user }) => {
   const [isActive, setIsActive] = useState(false);
   const [addingNewChar, setaddingNewChar] = useState(false);
   const [userCharacters, setUserCharacters] = useState([]);
+  const [watchedCharacter, setwatchedCharacter] = useState(null);
   const [newCharacter, setNewCharacter] = useState({
     name: "",
     level: "",
@@ -248,32 +249,13 @@ const TopBar = ({ user }) => {
         </Overlay>
       )}
       <div className="user-or-signin">
-        {/* {user ? (
-          <div className="watching-container">
-            <div className="label">{userCharacters.length > 0 ? `Watching:` : `Add a character to watch: `} </div>
-            <div className={`characters ${isActive ? "active" : ""}`} onClick={toggleCharacters} ref={charactersRef}>
-              {watchedCharacter && (
-                <div className="char">
-                  {watchedCharacter.name} <FontAwesomeIcon icon={faCaretDown} />
-                </div>
-              )}
-              <div className="char new-char" onClick={() => setaddingNewChar(true)}>
-                <FontAwesomeIcon icon={faPlusCircle} /> New Character
-              </div>
-              {userCharacters &&
-                userCharacters.length > 1 &&
-                userCharacters.map((char, index) => (
-                  <div className="char" key={index} onClick={() => updateWatchedCharacter(char)}>
-                    {char.name}
-                  </div>
-                ))}
-            </div>
-          </div>
+        {user ? (
+          <div className="watching-container">Signed in</div>
         ) : (
           <div className="pill" onClick={signInWithGoogle}>
             Sign in
           </div>
-        )} */}
+        )}
       </div>
       <div className="user-options">
         <div className="user-options-menu-item" onClick={handleOpenLogFile}>

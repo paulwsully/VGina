@@ -1,20 +1,24 @@
 import React, { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faWindowMinimize, faWindowMaximize, faTimes, faFolderOpen, faArrowUp, faFileImport } from "@fortawesome/free-solid-svg-icons";
-import { v4 as uuidv4 } from "uuid";
-import { XMLParser } from "fast-xml-parser";
+import { faWindowMinimize, faWindowMaximize, faTimes } from "@fortawesome/free-solid-svg-icons";
 import packageJson from "../../../package.json";
 import "./TitleBar.scss";
 
-const TitleBar = ({ fileName }) => {
+const TitleBar = () => {
   const [updateAvailable, setUpdateAvailable] = useState(false);
+  const [fileName, setFileName] = useState("");
 
   useEffect(() => {
     window.electron.ipcRenderer.on("update-available", () => setUpdateAvailable(true));
     window.electron.ipcRenderer.on("update-not-available", () => setUpdateAvailable(false));
+    window.electron.ipcRenderer.on("watching-file-changed", (event, newFileName) => {
+      setFileName(newFileName);
+      console.log("watching-file-changed", newFileName);
+    });
     return () => {
       window.electron.ipcRenderer.removeAllListeners("update-available");
       window.electron.ipcRenderer.removeAllListeners("update-not-available");
+      window.electron.ipcRenderer.removeAllListeners("watching-file-changed");
     };
   }, []);
 
@@ -53,6 +57,10 @@ const TitleBar = ({ fileName }) => {
           Update Available
         </div>
       )}
+      <div className="watching">
+        <span className="label">Watching: </span>
+        {fileName}
+      </div>
       <div className="window-controls">
         <div className="window-control" onClick={handleMinimize}>
           <FontAwesomeIcon icon={faWindowMinimize} />
