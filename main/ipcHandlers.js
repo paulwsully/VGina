@@ -23,28 +23,42 @@ function setupIpcHandlers() {
   let lastFile = "";
 
   const startWatching = async (directoryPath) => {
-    // console.log("Dude... sweet");
+    console.log("Looking for new log file to watch");
     try {
       const files = await fsPromises.readdir(directoryPath);
-      const logFiles = files.filter((file) => file.match(/eqlog_.*_pq\.proj\.txt$/));
+      const logFiles = files.filter((file) => file.match(/eqlog_(.*?)_pq\.proj\.txt$/));
       let latestFile = "";
       let latestMtime = new Date(0);
+      let characters = store.get("characters", []);
 
       for (const file of logFiles) {
-        const stats = await fsPromises.stat(path.join(directoryPath, file));
+        const characterName = file.match(/eqlog_(.*?)_pq\.proj\.txt$/)[1];
+        if (!characters.includes(characterName)) {
+          characters.push(characterName);
+        }
+
+        const filePath = path.join(directoryPath, file);
+        const stats = await fsPromises.stat(filePath);
         if (stats.mtime > latestMtime) {
           latestMtime = stats.mtime;
           latestFile = file;
+          store.set("watchedCharacter", characterName);
         }
       }
 
-      if (latestFile && latestFile !== lastFile) {
+      store.set("characters", characters);
+
+      const fullPath = latestFile ? path.join(directoryPath, latestFile).replace(/\\/g, "/") : "";
+      if (fullPath && fullPath !== lastFile) {
         if (currentWatcher) {
           unwatchFile(lastFile);
+          console.log("Stopped watching file:", lastFile);
         }
-        const fullPath = path.join(directoryPath, latestFile).replace(/\\/g, "/");
+
         lastSize = (await fsPromises.stat(fullPath)).size;
         lastFile = fullPath;
+
+        console.log("Now watching file:", fullPath);
 
         currentWatcher = watchFile(fullPath, { interval: 100 }, async (curr) => {
           if (curr.size > lastSize) {
@@ -65,9 +79,12 @@ function setupIpcHandlers() {
     }
   };
 
+  let fileWatchInterval;
+
   ipcMain.on("start-file-watch", () => {
     const logDirectory = store.get("logDirectory").replace(/\\/g, "/");
-    setInterval(() => startWatching(logDirectory), 5000);
+    if (fileWatchInterval) clearInterval(fileWatchInterval);
+    fileWatchInterval = setInterval(() => startWatching(logDirectory), 2500);
   });
 
   function updateRolls() {
@@ -247,9 +264,9 @@ function setupIpcHandlers() {
   }
 
   function handleCommands(line) {
-    let logFilePath = `${store.get("logDirectory")}/eqlog_${store.get("watchedCharacter").name}_pq.proj.txt`;
+    let logFilePath = `${store.get("logDirectory")}/eqlog_${store.get("watchedCharacter")}_pq.proj.txt`;
     logFilePath = logFilePath.replace(/\\/g, "/");
-    const playerName = store.get("watchedCharacter").name;
+    const playerName = store.get("watchedCharacter");
     const regex = new RegExp(`\\[(.*?)\\] ${playerName} (\\w+) (.*)|You say to your guild, 'bid (.*)`);
     const match = line.match(regex);
 

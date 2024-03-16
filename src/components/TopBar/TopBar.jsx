@@ -12,7 +12,6 @@ const TopBar = ({ user }) => {
   const [isActive, setIsActive] = useState(false);
   const [addingNewChar, setaddingNewChar] = useState(false);
   const [userCharacters, setUserCharacters] = useState([]);
-  const [watchedCharacter, setwatchedCharacter] = useState(null);
   const [newCharacter, setNewCharacter] = useState({
     name: "",
     level: "",
@@ -25,35 +24,11 @@ const TopBar = ({ user }) => {
   };
 
   const updateWatchedCharacter = () => {
-    // window.electron.ipcRenderer.send("storeSet", "watchedCharacter", character);
     window.electron.ipcRenderer.send("start-file-watch");
   };
 
   useEffect(() => {
     updateWatchedCharacter();
-    // if (user) {
-    //   const userCharactersRef = ref(database, `users/${user.uid}/characters`);
-    //   get(userCharactersRef)
-    //     .then((snapshot) => {
-    //       if (snapshot.exists()) {
-    //         const fetchedCharacters = [];
-    //         snapshot.forEach((childSnapshot) => {
-    //           const characterData = childSnapshot.val();
-    //           fetchedCharacters.push(characterData);
-    //         });
-    //         setUserCharacters(fetchedCharacters);
-    //         if (fetchedCharacters) {
-    //           updateWatchedCharacter(fetchedCharacters[0]);
-    //         }
-    //       } else {
-    //         setUserCharacters([]);
-    //         updateWatchedCharacter(null);
-    //       }
-    //     })
-    //     .catch((error) => {
-    //       console.error("Error fetching user characters:", error);
-    //     });
-    // }
   }, []);
 
   useEffect(() => {
