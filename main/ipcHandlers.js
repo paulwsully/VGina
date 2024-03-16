@@ -23,6 +23,7 @@ function setupIpcHandlers() {
   let lastFile = "";
 
   const startWatching = async (directoryPath) => {
+    // console.log("Dude... sweet");
     try {
       const files = await fsPromises.readdir(directoryPath);
       const logFiles = files.filter((file) => file.match(/eqlog_.*_pq\.proj\.txt$/));

@@ -24,38 +24,37 @@ const TopBar = ({ user }) => {
     setNewCharacter((prev) => ({ ...prev, [field]: value }));
   };
 
-  const updateWatchedCharacter = (character) => {
-    setwatchedCharacter(character);
-    window.electron.ipcRenderer.send("storeSet", "watchedCharacter", character);
+  const updateWatchedCharacter = () => {
+    // window.electron.ipcRenderer.send("storeSet", "watchedCharacter", character);
     window.electron.ipcRenderer.send("start-file-watch");
   };
 
   useEffect(() => {
-    if (user) {
-      const userCharactersRef = ref(database, `users/${user.uid}/characters`);
-      get(userCharactersRef)
-        .then((snapshot) => {
-          if (snapshot.exists()) {
-            const fetchedCharacters = [];
-            snapshot.forEach((childSnapshot) => {
-              const characterData = childSnapshot.val();
-              fetchedCharacters.push(characterData);
-            });
-            setUserCharacters(fetchedCharacters);
-            if (fetchedCharacters) {
-              updateWatchedCharacter(fetchedCharacters[0]);
-            }
-          } else {
-            console.log("No characters found for this user.");
-            setUserCharacters([]);
-            updateWatchedCharacter(null);
-          }
-        })
-        .catch((error) => {
-          console.error("Error fetching user characters:", error);
-        });
-    }
-  }, [user]);
+    updateWatchedCharacter();
+    // if (user) {
+    //   const userCharactersRef = ref(database, `users/${user.uid}/characters`);
+    //   get(userCharactersRef)
+    //     .then((snapshot) => {
+    //       if (snapshot.exists()) {
+    //         const fetchedCharacters = [];
+    //         snapshot.forEach((childSnapshot) => {
+    //           const characterData = childSnapshot.val();
+    //           fetchedCharacters.push(characterData);
+    //         });
+    //         setUserCharacters(fetchedCharacters);
+    //         if (fetchedCharacters) {
+    //           updateWatchedCharacter(fetchedCharacters[0]);
+    //         }
+    //       } else {
+    //         setUserCharacters([]);
+    //         updateWatchedCharacter(null);
+    //       }
+    //     })
+    //     .catch((error) => {
+    //       console.error("Error fetching user characters:", error);
+    //     });
+    // }
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -274,7 +273,7 @@ const TopBar = ({ user }) => {
         </Overlay>
       )}
       <div className="user-or-signin">
-        {user ? (
+        {/* {user ? (
           <div className="watching-container">
             <div className="label">{userCharacters.length > 0 ? `Watching:` : `Add a character to watch: `} </div>
             <div className={`characters ${isActive ? "active" : ""}`} onClick={toggleCharacters} ref={charactersRef}>
@@ -299,7 +298,7 @@ const TopBar = ({ user }) => {
           <div className="pill" onClick={signInWithGoogle}>
             Sign in
           </div>
-        )}
+        )} */}
       </div>
       <div className="user-options">
         <div className="user-options-menu-item" onClick={handleOpenLogFile}>
