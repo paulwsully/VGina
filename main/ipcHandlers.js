@@ -9,9 +9,10 @@ import { sanitizeFilename } from "./util.js";
 import { v4 as uuidv4 } from "uuid";
 import { itemsData } from "./itemsData.js";
 import tga2png from "tga2png";
+import { processAction, actionResponse, defaultActions } from "./actionHandler.js";
 import Store from "electron-store";
 import database from "./../firebaseConfig.js";
-import path from "path";
+import path from "path"; 
 const store = new Store();
 
 function setupIpcHandlers() {
@@ -116,59 +117,53 @@ function setupIpcHandlers() {
   }
 
   async function processCommonActions(lastLine, settingKey, search, useRegex) {
-    try {
-      let matchFound = false;
-      if (useRegex) {
-        const regex = new RegExp(search);
-        matchFound = regex.test(lastLine);
-      } else {
-        matchFound = lastLine.includes(search);
-      }
-
-      if (!matchFound) return;
-
-      let settings = null;
-      if (settingKey !== null) {
-        settings = store.get(settingKey);
-      }
-
-      return settings || settingKey === "";
-    } catch (error) {
-      console.error("Error in processCommonActions:", error);
-      return false;
-    }
+    return processAction(lastLine, settingKey, search, useRegex); 
   }
 
   async function processSpeakAction(lastLine, settingKey, search, sound, useRegex) {
-    const actionRequired = await processCommonActions(lastLine, settingKey, search, useRegex);
-    if (actionRequired) {
+    lastLine = removeTimestamps(lastLine);
+    const response = await actionResponse(lastLine, settingKey, search, sound, useRegex);
+    
+    if (response) {
       const userDataPath = app.getPath("userData");
-      const soundFilePath = path.join(userDataPath, `./sounds/${sanitizeFilename(sound)}.mp3`);
+      const soundFilePath = path.join(userDataPath, `./sounds/${sanitizeFilename(response)}.mp3`);
       const mainWindow = getMainWindow();
 
       try {
-        await fsPromises.stat(soundFilePath);
-        mainWindow && mainWindow.webContents.send("play-sound", soundFilePath);
+        const exists = await fsPromises.stat(soundFilePath);
+        if (exists){
+          console.log("Using existing sound file: ", soundFilePath);
+
+          mainWindow && mainWindow.webContents.send("play-sound", soundFilePath);
+        }
       } catch (error) {
         const functions = getFunctions();
         const speech = httpsCallable(functions, "processSpeakAction");
-        speech(sound)
-          .then(async (result) => {
+
+        speech(response)
+          .then((result) => {
             const audioBuffer = Buffer.from(result.data.audioContent, "base64");
-            await fsPromises.mkdir(path.dirname(soundFilePath), { recursive: true });
-            await fsPromises.writeFile(soundFilePath, audioBuffer);
+
+            fsPromises.mkdir(path.dirname(soundFilePath), { recursive: true });
+            fsPromises.writeFile(soundFilePath, audioBuffer);
+
+            console.log("Create sound file: ", soundFilePath);
+
             mainWindow && mainWindow.webContents.send("play-sound", soundFilePath);
           })
           .catch((error) => {
             console.error("Error:", error);
           });
+
+        console.error("Error:", error);
       }
     }
   }
 
   async function processSoundAction(lastLine, settingKey, search, sound, useRegex) {
     try {
-      const actionRequired = await processCommonActions(lastLine, settingKey, search, useRegex);
+      let actionRequired = await actionResponse(lastLine, settingKey, search, useRegex);
+      actionRequired = false;
       if (actionRequired) {
         const userDataPath = app.getPath("userData");
         const soundFilePath = path.join(userDataPath, `./sounds/${sound}.mp3`);
@@ -241,26 +236,24 @@ function setupIpcHandlers() {
   }
 
   function processNewLine(line) {
-    const lineOnly = removeTimestamps(line);
-    if (line) {
-      const triggers = store.get("triggers");
-      actions.forEach(({ actionType, key, search, sound, useRegex }) => {
-        if (actionType === "speak") processSpeakAction(lineOnly, key, search, sound, useRegex, actionType);
-        if (actionType === "sound") processSoundAction(lineOnly, key, search, sound, useRegex, actionType);
-      });
-
+    // ALLEGRO
+    //const lineOnly = removeTimestamps(line);
+    /*
       if (line.includes("**A Magic Die is rolled by") || line.includes("**It could have been any number from")) parseRolls(line);
       if (line.includes("tells you,")) parseLineForBid(line, true);
-
-      handleAlerts(line);
-      handleCommands(line);
+     
+    */
+    if (line){
+      //handleAlerts(line);
+      //handleCommands(line);
       handleTriggers(line);
-      handleTracker(line);
+      //handleTracker(line);
     }
   }
 
   function handleAlerts(line) {
-    actions.forEach(({ actionType, key, search, sound, useRegex }) => {
+    const alerts = defaultActions();
+    alerts.forEach(({ actionType, key, search, sound, useRegex }) => {
       if (actionType === "speak") processSpeakAction(line, key, search, sound, useRegex, actionType);
       if (actionType === "sound") processSoundAction(line, key, search, sound, useRegex, actionType);
     });
