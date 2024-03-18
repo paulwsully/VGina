@@ -23,20 +23,22 @@ async function processAction(line, settingKey, search, useRegex){
   }
 }
 
-/*
 async function actionResponse2(type, line, key, search, sound, regex){
   let response = "";
 
   if (type == "sound")
   {
-
+    response = actionResponse(line, key, search, sound, regex);
+    if (response){
+      return sound;
+    }
+    return false;
   }
 
   return response;
 }
-*/
 
-async function actionResponse(line, settingKey, search, sound, useRegex){
+function actionResponse(line, settingKey, search, sound, useRegex){
   // NOTE (Allegro): ignore settingkey cause I don't know what it's for exactly.
 
   search = search.toLowerCase();
@@ -96,4 +98,4 @@ function defaultActions(){
   ];
 }
 
-export{ processAction, defaultActions, actionResponse };
+export{ processAction, defaultActions, actionResponse, actionResponse2};

@@ -122,7 +122,7 @@ function setupIpcHandlers() {
 
   async function processSpeakAction(lastLine, settingKey, search, sound, useRegex) {
     lastLine = removeTimestamps(lastLine);
-    const response = await actionResponse(lastLine, settingKey, search, sound, useRegex);
+    const response = actionResponse(lastLine, settingKey, search, sound, useRegex);
     
     if (response) {
       const userDataPath = app.getPath("userData");
@@ -162,9 +162,10 @@ function setupIpcHandlers() {
 
   async function processSoundAction(lastLine, settingKey, search, sound, useRegex) {
     try {
-      let actionRequired = await actionResponse(lastLine, settingKey, search, useRegex);
-      actionRequired = false;
-      if (actionRequired) {
+      console.log(sound);
+      let response = actionResponse(lastLine, settingKey, search, useRegex);
+      console.log(response);
+      if (response) {
         const userDataPath = app.getPath("userData");
         const soundFilePath = path.join(userDataPath, `./sounds/${sound}.mp3`);
         const mainWindow = getMainWindow();
@@ -217,17 +218,6 @@ function setupIpcHandlers() {
     });
   }, 2);
 
-  const actions = [
-    { actionType: "speak", key: "rootBroke", search: "Roots spell has worn off", sound: "Root fell off", useRegex: false },
-    { actionType: "speak", key: "feignDeath", search: "has fallen to the ground", sound: "Failed feign", useRegex: false },
-    { actionType: "speak", key: "resisted", search: "Your target resisted", sound: "Resisted", useRegex: false },
-    { actionType: "speak", key: "invisFading", search: "You feel yourself starting to appear", sound: "You're starting to appear", useRegex: false },
-    { actionType: "speak", key: "groupInvite", search: "invites you to join a group", sound: "You've been invited to a group", useRegex: false },
-    { actionType: "speak", key: "raidInvite", search: "invites you to join a raid", sound: "You've been invited to a raid", useRegex: false },
-    { actionType: "speak", key: "mobEnrage", search: "has become ENRAGED", sound: "Mob is enraged", useRegex: false },
-    { actionType: "sound", key: "tell", search: "\\[.*?\\] (\\S+) tells you,", sound: "tell", useRegex: true },
-  ];
-
   function removeTimestamps(text) {
     return text
       .split("\n")
@@ -252,8 +242,8 @@ function setupIpcHandlers() {
   }
 
   function handleAlerts(line) {
-    const alerts = defaultActions();
-    alerts.forEach(({ actionType, key, search, sound, useRegex }) => {
+    const actions = defaultActions();
+    actions.forEach(({ actionType, key, search, sound, useRegex }) => {
       if (actionType === "speak") processSpeakAction(line, key, search, sound, useRegex, actionType);
       if (actionType === "sound") processSoundAction(line, key, search, sound, useRegex, actionType);
     });
