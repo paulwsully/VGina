@@ -8,7 +8,7 @@ import { promises as fsPromises, watchFile, unwatchFile } from "fs";
 import { sanitizeFilename } from "./util.js";
 import { v4 as uuidv4 } from "uuid";
 import { itemsData } from "./itemsData.js";
-import { processAction, actionResponse, defaultActions, actionResponse2 } from "./actionHandler.js";
+import { actionResponse, defaultActions} from "./actionHandler.js";
 import Store from "electron-store";
 import database from "./../firebaseConfig.js";
 import path from "path"; 
@@ -82,13 +82,9 @@ function setupIpcHandlers() {
     }
   }
 
-  async function processCommonActions(lastLine, settingKey, search, useRegex) {
-    return processAction(lastLine, settingKey, search, useRegex); 
-  }
-
   async function processSpeakAction(lastLine, settingKey, search, sound, useRegex) {
     lastLine = removeTimestamps(lastLine);
-    const response = actionResponse(lastLine, settingKey, search, sound, useRegex);
+    const response = actionResponse('speak', lastLine, settingKey, search, sound, useRegex);
     
     if (response) {
       const userDataPath = app.getPath("userData");
@@ -128,9 +124,8 @@ function setupIpcHandlers() {
 
   async function processSoundAction(lastLine, settingKey, search, sound, useRegex) {
     try {
-      console.log(sound);
-      let response = actionResponse(lastLine, settingKey, search, useRegex);
-      console.log(response);
+      const line = removeTimestamps(lastLine);
+      let response = actionResponse('sound', line, settingKey, search, sound, useRegex);
       if (response) {
         const userDataPath = app.getPath("userData");
         const soundFilePath = path.join(userDataPath, `./sounds/${sound}.mp3`);
@@ -144,8 +139,10 @@ function setupIpcHandlers() {
 
   async function processTimerAction(lastLine, settingKey, search, useRegex, timer) {
     try {
-      const actionRequired = await processCommonActions(lastLine, settingKey, search, useRegex);
-      if (actionRequired) {
+      const line = removeTimestamps(lastLine);
+      const response = actionResponse('timer', line, settingKey, search, "", useRegex);
+      console.log(timer, response, search, line);
+      if (response) {
         const activeTimers = store.get("activeTimers", []);
         const uniqueId = `timer-${Date.now()}`;
         timer.id = uniqueId;
@@ -192,18 +189,14 @@ function setupIpcHandlers() {
   }
 
   function processNewLine(line) {
-    // ALLEGRO
-    //const lineOnly = removeTimestamps(line);
-    /*
+    if (line){
       if (line.includes("**A Magic Die is rolled by") || line.includes("**It could have been any number from")) parseRolls(line);
       if (line.includes("tells you,")) parseLineForBid(line, true);
-     
-    */
-    if (line){
-      //handleAlerts(line);
-      //handleCommands(line);
+      
+      handleAlerts(line);
+      handleCommands(line);
       handleTriggers(line);
-      //handleTracker(line);
+      handleTracker(line);
     }
   }
 
