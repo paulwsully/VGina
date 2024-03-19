@@ -1,80 +1,142 @@
 import { test, expect } from '@playwright/test';
-import { actionResponse, defaultActions} from '../main/actionHandler.js';
+import { actionResponse} from '../main/actionHandler.js';
 
-test.describe('Support {s} sentence matching timer actions', () => {
-  test('No match', ({}) => {
-    expect(actionResponse("timer", "line match", "", "nomatch", "", true)).toEqual(false);
-  });
+test.describe('Timer action tests', () => {
+  const player = "TestPlayer"; 
+  let line = "";
+  let action = { type: "timer", key: "", search: "", sound: "", regex: true };
 
   // TODO (Allegro): change test after implementation complete.
   test('On timer match return true.', ({}) => {
-    expect(actionResponse("timer", "line match", "", "{S} match", "", true)).toEqual("true");
+    line = "line match";
+    action.search = "{S} match";
+    expect(actionResponse(player, line, action)).toEqual("true");
   });
 
-  //timer 15 Allegro timer 15.
-  test('Match', ({}) => {
-    expect(actionResponse("timer", "Allegro timer 15", "", "{S} timer 15", "", true)).toEqual("true");
+});
+
+test.describe('Sound action tests', () => {
+  const player = "TestPlayer"; 
+  let line = "";
+  let action = { type: "sound", key: "", search: "", sound: "", regex: true };
+
+  test('On match return orginal sound.', ({}) => {
+    line = "line match";
+    action.search = "{S} match";
+    action.sound = "tell";
+    expect(actionResponse(player, line, action)).toEqual(action.sound);
   });
 });
 
-test.describe('Support {s} sentence matching sound actions', () => {
-  test('No match', ({}) => {
-    expect(actionResponse("sound", "line match", "", "nomatch", "Matched", true)).toEqual(false);
-  });
+test.describe('Speak action tests', () => {
+  const player = "TestPlayer"; 
+  let line = "";
+  let action = { type: "speak", key: "", search: "", sound: "", regex: true };
 
-  test('On match if type is sound return orginal sound.', ({}) => {
-    expect(actionResponse("sound", "line match", "", "{S} match", "tell", true)).toEqual("tell");
+  test('On match return possibly altered sound', ({}) => {
+    line = "line match";
+    action.search = "match";
+    action.sound = "matched";
+    expect(actionResponse(player, line, action)).toEqual("matched");
   });
 });
 
-test.describe('Support {s} sentence matching in speak actions.', () => {
+test.describe('Common action tests', () => {
+  const player = "TestPlayer"; 
+  let line = "";
+  let action = { type: "", key: "", search: "", sound: "", regex: true };
+
   test('No match', ({}) => {
-    expect(actionResponse("speak", "line match", "", "nomatch", "Matched", true)).toEqual(false);
+    line = "line match";
+    action.search = "nomatch";
+    expect(actionResponse(player, line, action)).toEqual(false);
   });
 
   test('Case insensitive on search string', ({}) => {
-    expect(actionResponse("speak", "line match", "", "match", "Matched", true)).toEqual("matched");
-    expect(actionResponse("speak", "line match", "", "Match", "Matched", true)).toEqual("matched");
+    line = "line match";
+    action.search = "match";
+    action.sound = "matched";
+    expect(actionResponse(player, line, action)).toEqual(action.sound);
+    action.search = "Match";
+    expect(actionResponse(player, line, action)).toEqual(action.sound);
   });
 
   test('Case insensitive on response string', ({}) => {
-    expect(actionResponse("speak", "line match", "", "match", "Matched", true)).toEqual("matched");
-    expect(actionResponse("speak", "line match", "", "match", "matched", true)).toEqual("matched");
+    line = "line match";
+    action.search = "match";
+    action.sound = "matched";
+    expect(actionResponse(player, line, action)).toEqual(action.sound.toLowerCase());
+    action.sound = "MATCHED";
+    expect(actionResponse(player, line, action)).toEqual(action.sound.toLowerCase());
   });
 
   test('Case insensitive on line.', ({}) => {
-    expect(actionResponse("speak", "line MATCH", "", "match", "matched", true)).toEqual("matched");
-    expect(actionResponse("speak", "line MaTcH", "", "match", "matched", true)).toEqual("matched");
+    line = "line MATCH";
+    action.search = "match";
+    action.sound = "matched";
+    expect(actionResponse(player, line, action)).toEqual(action.sound);
+    line = "line MaTcH";
+    expect(actionResponse(player, line, action)).toEqual(action.sound);
   });
+});
 
-  test('Match replace a group', ({}) => {
-    expect(actionResponse("speak", "a sentence match", "", "{S} match", "matched", true)).toEqual("matched");
-  });
 
-  test('Group name case does not matter.', ({}) => {
-    expect(actionResponse("speak", "a sentence match", "", "{s} match", "{S} matched", true)).toEqual("a sentence matched");
-    expect(actionResponse("speak", "a sentence match", "", "{S} match", "{s} matched", true)).toEqual("a sentence matched");
+test.describe('Support for {S} matching in actions', () => {
+  const player = "TestPlayer"; 
+  let line = "a sentence match";
+  let action = { type: "speak", key: "", search: "", sound: "", regex: true };
+
+  test('{S} matched', ({}) => {
+    action.search = "{S} match";
+    action.sound = "matched";
+    expect(actionResponse(player, line, action)).toEqual(action.sound);
   });
 
   test('Matching group cannot be have the same name, match fails.', ({}) => {
-    expect(actionResponse("speak", "a sentence match another sentence", "", "{S} match {S}", "match", true)).toEqual(false);
+    action.search = "{S} match {S}";
+    action.sound = "matched";
+    expect(actionResponse(player, line, action)).toEqual(false);
   });
 
-  test('Reponse can have multiple matching groups of the same name.', ({}) => {
-    expect(actionResponse("speak", "a sentence match another sentence", "", "{S} match", "{S} matched {S}", true)).toEqual("a sentence matched a sentence");
+  test('{S} Group name case does not matter.', ({}) => {
+    action.search = "{s} match";
+    action.sound = "{S} matched";
+    expect(actionResponse(player, line, action)).toEqual("a sentence matched");
+    action.search = "{S} match";
+    action.sound = "{s} matched";
+    expect(actionResponse(player, line, action)).toEqual("a sentence matched");
+  });
+
+  test('Response can have multiple matching groups of the same name.', ({}) => {
+    line = "a sentence match another sentence";
+    action.search = "{s} match";
+    action.sound = "{s} matched {s}";
+    expect(actionResponse(player, line, action)).toEqual("a sentence matched a sentence");
   });
 
   test('Responses will includes {S} even if not matched. Gina does this.', ({}) => {
-    expect(actionResponse("speak", "a sentence match another sentence", "", "match", "{S} matched {S}", true)).toEqual("{s} matched {s}");
+    line = "a sentence match another sentence";
+    action.search = "match";
+    action.sound = "{s} matched {s}";
+    expect(actionResponse(player, line, action)).toEqual(action.sound);
   });
 
   test('Support multiple group names {S}, {Sd+}', ({}) => {
-    expect(actionResponse("speak", "a sentence match another sentence", "", "{S0} match", "{S0} matched", true)).toEqual("a sentence matched");
-    expect(actionResponse("speak", "a sentence match another sentence", "", "{S9000} match", "{S9000} matched", true)).toEqual("a sentence matched");
+    line = "a sentence match another sentence";
+    action.search = "{S0} match";
+    action.sound = "{S0} matched";
+    expect(actionResponse(player, line, action)).toEqual("a sentence matched");
+    action.search = "{S9000} match";
+    action.sound = "{S9000} matched";
+    expect(actionResponse(player, line, action)).toEqual("a sentence matched");
   });
 
   test('Support many group matches.', ({}) => {
-    expect(actionResponse("speak", "a sentence match another sentence", "", "{S} sentence {S1} another {S3}", "{S} sentence {S1}ed another {S3}", true)).toEqual("a sentence matched another sentence");
+    line = "a sentence match another sentence";
+    action.search = "{S} sentence {S1} another {S3}";
+    action.sound = "{S} sentence {S1}ed another {S3}";
+    expect(actionResponse(player, line, action)).toEqual("a sentence matched another sentence");
   });
-
+    
 });
+

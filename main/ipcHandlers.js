@@ -82,9 +82,9 @@ function setupIpcHandlers() {
     }
   }
 
-  async function processSpeakAction(lastLine, settingKey, search, sound, useRegex) {
-    lastLine = removeTimestamps(lastLine);
-    const response = actionResponse('speak', lastLine, settingKey, search, sound, useRegex);
+  async function processSpeakAction(line, action) {
+    const player = store.get("watchedCharacter").name;
+    const response = actionResponse(player, line, action);
     
     if (response) {
       const userDataPath = app.getPath("userData");
@@ -122,10 +122,10 @@ function setupIpcHandlers() {
     }
   }
 
-  async function processSoundAction(lastLine, settingKey, search, sound, useRegex) {
+  async function processSoundAction(line, action) {
     try {
-      const line = removeTimestamps(lastLine);
-      let response = actionResponse('sound', line, settingKey, search, sound, useRegex);
+      const player = store.get("watchedCharacter").name;
+      let response = actionResponse(player, line, action);
       if (response) {
         const userDataPath = app.getPath("userData");
         const soundFilePath = path.join(userDataPath, `./sounds/${sound}.mp3`);
@@ -137,11 +137,10 @@ function setupIpcHandlers() {
     }
   }
 
-  async function processTimerAction(lastLine, settingKey, search, useRegex, timer) {
+  async function processTimerAction(line, action, timer) {
     try {
-      const line = removeTimestamps(lastLine);
-      const response = actionResponse('timer', line, settingKey, search, "", useRegex);
-      console.log(timer, response, search, line);
+      const player = store.get("watchedCharacter").name;
+      const response = actionResponse(player, line, action);
       if (response) {
         const activeTimers = store.get("activeTimers", []);
         const uniqueId = `timer-${Date.now()}`;
@@ -181,13 +180,6 @@ function setupIpcHandlers() {
     });
   }, 2);
 
-  function removeTimestamps(text) {
-    return text
-      .split("\n")
-      .map((line) => line.replace(/\[\w+ \w+ \d+ \d+:\d+:\d+ \d+\] /, ""))
-      .join("\n");
-  }
-
   function processNewLine(line) {
     if (line){
       if (line.includes("**A Magic Die is rolled by") || line.includes("**It could have been any number from")) parseRolls(line);
@@ -202,9 +194,9 @@ function setupIpcHandlers() {
 
   function handleAlerts(line) {
     const actions = defaultActions();
-    actions.forEach(({ actionType, key, search, sound, useRegex }) => {
-      if (actionType === "speak") processSpeakAction(line, key, search, sound, useRegex, actionType);
-      if (actionType === "sound") processSoundAction(line, key, search, sound, useRegex, actionType);
+    actions.forEach((action) => {
+      if (action.type === "speak") processSpeakAction(line, action);
+      if (action.type === "sound") processSoundAction(line, action);
     });
   }
 
@@ -228,12 +220,22 @@ function setupIpcHandlers() {
     const triggers = store.get("triggers");
     if (triggers && triggers.length > 0) {
       triggers.map((trigger, index) => {
-        if (trigger.saySomething) processSpeakAction(line, "", trigger.searchText, trigger.speechText, trigger.searchRegex);
-        if (trigger.playSound) {
-          const soundFile = typeof triggers[index]?.sound === "string" ? triggers[index].sound.replace(".mp3", "") : undefined;
-          processSoundAction(line, "", trigger.searchText, soundFile, trigger.searchRegex);
+        let action = { type: "", key: "", search: trigger.searchText, sound: "" , regex: trigger.searchRegex }; 
+        if (trigger.saySomething){
+          action.type = "speak";
+          action.sound = trigger.searchText;
+          processSpeakAction(line, action);
         }
-        if (trigger.setTimer) processTimerAction(line, "", trigger.searchText, trigger.searchRegex, trigger);
+        if (trigger.playSound) {
+          action.type = "sound";
+          // NOTE (Allegro): do we need ot change if type is string here?
+          action.sound = typeof triggers[index]?.sound === "string" ? triggers[index].sound.replace(".mp3", "") : undefined;
+          processSpeakAction(line, action);
+        }
+        if (trigger.setTimer){
+          action.type = "timer";
+          processTimerAction(line, action, trigger);
+        }
       });
     }
   }

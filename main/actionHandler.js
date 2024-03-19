@@ -1,16 +1,17 @@
 
-// TODO: refactor into timer, sound, speak?
+function removeTimestamps(text) {
+  return text.split("\n").map((line) => line.replace(/\[\w+ \w+ \d+ \d+:\d+:\d+ \d+\] /, "")).join("\n");
+}
 
-function actionResponse(type, line, settingKey, search, sound, useRegex){
-  // NOTE (Allegro): ignore settingkey cause I don't know what it's for exactly.
-
-  search = search.toLowerCase();
-  line = line.toLowerCase();
+function actionResponse(player, line, action){
+  console.log(action.search);
+  let search = action.search.toLowerCase();
+  line = removeTimestamps(line).toLowerCase();
 
   // NOTE (Allegro): sound has toString() because it can be a bool for some reason.
-  let response = sound.toString().toLowerCase();
+  let response = action.sound.toString().toLowerCase();
   
-  if (!useRegex)
+  if (!action.regex)
   {
     // NOTE (Allegro): Change include to startswith?
     if (line.includes(search)){
@@ -34,12 +35,12 @@ function actionResponse(type, line, settingKey, search, sound, useRegex){
   if (!matched) return false;
 
   // There will never be groups when action type is a sound.
-  if (type === "sound"){
-    return sound;
+  if (action.type === "sound"){
+    return action.sound;
   }
 
   // TODO: return datetime object instead. and title?
-  if(type === "timer"){
+  if(action.type === "timer"){
     return "true";
   }
 
@@ -55,15 +56,17 @@ function actionResponse(type, line, settingKey, search, sound, useRegex){
 }
 
 function defaultActions(){
+  // What constitutes an action?
+  // {type, key, search, sound, regex}
   return [
-    { actionType: "speak", key: "rootBroke",   search: "Roots spell has worn off",             sound: "Root fell off",                  useRegex: false },
-    { actionType: "speak", key: "feignDeath",  search: "has fallen to the ground",             sound: "Failed feign",                   useRegex: false },
-    { actionType: "speak", key: "resisted",    search: "Your target resisted",                 sound: "Resisted",                       useRegex: false },
-    { actionType: "speak", key: "invisFading", search: "You feel yourself starting to appear", sound: "You're starting to appear",      useRegex: false },
-    { actionType: "speak", key: "groupInvite", search: "invites you to join a group",          sound: "You've been invited to a group", useRegex: false },
-    { actionType: "speak", key: "raidInvite",  search: "invites you to join a raid",           sound: "You've been invited to a raid",  useRegex: false },
-    { actionType: "speak", key: "mobEnrage",   search: "has become ENRAGED",                   sound: "Mob is enraged",                 useRegex: false },
-    { actionType: "sound", key: "tell",        search: "{S} tells you,",                       sound: "tell",                           useRegex: true },
+    { type: "speak", key: "rootBroke",   search: "Roots spell has worn off",             sound: "Root fell off",                  regex: false },
+    { type: "speak", key: "feignDeath",  search: "has fallen to the ground",             sound: "Failed feign",                   regex: false },
+    { type: "speak", key: "resisted",    search: "Your target resisted",                 sound: "Resisted",                       regex: false },
+    { type: "speak", key: "invisFading", search: "You feel yourself starting to appear", sound: "You're starting to appear",      regex: false },
+    { type: "speak", key: "groupInvite", search: "invites you to join a group",          sound: "You've been invited to a group", regex: false },
+    { type: "speak", key: "raidInvite",  search: "invites you to join a raid",           sound: "You've been invited to a raid",  regex: false },
+    { type: "speak", key: "mobEnrage",   search: "has become ENRAGED",                   sound: "Mob is enraged",                 regex: false },
+    { type: "sound", key: "tell",        search: "{S} tells you,",                       sound: "tell",                           regex: true },
   ];
 }
 
