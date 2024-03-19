@@ -27,7 +27,7 @@ const Input = ({ id, placeholder, value, label, onTextChange, large, onEnter, li
 
   return (
     <label htmlFor={id} className={`input ${large ? "input-large" : ""}`}>
-      <input type={type} id={id} value={inputValue} placeholder={placeholder} onChange={handleChange} onKeyUp={handleKeyUp} onBlur={handleBlur} list={list} />
+      <input type={type} id={id} value={inputValue || ""} placeholder={placeholder} onChange={handleChange} onKeyUp={handleKeyUp} onBlur={handleBlur} list={list} />
       <span>{label}</span>
     </label>
   );

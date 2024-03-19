@@ -31,6 +31,7 @@ contextBridge.exposeInMainWorld("electron", {
   startFileWatch: () => ipcRenderer.send("start-file-watch"),
   readItemsData: () => ipcRenderer.invoke("read-itemsData"),
   getTriggers: () => ipcRenderer.invoke("get-triggers"),
+  convertTGAtoPNG: (sourcePath, outputPath) => ipcRenderer.invoke("convert-tga-to-png", sourcePath, outputPath),
 });
 
 window.addEventListener("DOMContentLoaded", () => {

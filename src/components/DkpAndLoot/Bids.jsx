@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ref, onValue, off } from "firebase/database";
 import database from "/firebaseConfig.js";
 import Bid from "./Bid";
+// import cursorImagePath from "./../../assets/cursor.png";
 
 function Bids({ dkp }) {
   const [activeBids, setActiveBids] = useState([]);
@@ -30,9 +31,8 @@ function Bids({ dkp }) {
 
   useEffect(() => {
     const fetchname = async () => {
-      const logFilePath = await window.electron.ipcRenderer.invoke("storeGet", "logFile");
-      const nameMatch = logFilePath.match(/eqlog_(.+?)_pq.proj.txt/);
-      setname(nameMatch ? nameMatch[1] : "Unknown");
+      const resultName = await window.electron.ipcRenderer.invoke("storeGet", "watchedCharacter");
+      setname(resultName);
     };
 
     fetchname();
@@ -52,14 +52,17 @@ function Bids({ dkp }) {
   };
 
   return (
+    // <div className="active-bids" style={{ cursor: `url(${cursorImagePath}), auto` }}>
     <div className="active-bids">
       {activeBids.length === 0 ? (
         <div className="null-message">No active bids</div>
       ) : (
         <div className="active-bids-list">
-          {activeBids.map((bid, index) => (
-            <>{name === bid.bidTaker && <Bid key={`active-${index}-${bid.id}`} itemName={bid.item} bidders={bid.bidders} findCurrentDKP={findCurrentDKP} isAlt={bid.isAlt} bidId={bid.id} />}</>
-          ))}
+          {activeBids.map((bid) => {
+            console.log(name); // Logging the values
+
+            return <React.Fragment key={`active-bid-${bid.id}`}>{name === bid.bidTaker && <Bid itemName={bid.item} bidders={bid.bidders} findCurrentDKP={findCurrentDKP} isAlt={bid.isAlt} bidId={bid.id} />}</React.Fragment>;
+          })}
         </div>
       )}
     </div>

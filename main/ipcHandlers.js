@@ -8,6 +8,7 @@ import { promises as fsPromises, watchFile, unwatchFile } from "fs";
 import { sanitizeFilename } from "./util.js";
 import { v4 as uuidv4 } from "uuid";
 import { itemsData } from "./itemsData.js";
+import tga2png from "tga2png";
 import Store from "electron-store";
 import database from "./../firebaseConfig.js";
 import path from "path";
@@ -22,8 +23,17 @@ function setupIpcHandlers() {
   let currentWatcher = null;
   let lastFile = "";
 
+  ipcMain.handle("convert-tga-to-png", async (event, sourcePath, outputPath) => {
+    try {
+      await tga2png(sourcePath, outputPath);
+      return { success: true };
+    } catch (error) {
+      console.error("Conversion failed:", error);
+      return { success: false, error: error.message };
+    }
+  });
+
   const startWatching = async (directoryPath) => {
-    // console.log("Looking for new log file to watch");
     try {
       const files = await fsPromises.readdir(directoryPath);
       const logFiles = files.filter((file) => file.match(/eqlog_(.*?)_pq\.proj\.txt$/));
@@ -59,6 +69,12 @@ function setupIpcHandlers() {
         lastFile = fullPath;
 
         console.log("Now watching file:", fullPath);
+
+        const mainWindow = getMainWindow();
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          const watchedCharacter = store.get("watchedCharacter");
+          mainWindow.webContents.send("watching-file-changed", watchedCharacter);
+        }
 
         currentWatcher = watchFile(fullPath, { interval: 100 }, async (curr) => {
           if (curr.size > lastSize) {
@@ -323,10 +339,7 @@ function setupIpcHandlers() {
       }
     } else {
       if (checkIfRaidDrop(item)) {
-        const logFilePath = store.get("logFile", false);
-        const nameMatch = logFilePath.match(/eqlog_(.+?)_pq.proj.txt/);
-        const playerName = nameMatch ? nameMatch[1] : "Unknown";
-
+        const playerName = store.get("watchedCharacter");
         const timestamp = new Date().toISOString();
         const bidId = uuidv4();
         const currentBid = { item: checkIfRaidDrop(item), timestamp, bidTaker: playerName, id: bidId, bidders: [] };

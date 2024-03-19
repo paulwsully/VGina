@@ -11,16 +11,13 @@ const TitleBar = () => {
   useEffect(() => {
     window.electron.ipcRenderer.on("update-available", () => setUpdateAvailable(true));
     window.electron.ipcRenderer.on("update-not-available", () => setUpdateAvailable(false));
-    window.electron.ipcRenderer.on("watching-file-changed", (event, newFileName) => {
-      setFileName(newFileName);
-      console.log("watching-file-changed", newFileName);
-    });
+    window.electron.ipcRenderer.on("watching-file-changed", (newFileName) => setFileName(newFileName));
     return () => {
       window.electron.ipcRenderer.removeAllListeners("update-available");
       window.electron.ipcRenderer.removeAllListeners("update-not-available");
       window.electron.ipcRenderer.removeAllListeners("watching-file-changed");
     };
-  }, []);
+  }, [fileName]);
 
   const handleMinimize = () => window.electron.ipcRenderer.send("minimize-app");
   const handleMaximize = () => window.electron.ipcRenderer.send("maximize-app");

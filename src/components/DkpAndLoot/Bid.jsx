@@ -37,9 +37,8 @@ function Bid({ itemName, bidders = [], findCurrentDKP = "", isPublic = false, ti
 
   useEffect(() => {
     const fetchname = async () => {
-      const logFilePath = await window.electron.ipcRenderer.invoke("storeGet", "logFile");
-      const nameMatch = logFilePath.match(/eqlog_(.+?)_pq.proj.txt/);
-      setname(nameMatch ? nameMatch[1] : "Unknown");
+      const watchedNamed = await window.electron.ipcRenderer.invoke("storeGet", "watchedCharacter");
+      setname(watchedNamed);
     };
 
     fetchname();
@@ -62,6 +61,7 @@ function Bid({ itemName, bidders = [], findCurrentDKP = "", isPublic = false, ti
 
     await window.electron.ipcRenderer.invoke("set-foundItem", foundItem);
     await window.electron.ipcRenderer.invoke("open-itemDetailsWindow");
+    // handleMouseLeave();
   };
 
   const handleMouseEnter = async (event) => {
@@ -76,13 +76,39 @@ function Bid({ itemName, bidders = [], findCurrentDKP = "", isPublic = false, ti
   let paysAmount = hasMultipleBidders ? bidders[1].amt + 1 : null;
 
   const closeBid = async () => {
+    let winningBidder = bidders[0];
+
+    if (bidders.length > 1) {
+      winningBidder = { ...bidders[0], amt: bidders[1].amt + 1 };
+    } else if (bidders.length === 1) {
+      winningBidder = { ...bidders[0], amt: 1 };
+    }
+
+    if (bidders.length > 0) {
+      try {
+        await navigator.clipboard.writeText(`/gu 0022959${itemName} | ${winningBidder.name} for ${winningBidder.amt}dkp`);
+        handleMouseLeave();
+      } catch (err) {
+        console.error("Failed to copy text to clipboard", err);
+      }
+    }
+
     try {
       const response = await window.electron.ipcRenderer.invoke("close-bid", bidId);
-      // window.electron.ipcRenderer.send("enable-only-click-through");
-      window.electron.ipcRenderer.send("disable-only-click-through");
+      handleMouseLeave();
     } catch (error) {
       console.error("Error closing bid:", error);
     }
+  };
+
+  const copyToClipboard = async (msg) => {
+    try {
+      await navigator.clipboard.writeText(`/gu 0022959${itemName} | ${msg}!`);
+    } catch (err) {
+      console.error("Failed to copy text to clipboard", err);
+    }
+
+    window.electron.ipcRenderer.send("disable-only-click-through");
   };
 
   const handleInputChange = (field, value) => {
@@ -108,6 +134,7 @@ function Bid({ itemName, bidders = [], findCurrentDKP = "", isPublic = false, ti
     } finally {
       setTimeout(() => setdialogText(""), 2000);
     }
+    window.electron.ipcRenderer.send("disable-only-click-through");
   };
 
   const sendBid = () => {
@@ -138,7 +165,7 @@ function Bid({ itemName, bidders = [], findCurrentDKP = "", isPublic = false, ti
       {!isPublic && (
         <div className="bidders">
           {bidders.map((bidder, index) => (
-            <Bidder key={index} index={index} bidder={bidder} paysAmount={index === 0 && hasMultipleBidders ? paysAmount : null} findCurrentDKP={findCurrentDKP} />
+            <Bidder key={index + bidder.name} index={index} bidder={bidder} paysAmount={index === 0 && hasMultipleBidders ? paysAmount : null} findCurrentDKP={findCurrentDKP} />
           ))}
         </div>
       )}
@@ -161,8 +188,18 @@ function Bid({ itemName, bidders = [], findCurrentDKP = "", isPublic = false, ti
           </>
         )}
         {!isPublic && (
-          <div className="bid-close pill" onClick={closeBid}>
-            Close Bid
+          <div className="input-row">
+            <div className="bid-close pill" onClick={() => copyToClipboard("SECOND CALL")}>
+              2nd Call
+            </div>
+
+            <div className="bid-close pill" onClick={() => copyToClipboard("FINAL CALL")}>
+              Final Call
+            </div>
+
+            <div className="bid-close pill" onClick={closeBid}>
+              Close Bid
+            </div>
           </div>
         )}
       </div>

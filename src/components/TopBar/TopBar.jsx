@@ -1,24 +1,21 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { signInWithGoogle, signOutUser } from "./../Utilities/googleAuth";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faFolderOpen, faArrowUpFromBracket, faArrowRightFromBracket, faCaretDown, faPlusCircle } from "@fortawesome/free-solid-svg-icons";
-import { ref, push, set, get } from "firebase/database";
+import { faFolderOpen, faArrowUpFromBracket, faArrowRightFromBracket } from "@fortawesome/free-solid-svg-icons";
+import { ref, push, set } from "firebase/database";
 import database from "../../../firebaseConfig";
 import Overlay from "../Utilities/Overlay";
 import Input from "../Utilities/Input";
 import "./TopBar.scss";
 
 const TopBar = ({ user }) => {
-  const [isActive, setIsActive] = useState(false);
   const [addingNewChar, setaddingNewChar] = useState(false);
   const [userCharacters, setUserCharacters] = useState([]);
-  const [watchedCharacter, setwatchedCharacter] = useState(null);
   const [newCharacter, setNewCharacter] = useState({
     name: "",
     level: "",
     class: "",
   });
-  const charactersRef = useRef(null);
 
   const handleCharacterChange = (field, value) => {
     setNewCharacter((prev) => ({ ...prev, [field]: value }));
@@ -31,23 +28,6 @@ const TopBar = ({ user }) => {
   useEffect(() => {
     updateWatchedCharacter();
   }, []);
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (charactersRef.current && !charactersRef.current.contains(event.target)) {
-        setIsActive(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
-  const toggleCharacters = () => {
-    setIsActive(!isActive);
-  };
 
   const handleOpenLogFile = async () => {
     try {

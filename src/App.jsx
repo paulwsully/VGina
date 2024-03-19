@@ -7,7 +7,7 @@ import Triggers from "./components/Triggers/Triggers";
 import DkpAndLoot from "./components/DkpAndLoot/DkpAndLoot";
 import Alerts from "./components/Alerts/Alerts";
 import Bids from "./components/DkpAndLoot/Bids";
-import Guild from "./components/Guild/Guild";
+import GuildAndCharacters from "./components/GuildAndCharacters/GuildAndCharacters";
 import CurrentBids from "./components/DkpAndLoot/CurrentBids";
 import ItemDetailsWindow from "./components/DkpAndLoot/ItemDetailsWindow";
 import TimerOverlay from "./components/Triggers/TimerOverlay";
@@ -20,53 +20,34 @@ function App() {
   const [user, setuser] = useState(null);
   const [tabs] = useState([
     { label: "Triggers", path: "/triggers" },
-    { label: "Guild", path: "/guild" },
+    { label: "Guild and Characters", path: "/guild-and-characters" },
     { label: "DKP & Loot", path: "/dkp-and-loot" },
     { label: "Options and Overlays", path: "/alerts" },
   ]);
   const [sortedData, setSortedData] = useState(null);
 
-  useEffect(() => {
-    // const sortByClass = (data) => {
-    //   const sorted = {};
-    //   if (data && data.Models) {
-    //     data.Models.forEach((character) => {
-    //       const characterClass = character.CharacterClass;
-    //       if (!sorted[characterClass]) {
-    //         sorted[characterClass] = [];
-    //       }
-    //       sorted[characterClass].push(character);
-    //     });
-    //   }
-    //   return sorted;
-    // };
-    // const fetchData = async () => {
-    //   try {
-    //     const response = await fetch("https://7gnjtigho4.execute-api.us-east-2.amazonaws.com/prod/dkp", {
-    //       method: "GET",
-    //       headers: {
-    //         Accept: "application/json",
-    //         "Content-Type": "application/json, fsdftext/plain",
-    //         clientid: "92811f1b28ec0",
-    //       },
-    //     });
-    //     if (!response.ok) {
-    //       throw new Error(`HTTP error! Status: ${response.status}`);
-    //     }
-    //     const jsonData = await response.json();
-    //     const sorted = sortByClass(jsonData);
-    //     setSortedData(sorted);
-    //   } catch (error) {
-    //     console.error("Error fetching data:", error);
-    //   }
-    // };
-    // fetchData();
-  }, []);
+  const convertImage = async () => {
+    const sourcePath = "C:/EQ/uifiles/QuarmUpscale/pot_cursors.tga";
+    const outputPath = "C:/vgina/src/assets/cursor.png";
+
+    try {
+      const result = await window.electron.convertTGAtoPNG(sourcePath, outputPath);
+      if (result.success) {
+        console.log("Conversion successful");
+      } else {
+        console.error("Conversion failed:", result.error);
+      }
+    } catch (error) {
+      console.error("IPC conversion failed:", error);
+    }
+  };
 
   useEffect(() => {
     window.electron.ipcRenderer.on("play-sound", (soundFile) => {
       window.electron.playSound(soundFile);
     });
+
+    // convertImage();
 
     return () => {
       window.electron.ipcRenderer.removeAllListeners("file-name");
@@ -93,7 +74,7 @@ function App() {
       <Routes>
         <Route path="/" element={<LayoutWithCommonComponents tabs={tabs} user={user} />}>
           <Route index path="triggers" element={<Triggers />} />
-          <Route path="guild" element={<Guild user={user} />} />
+          <Route path="guild-and-characters" element={<GuildAndCharacters user={user} />} />
           <Route path="dkp-and-loot" element={<DkpAndLoot sortedData={sortedData} user={user} />} />
           <Route path="alerts" element={<Alerts />} />
         </Route>
