@@ -4,7 +4,7 @@ function removeTimestamps(text) {
 }
 
 function actionResponse(player, line, action){
-  console.log(action.search);
+  player = player.toLowerCase();
   let search = action.search.toLowerCase();
   line = removeTimestamps(line).toLowerCase();
 
@@ -20,8 +20,11 @@ function actionResponse(player, line, action){
     return false;
   }
   
-  // Convert GINA style {s}, {c}, etc into group names.
-  search = search.replace(/{s(\d*)\}/gi, "(?<s$1>.+)");
+  // Convert GINA style {s} into group names.
+  search = search.replace(/\{s(\d*)\}/gi, "(?<s$1>.+)");
+
+  // Convert {c} to player name match.
+  search = search.replaceAll("{c}", player);
 
   // Check if regex is valid. Duplicate group names is invalid regex.
   // TODO (Allegro): Should be checked on save?
@@ -51,6 +54,9 @@ function actionResponse(player, line, action){
       response = response.replaceAll("{" + key + "}", value);
     }
   }
+
+  // Replace {c} with player name in reponse.
+  response = response.replaceAll("{c}", player);
 
   return response;
 }
