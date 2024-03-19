@@ -80,6 +80,37 @@ test.describe('Common action tests', () => {
   });
 });
 
+test.describe('Support for {C} matching in actions', () => {
+  const player = "TestPlayer"; 
+  let line = "TestPlayer";
+  let action = { type: "speak", key: "", search: "", sound: "", regex: true };
+  
+  test('Matched', ({}) => {
+    action.search = "{C}";
+    action.sound = "matched";
+    expect(actionResponse(player, line, action)).toEqual(action.sound);
+  });
+
+  test('Matched and replaced.', ({}) => {
+    action.search = "{C}";
+    action.sound = "{C} matched";
+    expect(actionResponse(player, line, action)).toEqual(player.toLowerCase() + " matched");
+  });
+
+  test('Not matched.', ({}) => {
+    let line = "AnotherPlayer"
+    action.search = "{C}";
+    expect(actionResponse(player, line, action)).toEqual(false);
+  });
+
+  test('Multiple matches and replacements', ({}) => {
+    let line = "TestPlayer tests out new Testplayer's test"
+    action.search = "{C}";
+    action.sound = "{C} tests out new {C}'s test"
+    expect(actionResponse(player, line, action)).toEqual(line.toLowerCase());
+  });
+
+});
 
 test.describe('Support for {S} matching in actions', () => {
   const player = "TestPlayer"; 
