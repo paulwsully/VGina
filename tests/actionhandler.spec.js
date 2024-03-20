@@ -171,3 +171,68 @@ test.describe('Support for {S} matching in actions', () => {
     
 });
 
+test.describe('Support for {W} matching in actions', () => {
+  const player = "TestPlayer"; 
+  let line = "a sentence match";
+  let action = { type: "speak", key: "", search: "", sound: "", regex: true };
+
+  test('{W} matched', ({}) => {
+    action.search = "a {W} match";
+    action.sound = "matched";
+    expect(actionResponse(player, line, action)).toEqual(action.sound);
+  });
+
+  test('{W} matched and replaced', ({}) => {
+    action.search = "a {W} match";
+    action.sound = "{W} matched";
+    expect(actionResponse(player, line, action)).toEqual("sentence matched");
+  });
+
+});
+
+test.describe('Real world examples', () => {
+  const player = "tester"; 
+  let line = "";
+  let action = { type: "", key: "", search: "", sound: "", regex: true };
+
+  test('Spell was interrupted', ({}) => {
+    line = "Your spell is interrupted.";
+    action.type = "speak";
+    action.search = "Your spell is interrupted.";
+    action.sound = "{C} Interrupted";
+    expect(actionResponse(player, line, action)).toEqual("tester interrupted");
+  });
+
+  test('Gift of mana', ({}) => {
+    line = "You've been granted a gift of gracious mana!";
+    action.type = "speak";
+    action.search = "You've been granted a gift of {S} mana!";
+    action.sound = "Free cast for {C}";
+    expect(actionResponse(player, line, action)).toEqual("free cast for tester");
+  });
+
+  test('Spell was resisted', ({}) => {
+    line = "Your target resisted the Selo's Chords of Cessation spell";
+    action.type = "speak";
+    action.search = "Your target resisted the {S} spell";
+    action.sound = "{S} cast by {C} was resisted";
+    expect(actionResponse(player, line, action)).toEqual("selo's chords of cessation cast by tester was resisted");
+  });
+
+  test('Player invited to group', ({}) => {
+    line = "Player invites you to join a group.";
+    action.type = "speak";
+    action.search = "{W} invites you to join a group";
+    action.sound = "{W} invited {C} to group";
+    expect(actionResponse(player, line, action)).toEqual("player invited tester to group");
+  });
+
+  test('Banshee', ({}) => {
+    line = "a spiteful banshee turns her attention on Tester.";
+    action.type = "speak";
+    action.search = "a spiteful banshee turns her attention on {C}";
+    action.sound = "{C} take Banshee to doors!";
+    expect(actionResponse(player, line, action)).toEqual("tester take banshee to doors!");
+  });
+
+});
