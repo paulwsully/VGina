@@ -4,6 +4,8 @@ function removeTimestamps(text) {
 }
 
 function actionResponse(player, line, action){
+  // NOTE (Allegro): lots of lowercasing, should lowercase on save instead?
+
   player = player.toLowerCase();
   let search = action.search.toLowerCase();
   line = removeTimestamps(line).toLowerCase();
@@ -22,6 +24,7 @@ function actionResponse(player, line, action){
   
   // Convert GINA style {s} into group names.
   search = search.replace(/\{s(\d*)\}/gi, "(?<s$1>.+)");
+  search = search.replace(/\{w(\d*)\}/gi, "(?<w$1>\\w+)");
 
   // Convert {c} to player name match.
   search = search.replaceAll("{c}", player);
