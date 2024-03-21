@@ -36,6 +36,107 @@
 .characters-container {
   border-right: 1px solid white;
   height: 100%;
-  width: 200px;
+  width: 250px;
   padding-right: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-self: flex-start;
+  gap: 8px;
+  input {
+    width: 100%;
+  }
+  .actions {
+    height: 20px;
+    width: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    span {
+      display: flex;
+      gap: 8px;
+    }
+    svg {
+      border: 1px solid white;
+      border-radius: 50%;
+      background-color: white;
+    }
+    .text-error {
+      color: $color-error;
+    }
+  }
+  .character {
+    width: 100%;
+    border-radius: 4px;
+    padding: 4px 8px;
+    text-align: left;
+    display: flex;
+    justify-content: space-between;
+    .character-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      .character-name {
+        font-size: 1.2em;
+      }
+      .character-guild {
+        font-size: 0.8em;
+      }
+      .character-level {
+        font-size: 0.8em;
+        color: #666;
+        font-weight: 900;
+      }
+    }
+    .error-message {
+      opacity: 0;
+      transition: opacity 0.15s ease-in-out;
+    }
+    &:hover {
+      background: rgba(white, 0.1);
+      cursor: pointer;
+      .error-message {
+        opacity: 1;
+      }
+    }
+  }
+}
+
+.icon-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.error-message {
+  color: $color-error;
+  font-size: 0.8em;
+}
+
+.success-message {
+  color: $color-primary;
+  font-size: 0.8em;
+}
+
+select {
+  background-color: transparent;
+  padding: 10px;
+  padding-left: 0;
+  border: none;
+  border-bottom: 1px solid #444;
+  width: 300px;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("arrow.png");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  &:focus {
+    outline: 1px solid $color-primary;
+  }
+}
+
+option {
+  background-color: #010103;
+  color: white;
+  padding: 8px 16px;
 }

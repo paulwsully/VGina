@@ -152,9 +152,7 @@ const TopBar = ({ user }) => {
   };
 
   const handleSignOut = () => {
-    signOutUser(() => {
-      // setMenuActive(false);
-    });
+    signOutUser();
   };
 
   const toggleOpenClose = () => {

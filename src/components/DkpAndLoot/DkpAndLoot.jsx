@@ -7,6 +7,7 @@ import ClosedBids from "./ClosedBids";
 import "./DkpAndLoot.scss";
 
 function DkpAndLoot({ sortedData, fileName, user }) {
+  if (!user) return <Navigate to="/" replace />;
   const [isDkpListVisible, setIsDkpListVisible] = useState(false);
   const [isClosedBidsVisible, setIsClosedBidsVisible] = useState(false);
   const [isOfficer, setisOfficer] = useState(false);
@@ -29,10 +30,6 @@ function DkpAndLoot({ sortedData, fileName, user }) {
   useEffect(() => {
     checkIfIsOfficer();
   }, [fileName]);
-
-  if (!user) {
-    return <Navigate to="/" replace />;
-  }
 
   return (
     <div className="dkp-container">

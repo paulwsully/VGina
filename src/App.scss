@@ -86,3 +86,31 @@
     }
   }
 }
+
+.pointer {
+  cursor: pointer;
+}
+
+input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  border-bottom: 1px solid rgba(white, 0.2);
+  padding: 12px 0;
+  font-size: 1em;
+  &:-webkit-autofill {
+    -webkit-text-fill-color: white;
+    -webkit-box-shadow: 0 0 0px 1000px darken($color-highlight, 7%) inset;
+    transition: background-color 5000s ease-in-out 0s;
+  }
+  &:focus,
+  &:not(:placeholder-shown) {
+    outline: none;
+    border-bottom: 1px solid $color-primary;
+    & + span {
+      transform: translateY(-8px) translateX(0);
+      color: rgba(white, 0.3);
+      font-size: 0.7em;
+    }
+  }
+}

@@ -39,7 +39,7 @@ const TabBar = ({ tabs, user }) => {
   return (
     <div className="tabbar">
       {tabs.map((tab) => {
-        if (!user && (tab.label === "DKP & Loot" || tab.label === "Guild")) {
+        if (!user && (tab.label === "DKP & Loot" || tab.label === "Guild & Characters")) {
           return null;
         }
         return (

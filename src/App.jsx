@@ -20,9 +20,9 @@ function App() {
   const [user, setuser] = useState(null);
   const [tabs] = useState([
     { label: "Triggers", path: "/triggers" },
-    { label: "Guild and Characters", path: "/guild-and-characters" },
+    { label: "Guild & Characters", path: "/guild-and-characters" },
     { label: "DKP & Loot", path: "/dkp-and-loot" },
-    { label: "Options and Overlays", path: "/alerts" },
+    { label: "Options & Overlays", path: "/alerts" },
   ]);
   const [sortedData, setSortedData] = useState(null);
 
