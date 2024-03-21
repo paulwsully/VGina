@@ -140,3 +140,18 @@ option {
   color: white;
   padding: 8px 16px;
 }
+
+.guild-wrapper {
+  h2 {
+    color: $color-primary;
+  }
+}
+
+.members {
+  background: rgba(white, 0.05);
+  border-radius: 4px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}

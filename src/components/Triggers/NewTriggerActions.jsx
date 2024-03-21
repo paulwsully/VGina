@@ -56,6 +56,7 @@ const NewTriggerActions = ({ newTrigger, soundFiles, selectedSound, selectedTime
               <Input id="timerMinutes" type="number" value={newTrigger.timerMinutes === 0 ? "" : newTrigger.timerMinutes} placeholder=" " label="MM" onTextChange={(value) => handleInputChange("timerMinutes", value)} />
               <Input id="timerSeconds" type="number" value={newTrigger.timerSeconds === 0 ? "" : newTrigger.timerSeconds} placeholder=" " label="SS" onTextChange={(value) => handleInputChange("timerSeconds", value)} />
             </div>
+            <br />
             <h4>Expiration Action</h4>
             <div className="sounds-header">
               <Checkbox id="doTimerExpirationSound" label="Play a sound" checked={newTrigger.doTimerExpirationSound} onCheckChange={(checked) => handleCheckboxChange("doTimerExpirationSound", checked)} />

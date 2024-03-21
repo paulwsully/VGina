@@ -4,13 +4,45 @@ import database from "../../../firebaseConfig";
 import Input from "../Utilities/Input";
 
 function Guilds({ user }) {
-  const [creatingGuild, setcreatingGuild] = useState(false);
-  const [joiningGuild, setjoiningGuild] = useState(false);
+  const [creatingGuild, setcreatingGuild] = useState(false); // Corrected function name casing
+  const [joiningGuild, setJoiningGuild] = useState(false);
   const [guildName, setGuildName] = useState("");
   const [characters, setCharacters] = useState([]);
   const [selectedCharacter, setSelectedCharacter] = useState("");
+  const [currentGuild, setCurrentGuild] = useState(null); // Added state for current guild
   const [loadingCharacters, setLoadingCharacters] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    setLoadingCharacters(true);
+    get(child(ref(database), `users/${user.uid}/characters`))
+      .then((snapshot) => {
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          setCharacters(Object.values(data));
+
+          const guildedCharacter = Object.values(data).find((char) => char.guild);
+          if (guildedCharacter) {
+            setSelectedCharacter(guildedCharacter);
+            return get(ref(database, `guilds/${guildedCharacter.guild.id}`));
+          }
+        } else {
+          setCharacters([]);
+        }
+      })
+      .then((guildSnapshot) => {
+        if (guildSnapshot && guildSnapshot.exists()) {
+          setCurrentGuild(guildSnapshot.val());
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching characters or guild: ", error);
+        setError("Error fetching characters or guild");
+      })
+      .finally(() => {
+        setLoadingCharacters(false);
+      });
+  }, [user.uid]);
 
   useEffect(() => {
     if (creatingGuild) {
@@ -101,49 +133,84 @@ function Guilds({ user }) {
 
   return (
     <div className="guild-container">
-      <div className="no-guild">
-        {(joiningGuild || creatingGuild) && <Input id="guildName" placeholder="" label={creatingGuild ? "New Guild Name" : "Search guild names..."} onTextChange={(value) => handleInputChange("name", value)} />}
-        {creatingGuild && (
-          <>
-            <select id="character-select" value={selectedCharacter.id} onChange={(e) => setSelectedCharacter(characters.find((character) => character.id === e.target.value))} disabled={loadingCharacters}>
-              <option value="">Guild leader...</option>
-              {characters.map((character) => (
-                <option key={character.id} value={character.id}>
-                  {character.name}
-                </option>
-              ))}
-            </select>
-          </>
-        )}
-        {!joiningGuild && !creatingGuild && <div className="null-message">It looks like you're not in a guild</div>}
-        {!joiningGuild && !creatingGuild && (
-          <div className="guild-actions">
-            <div className="pill" onClick={handleJoinGuild}>
-              Join a Guild
-            </div>
-            <div className="pill" onClick={handleCreateGuild}>
-              Create a Guild
+      {currentGuild ? (
+        <div className="guild-wrapper">
+          <h2>{currentGuild.name}</h2>
+          <div className="guild-details">
+            <div className="members">
+              <div className="guild-invite">
+                <div className="pill">Invite Members</div>
+              </div>
+              {console.log(currentGuild)}
+              <div className="guild-leaders">
+                <h4>Guild Leaders ({currentGuild.leaders?.length})</h4>
+                {currentGuild.leaders?.length > 0 &&
+                  currentGuild.leaders.map((leader) => {
+                    return <div key={leader.id}>{leader.name}</div>;
+                  })}
+              </div>
+              <div className="guild-officers">
+                <h4>Guild Officers ({currentGuild.officers?.length})</h4>
+                {currentGuild.officers?.length > 0 &&
+                  currentGuild.officers.map((officer) => {
+                    return <div key={officer.id}>{officer.name}</div>;
+                  })}
+              </div>
+              <div className="guild-members">
+                <h4>All Members ({currentGuild.members?.length})</h4>
+                {currentGuild.members?.length > 0 &&
+                  currentGuild.members.map((member) => {
+                    return <div key={member.id}>{member.name}</div>;
+                  })}
+              </div>
             </div>
           </div>
-        )}
-        {(creatingGuild || joiningGuild) && (
-          <div className="guild-actions">
-            {creatingGuild && (
-              <div className="pill" onClick={handleSaveNewGuild}>
-                Save
-              </div>
-            )}
-            {joiningGuild && (
+        </div>
+      ) : (
+        <div className="no-guild">
+          {(joiningGuild || creatingGuild) && <Input id="guildName" placeholder="" label={creatingGuild ? "New Guild Name" : "Search guild names..."} onTextChange={(value) => handleInputChange("name", value)} />}
+          {creatingGuild && (
+            <>
+              <select id="character-select" value={selectedCharacter.id} onChange={(e) => setSelectedCharacter(characters.find((character) => character.id === e.target.value))} disabled={loadingCharacters}>
+                <option value="">Guild leader...</option>
+                {characters.map((character) => (
+                  <option key={character.id} value={character.id}>
+                    {character.name}
+                  </option>
+                ))}
+              </select>
+            </>
+          )}
+          {!joiningGuild && !creatingGuild && <div className="null-message">It looks like you're not in a guild</div>}
+          {!joiningGuild && !creatingGuild && (
+            <div className="guild-actions">
               <div className="pill" onClick={handleJoinGuild}>
-                Join
+                Join a Guild
               </div>
-            )}
-            <div className="pill error" onClick={handleCancel}>
-              Cancel
+              <div className="pill" onClick={handleCreateGuild}>
+                Create a Guild
+              </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+          {(creatingGuild || joiningGuild) && (
+            <div className="guild-actions">
+              {creatingGuild && (
+                <div className="pill" onClick={handleSaveNewGuild}>
+                  Save
+                </div>
+              )}
+              {joiningGuild && (
+                <div className="pill" onClick={handleJoinGuild}>
+                  Join
+                </div>
+              )}
+              <div className="pill error" onClick={handleCancel}>
+                Cancel
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
