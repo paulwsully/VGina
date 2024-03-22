@@ -182,9 +182,7 @@ function setupIpcHandlers() {
           timer.timerMinutes = response.mins;
           timer.timerSeconds = response.secs;
         }
-        console.log(response);
         timer.triggerName = response.title;
-        console.log(timer);
 
         const activeTimers = store.get("activeTimers", []);
         const uniqueId = `timer-${Date.now()}`;
