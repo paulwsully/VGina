@@ -5,7 +5,6 @@ function removeTimestamps(text) {
 
 function actionResponse(player, line, action){
   // NOTE (Allegro): lots of lowercasing, should lowercase on save instead?
-
   player = player.toLowerCase();
   let search = action.search.toLowerCase();
   line = removeTimestamps(line).toLowerCase();

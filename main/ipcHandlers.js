@@ -117,7 +117,7 @@ function setupIpcHandlers() {
   }
 
   async function processSpeakAction(line, action) {
-    const player = store.get("watchedCharacter").name;
+    const player = store.get("watchedCharacter");
     const response = actionResponse(player, line, action);
     
     if (response) {
@@ -158,7 +158,7 @@ function setupIpcHandlers() {
 
   async function processSoundAction(line, action) {
     try {
-      const player = store.get("watchedCharacter").name;
+      const player = store.get("watchedCharacter");
       let response = actionResponse(player, line, action);
       if (response) {
         const userDataPath = app.getPath("userData");
@@ -173,7 +173,7 @@ function setupIpcHandlers() {
 
   async function processTimerAction(line, action, timer) {
     try {
-      const player = store.get("watchedCharacter").name;
+      const player = store.get("watchedCharacter");
       const response = actionResponse(player, line, action);
       if (response) {
 
@@ -262,7 +262,6 @@ function setupIpcHandlers() {
     const triggers = store.get("triggers");
     if (triggers && triggers.length > 0) {
       triggers.map((trigger, index) => {
-        console.log(trigger);
         let action = { type: "", key: "", search: trigger.searchText, sound: "" , regex: trigger.searchRegex }; 
         if (trigger.saySomething){
           action.type = "speak";
