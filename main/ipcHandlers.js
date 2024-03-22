@@ -176,6 +176,16 @@ function setupIpcHandlers() {
       const player = store.get("watchedCharacter").name;
       const response = actionResponse(player, line, action);
       if (response) {
+
+        if (response.override){
+          timer.timerHours = response.hours;
+          timer.timerMinutes = response.mins;
+          timer.timerSeconds = response.secs;
+        }
+        console.log(response);
+        timer.triggerName = response.title;
+        console.log(timer);
+
         const activeTimers = store.get("activeTimers", []);
         const uniqueId = `timer-${Date.now()}`;
         timer.id = uniqueId;
@@ -254,6 +264,7 @@ function setupIpcHandlers() {
     const triggers = store.get("triggers");
     if (triggers && triggers.length > 0) {
       triggers.map((trigger, index) => {
+        console.log(trigger);
         let action = { type: "", key: "", search: trigger.searchText, sound: "" , regex: trigger.searchRegex }; 
         if (trigger.saySomething){
           action.type = "speak";
@@ -268,6 +279,7 @@ function setupIpcHandlers() {
         }
         if (trigger.setTimer){
           action.type = "timer";
+          action.sound = trigger.triggerName;
           processTimerAction(line, action, trigger);
         }
       });
