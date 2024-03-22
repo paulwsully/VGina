@@ -12,7 +12,9 @@ function actionResponse(player, line, action){
 
   // NOTE (Allegro): sound has toString() because it can be a bool for some reason.
   let response = action.sound.toString().toLowerCase();
-  
+
+  let timer_override = false;
+
   if (!action.regex)
   {
     // NOTE (Allegro): Change include to startswith?
@@ -29,8 +31,11 @@ function actionResponse(player, line, action){
   // Convert {c} to player name match.
   search = search.replaceAll("{c}", player);
 
-  // Convert {ts} to time stamp group.
-  search = search.replace("{ts}", "((?<hr>\\d+)h\\s?)?((?<min>\\d+)m\\s?)?((?<sec>\\d+)s)?");
+  // Convert {ts} to time stamp group. If using {ts} override previous timer's time.
+  if (search.includes("{ts}")){
+    search = search.replace("{ts}", "((?<hr>\\d+)h\\s?)?((?<min>\\d+)m\\s?)?((?<sec>\\d+)s)?");
+    timer_override = true;
+  }
 
   // Check if regex is valid. Duplicate group names is invalid regex.
   // TODO (Allegro): Should be checked on save?
@@ -61,7 +66,13 @@ function actionResponse(player, line, action){
 
   // Timer response is used in the timer's title and the group variables replace the time values of the timer.
   if(action.type === "timer"){
-    return {response: response, hours: groups.hr, mins: groups.min, secs: groups.sec};
+    if (groups.hr === undefined && groups.min === undefined && groups.sec === undefined){
+      timer_override = false;
+    }
+    const hours = (groups.hr === undefined)  ? 0 : Number(groups.hr);
+    const mins  = (groups.min === undefined) ? 0 : Number(groups.min);
+    const secs  = (groups.sec === undefined) ? 0 : Number(groups.sec);
+    return {title: response, hours: hours, mins: mins, secs: secs, override: timer_override};
   }
 
   return response;

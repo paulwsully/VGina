@@ -9,14 +9,36 @@ test.describe('Timer action tests', () => {
   test('On timer match return true.', ({}) => {
     line = "line match";
     action.search = "{S} match";
-    const timer = {response: "timer match", hours: undefined, mins: undefined, secs: undefined};
+    const timer = {title: "timer match", hours: 0, mins: 0, secs: 0, override: false};
+    expect(JSON.stringify(actionResponse(player, line, action))).toEqual(JSON.stringify(timer));
+  });
+
+  test('{S} and {TS} should play nice', ({}) => {
+    line = "Player timer An NPC 15s";
+    action.search = "Player timer {S} {TS}";
+    action.sound = "{S} Timer"
+    const timer = {title: "an npc timer", hours: 0, mins: 0, secs: 15, override: true};
+    expect(JSON.stringify(actionResponse(player, line, action))).toEqual(JSON.stringify(timer));
+  });
+
+  test('Not match with {TS} should fail to match', ({}) => {
+    line = "line match";
+    action.search = "nomatch {TS}";
+    expect(actionResponse(player, line, action)).toEqual(false);
+  });
+
+  test('On timer match {TS} but no groups found dont override', ({}) => {
+    line = "line match 10";
+    action.search = "match {TS}";
+    action.sound = "timer match";
+    const timer = {title: "timer match", hours: 0, mins: 0, secs: 0, override: false};
     expect(JSON.stringify(actionResponse(player, line, action))).toEqual(JSON.stringify(timer));
   });
 
   test('On timer match {TS}', ({}) => {
-    line = "line match 10h10m10s";
+    line = "line match 1234h5678m4023s";
     action.search = "line match {TS}";
-    const timer = {response: "timer match", hours: "10", mins: "10", secs: "10"};
+    const timer = {title: "timer match", hours: 1234, mins: 5678, secs: 4023, override: true};
     expect(JSON.stringify(actionResponse(player, line, action))).toEqual(JSON.stringify(timer));
   });
 
@@ -24,7 +46,15 @@ test.describe('Timer action tests', () => {
     line = "line match 10h9m8s";
     action.search = "line match {ts}";
     action.sound = "{hr} {min} {sec}";
-    const timer = {response: "10 9 8", hours: "10", mins: "9", secs: "8"};
+    const timer = {title: "10 9 8", hours: 10, mins: 9, secs: 8, override: true};
+    expect(JSON.stringify(actionResponse(player, line, action))).toEqual(JSON.stringify(timer));
+  });
+
+  test('On timer match {TS} and replace (n)s into {sec}', ({}) => {
+    line = "line match 40s";
+    action.search = "line match {ts}";
+    action.sound = "{sec}";
+    const timer = {title: "40", hours: 0, mins: 0, secs: 40, override: true};
     expect(JSON.stringify(actionResponse(player, line, action))).toEqual(JSON.stringify(timer));
   });
 
