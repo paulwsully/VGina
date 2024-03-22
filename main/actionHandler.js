@@ -22,12 +22,15 @@ function actionResponse(player, line, action){
     return false;
   }
   
-  // Convert GINA style {s} into group names.
+  // Convert GINA style {S} into group names.
   search = search.replace(/\{s(\d*)\}/gi, "(?<s$1>.+)");
   search = search.replace(/\{w(\d*)\}/gi, "(?<w$1>\\w+)");
 
   // Convert {c} to player name match.
   search = search.replaceAll("{c}", player);
+
+  // Convert {ts} to time stamp group.
+  search = search.replace("{ts}", "((?<hr>\\d+)h\\s?)?((?<min>\\d+)m\\s?)?((?<sec>\\d+)s)?");
 
   // Check if regex is valid. Duplicate group names is invalid regex.
   // TODO (Allegro): Should be checked on save?
@@ -45,11 +48,6 @@ function actionResponse(player, line, action){
     return action.sound;
   }
 
-  // TODO: return datetime object instead. and title?
-  if(action.type === "timer"){
-    return "true";
-  }
-
   // Replace the groups with the matches 
   const groups = (matched.groups);
   if (groups){
@@ -60,6 +58,11 @@ function actionResponse(player, line, action){
 
   // Replace {c} with player name in reponse.
   response = response.replaceAll("{c}", player);
+
+  // Timer response is used in the timer's title and the group variables replace the time values of the timer.
+  if(action.type === "timer"){
+    return {response: response, hours: groups.hr, mins: groups.min, secs: groups.sec};
+  }
 
   return response;
 }
