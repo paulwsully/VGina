@@ -4,13 +4,28 @@ import { actionResponse} from '../main/actionHandler.js';
 test.describe('Timer action tests', () => {
   const player = "TestPlayer"; 
   let line = "";
-  let action = { type: "timer", key: "", search: "", sound: "", regex: true };
+  let action = { type: "timer", key: "", search: "", sound: "timer match", regex: true };
 
-  // TODO (Allegro): change test after implementation complete.
   test('On timer match return true.', ({}) => {
     line = "line match";
     action.search = "{S} match";
-    expect(actionResponse(player, line, action)).toEqual("true");
+    const timer = {response: "timer match", hours: undefined, mins: undefined, secs: undefined};
+    expect(JSON.stringify(actionResponse(player, line, action))).toEqual(JSON.stringify(timer));
+  });
+
+  test('On timer match {TS}', ({}) => {
+    line = "line match 10h10m10s";
+    action.search = "line match {TS}";
+    const timer = {response: "timer match", hours: "10", mins: "10", secs: "10"};
+    expect(JSON.stringify(actionResponse(player, line, action))).toEqual(JSON.stringify(timer));
+  });
+
+  test('On timer match {TS} and replace into {hr} {min} {sec}', ({}) => {
+    line = "line match 10h9m8s";
+    action.search = "line match {ts}";
+    action.sound = "{hr} {min} {sec}";
+    const timer = {response: "10 9 8", hours: "10", mins: "9", secs: "8"};
+    expect(JSON.stringify(actionResponse(player, line, action))).toEqual(JSON.stringify(timer));
   });
 
 });
