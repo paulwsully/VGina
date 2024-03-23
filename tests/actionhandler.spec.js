@@ -280,4 +280,13 @@ test.describe('Real world examples', () => {
     expect(actionResponse(player, line, action)).toEqual("tester take banshee to doors!");
   });
 
+  // TODO: There is a bug where this test will fail when regex is not set to true, even though it doesn't use any regex in it.
+  test('Fufills Song', ({}) => {
+    line = "A mob's hair stands on end";
+    action.type = "speak";
+    action.search = "hair stands on end";
+    action.sound = "Fufills";
+    expect(actionResponse(player, line, action)).toEqual("fufills");
+  });
+
 });
