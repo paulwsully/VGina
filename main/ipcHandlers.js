@@ -9,9 +9,10 @@ import { sanitizeFilename } from "./util.js";
 import { v4 as uuidv4 } from "uuid";
 import { itemsData } from "./itemsData.js";
 import tga2png from "tga2png";
+import { actionResponse, defaultActions} from "./actionHandler.js";
 import Store from "electron-store";
 import database from "./../firebaseConfig.js";
-import path from "path";
+import path from "path"; 
 const store = new Store();
 
 function setupIpcHandlers() {
@@ -115,61 +116,51 @@ function setupIpcHandlers() {
     }
   }
 
-  async function processCommonActions(lastLine, settingKey, search, useRegex) {
-    try {
-      let matchFound = false;
-      if (useRegex) {
-        const regex = new RegExp(search);
-        matchFound = regex.test(lastLine);
-      } else {
-        matchFound = lastLine.includes(search);
-      }
-
-      if (!matchFound) return;
-
-      let settings = null;
-      if (settingKey !== null) {
-        settings = store.get(settingKey);
-      }
-
-      return settings || settingKey === "";
-    } catch (error) {
-      console.error("Error in processCommonActions:", error);
-      return false;
-    }
-  }
-
-  async function processSpeakAction(lastLine, settingKey, search, sound, useRegex) {
-    const actionRequired = await processCommonActions(lastLine, settingKey, search, useRegex);
-    if (actionRequired) {
+  async function processSpeakAction(line, action) {
+    const player = store.get("watchedCharacter");
+    const response = actionResponse(player, line, action);
+    
+    if (response) {
       const userDataPath = app.getPath("userData");
-      const soundFilePath = path.join(userDataPath, `./sounds/${sanitizeFilename(sound)}.mp3`);
+      const soundFilePath = path.join(userDataPath, `./sounds/${sanitizeFilename(response)}.mp3`);
       const mainWindow = getMainWindow();
 
       try {
-        await fsPromises.stat(soundFilePath);
-        mainWindow && mainWindow.webContents.send("play-sound", soundFilePath);
+        const exists = await fsPromises.stat(soundFilePath);
+        if (exists){
+          console.log("Using existing sound file: ", soundFilePath);
+
+          mainWindow && mainWindow.webContents.send("play-sound", soundFilePath);
+        }
       } catch (error) {
         const functions = getFunctions();
         const speech = httpsCallable(functions, "processSpeakAction");
-        speech(sound)
-          .then(async (result) => {
+
+        speech(response)
+          .then((result) => {
             const audioBuffer = Buffer.from(result.data.audioContent, "base64");
-            await fsPromises.mkdir(path.dirname(soundFilePath), { recursive: true });
-            await fsPromises.writeFile(soundFilePath, audioBuffer);
+
+            fsPromises.mkdir(path.dirname(soundFilePath), { recursive: true });
+            fsPromises.writeFile(soundFilePath, audioBuffer);
+
+            console.log("Create sound file: ", soundFilePath);
+
             mainWindow && mainWindow.webContents.send("play-sound", soundFilePath);
           })
           .catch((error) => {
             console.error("Error:", error);
           });
+
+        console.error("Error:", error);
       }
     }
   }
 
-  async function processSoundAction(lastLine, settingKey, search, sound, useRegex) {
+  async function processSoundAction(line, action) {
     try {
-      const actionRequired = await processCommonActions(lastLine, settingKey, search, useRegex);
-      if (actionRequired) {
+      const player = store.get("watchedCharacter");
+      let response = actionResponse(player, line, action);
+      if (response) {
         const userDataPath = app.getPath("userData");
         const soundFilePath = path.join(userDataPath, `./sounds/${sound}.mp3`);
         const mainWindow = getMainWindow();
@@ -180,10 +171,19 @@ function setupIpcHandlers() {
     }
   }
 
-  async function processTimerAction(lastLine, settingKey, search, useRegex, timer) {
+  async function processTimerAction(line, action, timer) {
     try {
-      const actionRequired = await processCommonActions(lastLine, settingKey, search, useRegex);
-      if (actionRequired) {
+      const player = store.get("watchedCharacter");
+      const response = actionResponse(player, line, action);
+      if (response) {
+
+        if (response.override){
+          timer.timerHours = response.hours;
+          timer.timerMinutes = response.mins;
+          timer.timerSeconds = response.secs;
+        }
+        timer.triggerName = response.title;
+
         const activeTimers = store.get("activeTimers", []);
         const uniqueId = `timer-${Date.now()}`;
         timer.id = uniqueId;
@@ -222,36 +222,11 @@ function setupIpcHandlers() {
     });
   }, 2);
 
-  const actions = [
-    { actionType: "speak", key: "rootBroke", search: "Roots spell has worn off", sound: "Root fell off", useRegex: false },
-    { actionType: "speak", key: "feignDeath", search: "has fallen to the ground", sound: "Failed feign", useRegex: false },
-    { actionType: "speak", key: "resisted", search: "Your target resisted", sound: "Resisted", useRegex: false },
-    { actionType: "speak", key: "invisFading", search: "You feel yourself starting to appear", sound: "You're starting to appear", useRegex: false },
-    { actionType: "speak", key: "groupInvite", search: "invites you to join a group", sound: "You've been invited to a group", useRegex: false },
-    { actionType: "speak", key: "raidInvite", search: "invites you to join a raid", sound: "You've been invited to a raid", useRegex: false },
-    { actionType: "speak", key: "mobEnrage", search: "has become ENRAGED", sound: "Mob is enraged", useRegex: false },
-    { actionType: "sound", key: "tell", search: "\\[.*?\\] (\\S+) tells you,", sound: "tell", useRegex: true },
-  ];
-
-  function removeTimestamps(text) {
-    return text
-      .split("\n")
-      .map((line) => line.replace(/\[\w+ \w+ \d+ \d+:\d+:\d+ \d+\] /, ""))
-      .join("\n");
-  }
-
   function processNewLine(line) {
-    const lineOnly = removeTimestamps(line);
-    if (line) {
-      const triggers = store.get("triggers");
-      actions.forEach(({ actionType, key, search, sound, useRegex }) => {
-        if (actionType === "speak") processSpeakAction(lineOnly, key, search, sound, useRegex, actionType);
-        if (actionType === "sound") processSoundAction(lineOnly, key, search, sound, useRegex, actionType);
-      });
-
+    if (line){
       if (line.includes("**A Magic Die is rolled by") || line.includes("**It could have been any number from")) parseRolls(line);
       if (line.includes("tells you,")) parseLineForBid(line, true);
-
+      
       handleAlerts(line);
       handleCommands(line);
       handleTriggers(line);
@@ -260,9 +235,10 @@ function setupIpcHandlers() {
   }
 
   function handleAlerts(line) {
-    actions.forEach(({ actionType, key, search, sound, useRegex }) => {
-      if (actionType === "speak") processSpeakAction(line, key, search, sound, useRegex, actionType);
-      if (actionType === "sound") processSoundAction(line, key, search, sound, useRegex, actionType);
+    const actions = defaultActions();
+    actions.forEach((action) => {
+      if (action.type === "speak") processSpeakAction(line, action);
+      if (action.type === "sound") processSoundAction(line, action);
     });
   }
 
@@ -286,12 +262,23 @@ function setupIpcHandlers() {
     const triggers = store.get("triggers");
     if (triggers && triggers.length > 0) {
       triggers.map((trigger, index) => {
-        if (trigger.saySomething) processSpeakAction(line, "", trigger.searchText, trigger.speechText, trigger.searchRegex);
-        if (trigger.playSound) {
-          const soundFile = typeof triggers[index]?.sound === "string" ? triggers[index].sound.replace(".mp3", "") : undefined;
-          processSoundAction(line, "", trigger.searchText, soundFile, trigger.searchRegex);
+        let action = { type: "", key: "", search: trigger.searchText, sound: "" , regex: trigger.searchRegex }; 
+        if (trigger.saySomething){
+          action.type = "speak";
+          action.sound = trigger.searchText;
+          processSpeakAction(line, action);
         }
-        if (trigger.setTimer) processTimerAction(line, "", trigger.searchText, trigger.searchRegex, trigger);
+        if (trigger.playSound) {
+          action.type = "sound";
+          // NOTE (Allegro): do we need ot change if type is string here?
+          action.sound = typeof triggers[index]?.sound === "string" ? triggers[index].sound.replace(".mp3", "") : undefined;
+          processSpeakAction(line, action);
+        }
+        if (trigger.setTimer){
+          action.type = "timer";
+          action.sound = trigger.triggerName;
+          processTimerAction(line, action, trigger);
+        }
       });
     }
   }
