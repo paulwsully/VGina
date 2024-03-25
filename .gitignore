@@ -135,3 +135,7 @@ functions*
 .supabase
 google-tts.json
 google-tts-encoded.txt
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
