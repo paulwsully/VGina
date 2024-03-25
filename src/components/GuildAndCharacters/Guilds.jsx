@@ -1,15 +1,19 @@
 import React, { useState, useEffect } from "react";
 import { ref, push, set, get, child } from "firebase/database";
+import { CurrentGuild } from "./CurrentGuild";
+import { guildData } from "./guildData";
+import { toast, ToastContainer } from "react-toastify";
+import CharacterSelect from "./CharacterSelect";
 import database from "../../../firebaseConfig";
 import Input from "../Utilities/Input";
 
 function Guilds({ user }) {
-  const [creatingGuild, setcreatingGuild] = useState(false); // Corrected function name casing
-  const [joiningGuild, setJoiningGuild] = useState(false);
+  const [creatingGuild, setcreatingGuild] = useState(false);
+  const [joiningGuild, setjoiningGuild] = useState(false);
   const [guildName, setGuildName] = useState("");
   const [characters, setCharacters] = useState([]);
   const [selectedCharacter, setSelectedCharacter] = useState("");
-  const [currentGuild, setCurrentGuild] = useState(null); // Added state for current guild
+  const [currentGuild, setCurrentGuild] = useState(null);
   const [loadingCharacters, setLoadingCharacters] = useState(false);
   const [error, setError] = useState("");
 
@@ -69,17 +73,17 @@ function Guilds({ user }) {
     if (creatingGuild && selectedCharacter) {
       const newGuildRef = push(ref(database, "guilds"));
       const timestamp = Date.now();
-      const guildData = {
+      const updatedGuildData = {
+        ...guildData,
         name: guildName,
         id: newGuildRef.key,
-        server: "",
+        createdAt: timestamp,
         leaders: [
           {
             name: selectedCharacter.name,
             id: selectedCharacter.id,
           },
         ],
-        officers: [],
         members: [
           {
             name: selectedCharacter.name,
@@ -88,18 +92,14 @@ function Guilds({ user }) {
             rank: "Leader",
           },
         ],
-        createdAt: timestamp,
-        lootRules: {
-          dkp: true,
-          lootCouncil: false,
-          openBid: false,
-          secondHighestPlusOne: false,
-        },
       };
 
-      set(newGuildRef, guildData)
+      set(newGuildRef, updatedGuildData)
         .then(() => {
           console.log("Guild saved successfully!");
+          toast.success("Guild Created !", {
+            position: "bottom-right",
+          });
           const characterRef = ref(database, `users/${user.uid}/characters/${selectedCharacter.id}`);
           return set(characterRef, { ...selectedCharacter, guild: { id: newGuildRef.key, name: guildName } });
         })
@@ -133,54 +133,13 @@ function Guilds({ user }) {
 
   return (
     <div className="guild-container">
+      <ToastContainer />
       {currentGuild ? (
-        <div className="guild-wrapper">
-          <h2>{currentGuild.name}</h2>
-          <div className="guild-details">
-            <div className="members">
-              <div className="guild-invite">
-                <div className="pill">Invite Members</div>
-              </div>
-              {console.log(currentGuild)}
-              <div className="guild-leaders">
-                <h4>Guild Leaders ({currentGuild.leaders?.length})</h4>
-                {currentGuild.leaders?.length > 0 &&
-                  currentGuild.leaders.map((leader) => {
-                    return <div key={leader.id}>{leader.name}</div>;
-                  })}
-              </div>
-              <div className="guild-officers">
-                <h4>Guild Officers ({currentGuild.officers?.length})</h4>
-                {currentGuild.officers?.length > 0 &&
-                  currentGuild.officers.map((officer) => {
-                    return <div key={officer.id}>{officer.name}</div>;
-                  })}
-              </div>
-              <div className="guild-members">
-                <h4>All Members ({currentGuild.members?.length})</h4>
-                {currentGuild.members?.length > 0 &&
-                  currentGuild.members.map((member) => {
-                    return <div key={member.id}>{member.name}</div>;
-                  })}
-              </div>
-            </div>
-          </div>
-        </div>
+        <CurrentGuild currentGuild={currentGuild} />
       ) : (
         <div className="no-guild">
           {(joiningGuild || creatingGuild) && <Input id="guildName" placeholder="" label={creatingGuild ? "New Guild Name" : "Search guild names..."} onTextChange={(value) => handleInputChange("name", value)} />}
-          {creatingGuild && (
-            <>
-              <select id="character-select" value={selectedCharacter.id} onChange={(e) => setSelectedCharacter(characters.find((character) => character.id === e.target.value))} disabled={loadingCharacters}>
-                <option value="">Guild leader...</option>
-                {characters.map((character) => (
-                  <option key={character.id} value={character.id}>
-                    {character.name}
-                  </option>
-                ))}
-              </select>
-            </>
-          )}
+          {creatingGuild && <CharacterSelect id="character-select" value={selectedCharacter.id} onChange={setSelectedCharacter} characters={characters} loadingCharacters={loadingCharacters} />}
           {!joiningGuild && !creatingGuild && <div className="null-message">It looks like you're not in a guild</div>}
           {!joiningGuild && !creatingGuild && (
             <div className="guild-actions">

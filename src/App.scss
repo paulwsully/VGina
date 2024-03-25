@@ -107,10 +107,5 @@ input {
   &:not(:placeholder-shown) {
     outline: none;
     border-bottom: 1px solid $color-primary;
-    // & + span {
-    //   transform: translateY(-8px) translateX(0);
-    //   color: rgba(white, 0.3);
-    //   font-size: 0.7em;
-    // }
   }
 }

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlusCircle, faCheckCircle, faTimesCircle } from "@fortawesome/free-solid-svg-icons";
 import { ref, get, push, set, remove } from "firebase/database";
+import { toast, ToastContainer } from "react-toastify";
 import database from "../../../firebaseConfig";
 
 function Characters({ user }) {
@@ -12,8 +13,6 @@ function Characters({ user }) {
     name: "",
     level: "",
   });
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
 
   useEffect(() => {
     if (addingCharacter) {
@@ -38,31 +37,12 @@ function Characters({ user }) {
       });
   }, [user.uid]);
 
-  useEffect(() => {
-    if (error) {
-      const timer = setTimeout(() => {
-        setError("");
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [error]);
-
-  useEffect(() => {
-    if (success) {
-      const timer = setTimeout(() => {
-        setSuccess("");
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [success]);
-
   const handleAddCharacter = () => {
-    setError("");
-    setSuccess("");
-
     const characterExists = characters.some((character) => character.name === newCharacter.name);
     if (characterExists) {
-      setError("Character already exists");
+      toast.error("Character already exists", {
+        position: "bottom-right",
+      });
       return;
     }
 
@@ -78,12 +58,16 @@ function Characters({ user }) {
       .then(() => {
         setAddingCharacter(false);
         setCharacters((prevCharacters) => [...prevCharacters, characterData]);
-        setSuccess("Character created");
         setNewCharacter({ name: "", level: "" });
+        toast.success("Character created", {
+          position: "bottom-right",
+        });
       })
       .catch((error) => {
         console.error(error);
-        setError("Failed to add character");
+        toast.error("Could not add character", {
+          position: "bottom-right",
+        });
       });
   };
 
@@ -91,17 +75,22 @@ function Characters({ user }) {
     const characterRef = ref(database, `users/${user.uid}/characters/${characterId}`);
     remove(characterRef)
       .then(() => {
-        setSuccess("Character deleted");
+        toast.success("Character deleted", {
+          position: "bottom-right",
+        });
         setCharacters((prevCharacters) => prevCharacters.filter((character) => character.id !== characterId));
       })
       .catch((error) => {
         console.error(error);
-        setError("Failed to delete character");
+        toast.error("Failed to delete character", {
+          position: "bottom-right",
+        });
       });
   };
 
   return (
     <div className="characters-container">
+      <ToastContainer />
       <div className="input-row">
         <h3>Characters</h3>
         <div className="pointer actions">
@@ -114,8 +103,6 @@ function Characters({ user }) {
           )}
         </div>
       </div>
-      {error && <div className="error-message">{error}</div>}
-      {success && <div className="success-message">{success}</div>}
       {addingCharacter && (
         <>
           <input ref={nameInputRef} type="text" placeholder="Character Name" value={newCharacter.name} onChange={(e) => setNewCharacter((prev) => ({ ...prev, name: e.target.value }))} onKeyPress={(e) => e.key === "Enter" && newCharacter.name && newCharacter.level && handleAddCharacter()} />

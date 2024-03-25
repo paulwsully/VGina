@@ -12,6 +12,7 @@ import CurrentBids from "./components/DkpAndLoot/CurrentBids";
 import ItemDetailsWindow from "./components/DkpAndLoot/ItemDetailsWindow";
 import TimerOverlay from "./components/Triggers/TimerOverlay";
 import Tracker from "./components/Tracker/Tracker";
+import "react-toastify/dist/ReactToastify.css";
 import "./App.scss";
 
 function App() {
@@ -19,7 +20,7 @@ function App() {
   const Router = isDev ? BrowserRouter : HashRouter;
   const [user, setuser] = useState(null);
   const [tabs] = useState([
-    { label: "Triggers", path: "/triggers" },
+    { label: "Triggers", path: "/" },
     { label: "Guild & Characters", path: "/guild-and-characters" },
     { label: "DKP & Loot", path: "/dkp-and-loot" },
     { label: "Options & Overlays", path: "/alerts" },
@@ -73,7 +74,7 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<LayoutWithCommonComponents tabs={tabs} user={user} />}>
-          <Route index path="triggers" element={<Triggers />} />
+          <Route index path="/" element={<Triggers />} />
           <Route path="guild-and-characters" element={<GuildAndCharacters user={user} />} />
           <Route path="dkp-and-loot" element={<DkpAndLoot sortedData={sortedData} user={user} />} />
           <Route path="alerts" element={<Alerts />} />
