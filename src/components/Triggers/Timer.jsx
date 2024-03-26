@@ -10,8 +10,6 @@ const Timer = memo(({updateTimers, timer }) => {
 
   let intervalId; 
 
-  // TODO: make close work when timer is locked.
-
   useEffect(() => {
     endTime.current = Date.now() + totalSeconds * 1000;
     setIsVisible(true);
