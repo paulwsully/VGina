@@ -4,15 +4,17 @@ import Timer from "./Timer";
 function TimerOverlay({}) {
   const [activeTimers, setActiveTimers] = useState([]);
   const overlayRef = useRef(null);
+  let timers;
 
+  const updateTimers = async () => {
+    timers = await window.electron.getActiveTimers();
+    if (!Array.isArray(timers)) {
+      timers = [];
+    }
+    setActiveTimers(timers);
+  };
+  
   useEffect(() => {
-    const updateTimers = async () => {
-      let timers = await window.electron.getActiveTimers();
-      if (!Array.isArray(timers)) {
-        timers = [];
-      }
-      setActiveTimers(timers);
-    };
 
     window.electron.ipcRenderer.on("updateActiveTimers", updateTimers);
     updateTimers();
@@ -31,7 +33,7 @@ function TimerOverlay({}) {
 
   return (
     <div className="trigger-overlay" ref={overlayRef}>
-      <div className="timers">{activeTimers && activeTimers.map((timer, index) => <Timer key={timer.id + index} timer={timer} />)}</div>
+      <div className="timers">{activeTimers && activeTimers.map((timer, index) => <Timer updateTimers={updateTimers} key={timer.id + index} timer={timer} />)}</div>
     </div>
   );
 }
