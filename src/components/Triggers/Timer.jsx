@@ -1,10 +1,16 @@
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faClose } from "@fortawesome/free-solid-svg-icons";
 import React, { useState, useEffect, useRef, memo } from "react";
 
-const Timer = memo(({ timer }) => {
+const Timer = memo(({updateTimers, timer }) => {
   const totalSeconds = timer.timerHours * 3600 + timer.timerMinutes * 60 + timer.timerSeconds;
   const endTime = useRef(Date.now() + totalSeconds * 1000);
   const [timeLeft, setTimeLeft] = useState(totalSeconds);
   const [isVisible, setIsVisible] = useState(true);
+
+  let intervalId; 
+
+  // TODO: make close work when timer is locked.
 
   useEffect(() => {
     endTime.current = Date.now() + totalSeconds * 1000;
@@ -15,7 +21,7 @@ const Timer = memo(({ timer }) => {
 
     const calculateTimeLeft = () => Math.ceil((endTime.current - Date.now()) / 1000);
 
-    const intervalId = setInterval(() => {
+    intervalId = setInterval(() => {
       const remainingTimeInSeconds = calculateTimeLeft();
       setTimeLeft(remainingTimeInSeconds);
 
@@ -41,6 +47,22 @@ const Timer = memo(({ timer }) => {
     return () => clearInterval(intervalId);
   }, []);
 
+  const removeTimer = (id) => {
+    window.electron.ipcRenderer.send("remove-activeTimer", id);
+    clearInterval(intervalId);
+    setIsVisible(false);
+    updateTimers();
+    handleMouseLeave();
+  };
+
+  const handleMouseEnter = async (event) => {
+    window.electron.ipcRenderer.send("disable-only-click-through");
+  };
+
+  const handleMouseLeave = () => {
+    window.electron.ipcRenderer.send("enable-only-click-through");
+  };
+
   const progressPercentage = (timeLeft / totalSeconds) * 100;
   const red = Math.floor((255 * (100 - progressPercentage)) / 100);
   const green = Math.floor((255 * progressPercentage) / 100);
@@ -57,8 +79,11 @@ const Timer = memo(({ timer }) => {
   const progressWidth = `${(elapsedTime / (totalSeconds - 1)) * 100}%`;
 
   return isVisible ? (
-    <div className="timer">
+    <div className="timer" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
       <div className="timer-header">
+        <div className="timer-close" onClick={() => removeTimer(timer.id)}>
+          <FontAwesomeIcon icon={faClose} />
+        </div>
         <div className="timer-name">{timer.triggerName}</div>
         <div className="timer-time">{`${hours}h ${minutes}m ${seconds}s`}</div>
       </div>

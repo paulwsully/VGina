@@ -124,7 +124,14 @@
         justify-content: space-between;
         font-weight: 900;
         font-size: 1.5em;
+        .timer-name {
+          padding-left: 8px;
+        }
+        .timer-close {
+          -webkit-app-region: no-drag;
+        }
         .timer-time {
+          margin-left: auto;
           font-family: "DM Mono", monospace;
         }
       }
