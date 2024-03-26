@@ -165,6 +165,8 @@ function NewTrigger({ selectedTrigger, refreshTriggers, triggerUpdateCancelled }
     await refreshTriggers();
     resetTrigger();
     setShowNewTrigger(false);
+
+    toggleOpenClose();
   };
 
   const resetTrigger = () => {
