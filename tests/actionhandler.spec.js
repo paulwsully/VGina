@@ -1,6 +1,20 @@
 import { test, expect } from '@playwright/test';
 import { actionResponse} from '../main/actionHandler.js';
 
+test.describe('Test how triggers should behave when regex is disabled', () => {
+  const player = "TestPlayer"; 
+  let line = "";
+  let action = { type: "speak", key: "", search: "", sound: "", regex: false };
+
+  test('Speak trigger with regex off', ({}) => {
+    line = "line match";
+    action.search = "match";
+    action.sound = "the line was matched";
+    expect(actionResponse(player, line, action)).toEqual("the line was matched");
+  });
+
+});
+
 test.describe('Timer action tests', () => {
   const player = "TestPlayer"; 
   let line = "";
@@ -278,15 +292,6 @@ test.describe('Real world examples', () => {
     action.search = "a spiteful banshee turns her attention on {C}";
     action.sound = "{C} take Banshee to doors!";
     expect(actionResponse(player, line, action)).toEqual("tester take banshee to doors!");
-  });
-
-  // TODO: There is a bug where this test will fail when regex is not set to true, even though it doesn't use any regex in it.
-  test('Fufills Song', ({}) => {
-    line = "A mob's hair stands on end";
-    action.type = "speak";
-    action.search = "hair stands on end";
-    action.sound = "Fufills";
-    expect(actionResponse(player, line, action)).toEqual("fufills");
   });
 
 });
