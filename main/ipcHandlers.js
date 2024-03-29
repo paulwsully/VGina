@@ -119,7 +119,7 @@ function setupIpcHandlers() {
   async function processSpeakAction(line, action) {
     const player = store.get("watchedCharacter");
     const response = actionResponse(player, line, action);
-    
+ 
     if (response) {
       const userDataPath = app.getPath("userData");
       const soundFilePath = path.join(userDataPath, `./sounds/${sanitizeFilename(response)}.mp3`);
@@ -265,7 +265,7 @@ function setupIpcHandlers() {
         let action = { type: "", key: "", search: trigger.searchText, sound: "" , regex: trigger.searchRegex }; 
         if (trigger.saySomething){
           action.type = "speak";
-          action.sound = trigger.searchText;
+          action.sound = trigger.speechText;
           processSpeakAction(line, action);
         }
         if (trigger.playSound) {
