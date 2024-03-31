@@ -262,22 +262,24 @@ function setupIpcHandlers() {
     const triggers = store.get("triggers");
     if (triggers && triggers.length > 0) {
       triggers.map((trigger, index) => {
-        let action = { type: "", key: "", search: trigger.searchText, sound: "" , regex: trigger.searchRegex }; 
-        if (trigger.saySomething){
-          action.type = "speak";
-          action.sound = trigger.speechText;
-          processSpeakAction(line, action);
-        }
-        if (trigger.playSound) {
-          action.type = "sound";
-          // NOTE (Allegro): do we need ot change if type is string here?
-          action.sound = typeof triggers[index]?.sound === "string" ? triggers[index].sound.replace(".mp3", "") : undefined;
-          processSpeakAction(line, action);
-        }
-        if (trigger.setTimer){
-          action.type = "timer";
-          action.sound = trigger.triggerName;
-          processTimerAction(line, action, trigger);
+        if (trigger.active){
+          let action = { type: "", key: "", search: trigger.searchText, sound: "" , regex: trigger.searchRegex }; 
+          if (trigger.saySomething){
+            action.type = "speak";
+            action.sound = trigger.speechText;
+            processSpeakAction(line, action);
+          }
+          if (trigger.playSound) {
+            action.type = "sound";
+            // NOTE (Allegro): do we need ot change if type is string here?
+            action.sound = typeof triggers[index]?.sound === "string" ? triggers[index].sound.replace(".mp3", "") : undefined;
+            processSpeakAction(line, action);
+          }
+          if (trigger.setTimer){
+            action.type = "timer";
+            action.sound = trigger.triggerName;
+            processTimerAction(line, action, trigger);
+          }
         }
       });
     }

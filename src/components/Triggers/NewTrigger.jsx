@@ -9,6 +9,7 @@ import NewTriggerActions from "./NewTriggerActions";
 import Overlay from "../Utilities/Overlay";
 
 const triggerReset = {
+  active: false,
   saySomething: false,
   playSound: false,
   triggerName: "",
