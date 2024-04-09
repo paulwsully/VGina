@@ -9,6 +9,7 @@ import NewTriggerActions from "./NewTriggerActions";
 import Overlay from "../Utilities/Overlay";
 
 const triggerReset = {
+  active: false,
   saySomething: false,
   playSound: false,
   triggerName: "",
@@ -165,6 +166,8 @@ function NewTrigger({ selectedTrigger, refreshTriggers, triggerUpdateCancelled }
     await refreshTriggers();
     resetTrigger();
     setShowNewTrigger(false);
+
+    toggleOpenClose();
   };
 
   const resetTrigger = () => {

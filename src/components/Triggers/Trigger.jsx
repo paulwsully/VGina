@@ -6,6 +6,7 @@ import { faTrash } from "@fortawesome/free-solid-svg-icons";
 function Trigger({ trigger, refreshTriggers }) {
   const [isSelected, setIsSelected] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
+  const [toggle, setToggle] = useState(trigger.active);
   const confirmTimer = useRef(null);
 
   const toggleSelection = () => {
@@ -17,7 +18,8 @@ function Trigger({ trigger, refreshTriggers }) {
     event.stopPropagation();
   };
 
-  const handleDeleteClick = async () => {
+  const handleDeleteClick = async (event) => {
+    event.stopPropagation();
     if (showTooltip) {
       clearTimeout(confirmTimer.current);
       setShowTooltip(false);
@@ -33,19 +35,36 @@ function Trigger({ trigger, refreshTriggers }) {
     }
   };
 
+  const toggleActive = async () => {
+    const existingTriggers = await window.electron.ipcRenderer.invoke("storeGet", "triggers");
+    for (let i = 0; i < existingTriggers.length; i++){
+      if (existingTriggers[i].id === trigger.id){
+        existingTriggers[i].active = !toggle;
+      }
+    }
+    await window.electron.ipcRenderer.send("storeSet", "triggers", existingTriggers);
+    setToggle(!toggle);
+  };
+
   return (
-    <div className={`trigger panel`}>
-      <div className="text-primary bold" onClick={toggleSelection}>
+    <div className={`trigger panel`} onClick={toggleSelection}>
+      <label className="trigger-toggle">
+        <input type="checkbox" checked={toggle} onChange={toggleActive} />
+        <span className="trigger-toggle-slider"></span>
+      </label>
+      <div className="trigger-description">
+        <div className="text-primary bold">
         {trigger.triggerName}
-      </div>
-      <span onClick={toggleSelection}>{trigger.searchText}</span>
-      <div className="tags" onClick={toggleSelection}>
-        {trigger.tags &&
-          trigger.tags.map((tag, index) => (
-            <div className="tag pill" key={index}>
-              {tag}
-            </div>
-          ))}
+        </div>  
+        <div>{trigger.searchText}</div>
+        <div className="trigger-tags">
+          {trigger.tags &&
+            trigger.tags.map((tag, index) => (
+              <div className="tag pill" key={index}>
+                {tag}
+              </div>
+            ))}
+        </div>
       </div>
       {isSelected && (
         <div onClick={handleNewTriggerClick}>

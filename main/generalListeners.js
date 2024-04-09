@@ -1,7 +1,7 @@
 import { config } from "dotenv";
 config();
 import { ipcMain, dialog } from "electron";
-import { getMainWindow, getOverlayBid, getOverlayCurrentBid } from "./windowManager.js";
+import { getMainWindow, getOverlayBid, getOverlayCurrentBid, getOverlayTimers } from "./windowManager.js";
 import Store from "electron-store";
 const store = new Store();
 
@@ -34,15 +34,19 @@ export const generalListeners = () => {
   ipcMain.on("enable-only-click-through", () => {
     const overlayBidWindow = getOverlayBid();
     const overlayCurrentBidWindow = getOverlayCurrentBid();
+    const overlayTimers = getOverlayTimers(); 
     if (overlayBidWindow && !overlayBidWindow.isDestroyed()) overlayBidWindow.setIgnoreMouseEvents(true, { forward: true });
     if (overlayCurrentBidWindow && !overlayCurrentBidWindow.isDestroyed()) overlayCurrentBidWindow.setIgnoreMouseEvents(true, { forward: true });
+    if (overlayTimers && !overlayTimers.isDestroyed()) overlayTimers.setIgnoreMouseEvents(true, { forward: true });
   });
 
   ipcMain.on("disable-only-click-through", () => {
     const overlayBidWindow = getOverlayBid();
     const overlayCurrentBidWindow = getOverlayCurrentBid();
+    const overlayTimers = getOverlayTimers(); 
     if (overlayBidWindow && !overlayBidWindow.isDestroyed()) overlayBidWindow.setIgnoreMouseEvents(false);
     if (overlayCurrentBidWindow && !overlayCurrentBidWindow.isDestroyed()) overlayCurrentBidWindow.setIgnoreMouseEvents(false);
+    if (overlayTimers && !overlayTimers.isDestroyed()) overlayTimers.setIgnoreMouseEvents(false);
   });
 
   ipcMain.once("stop-file-watch", () => {
